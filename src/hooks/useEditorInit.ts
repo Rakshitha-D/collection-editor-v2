@@ -6,6 +6,7 @@ import { readHierarchy, readQuestionSetHierarchyTree } from '../api/hierarchy';
 import { getCategoryDefinition } from '../api/categoryDefinition';
 import { getChannelData } from '../api/channel';
 import { setApiBaseUrl } from '../api/client';
+import { resolveEditorProfile } from '../types/profile';
 
 interface UseEditorInitOptions {
   config: IEditorConfig;
@@ -40,7 +41,7 @@ export function useEditorInit({ config, onError }: UseEditorInitOptions) {
   const [error, setError] = useState<Error | null>(null);
   const [isReady, setIsReady] = useState(false);
 
-  const { setEditorConfig, setEditorMode, setCategoryDefinition, setContentFramework } = useEditorStore();
+  const { setEditorConfig, setEditorMode, setCategoryDefinition, setContentFramework, setEditorProfile } = useEditorStore();
   const { setTreeData, selectNode } = useTreeStore();
 
   useEffect(() => {

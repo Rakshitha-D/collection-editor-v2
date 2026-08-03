@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { IEditorConfig, EditorMode, IButtonLoaders } from '../types/editor';
 import type { ICategoryField, IParsedCategoryDefinition } from '../api/categoryDefinition';
+import type { IEditorProfile } from '../types/profile';
+import { collectionProfile } from '../types/profile';
 
 interface EditorState {
   editorConfig: IEditorConfig | null;
@@ -34,8 +36,12 @@ interface EditorState {
   // precedence — the content's own framework wins over the editor context.
   contentFramework: string | null;
   contentTargetFWIds: string[] | null;
+  // Resolved once from config.config.primaryCategory (see resolveEditorProfile);
+  // components read this instead of branching on primaryCategory directly.
+  editorProfile: IEditorProfile;
   // actions
   setEditorConfig: (config: IEditorConfig) => void;
+  setEditorProfile: (profile: IEditorProfile) => void;
   setEditorMode: (mode: EditorMode) => void;
   setButtonLoader: (key: keyof IButtonLoaders, value: boolean) => void;
   setShowPreview: (show: boolean) => void;
@@ -70,6 +76,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   formStatusMapper: {},
   contentFramework: null,
   contentTargetFWIds: null,
+  editorProfile: collectionProfile,
   rootFormConfig: null,
   unitFormConfig: null,
   childFormConfig: null,
@@ -81,6 +88,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   categoryMeta: null,
 
   setEditorConfig: (config) => set({ editorConfig: config }),
+  setEditorProfile: (profile) => set({ editorProfile: profile }),
   setEditorMode: (mode) => set({ editorMode: mode }),
   setButtonLoader: (key, value) =>
     set((state) => ({

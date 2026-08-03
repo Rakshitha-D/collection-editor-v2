@@ -210,7 +210,8 @@ export const useTreeStore = create<TreeState>((set, get) => ({
 
   addNode: (parentId, _type) => {
     const state = get();
-    const maxDepth = useEditorStore.getState().editorConfig?.config?.maxDepth ?? 4;
+    const profile = useEditorStore.getState().editorProfile;
+    const maxDepth = useEditorStore.getState().editorConfig?.config?.maxDepth ?? profile.maxDepth;
     const parentDepth = getNodeDepth(state.treeData, parentId);
 
     // parentDepth is the depth of the parent; child would be at parentDepth + 1.
@@ -224,14 +225,16 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     const newNode: INode = {
       id: newId,
       identifier: newId,
-      name: 'Untitled Unit',
+      name: profile.defaultUnitName,
       isFolder: true,
       children: [],
       parent: parentId,
       metadata: {
         mimeType: 'application/vnd.ekstep.content-collection',
         code: newId,
-        name: 'Untitled Unit',
+        name: profile.defaultUnitName,
+        contentType: profile.unitContentType,
+        primaryCategory: profile.unitPrimaryCategory,
         visibility: 'Parent',
       },
     };
