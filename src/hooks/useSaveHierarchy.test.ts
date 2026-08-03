@@ -110,4 +110,42 @@ describe('buildSavePayload (learningPath profile)', () => {
       metadata: { contentType: 'Competency Level', primaryCategory: 'Level' },
     });
   });
+
+  it('a linked Course leaf under a Level never appears in nodesModified and links with empty children[] in hierarchy', () => {
+    const lpTree: INode[] = [
+      {
+        id: 'do_lp', identifier: 'do_lp', name: 'My Path', isFolder: true,
+        metadata: { name: 'My Path', strategy: 'Fixed', mimeType: 'application/vnd.ekstep.content-collection' },
+        children: [
+          {
+            id: 'temp-level1', identifier: 'temp-level1', name: 'Level 1', isFolder: true, parent: 'do_lp',
+            metadata: { name: 'Level 1', contentType: 'Competency Level', primaryCategory: 'Level' },
+            children: [
+              {
+                // A linked, published Course — never authored, never in nodesModified.
+                id: 'do_course1', identifier: 'do_course1', name: 'Intro to Python', isFolder: false, parent: 'temp-level1',
+                objectType: 'Content', primaryCategory: 'Course',
+                metadata: { name: 'Intro to Python', primaryCategory: 'Course' },
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const lpTreeCache = { 'temp-level1': { isNew: true } };
+
+    const { nodesModified, hierarchy } = buildSavePayload(lpTree, lpTreeCache, 'test-channel', learningPathProfile);
+
+    expect(Object.keys(nodesModified).sort()).toEqual(['do_lp', 'temp-level1']);
+    expect(nodesModified['temp-level1']).toMatchObject({
+      metadata: { contentType: 'Competency Level', primaryCategory: 'Level' },
+      isNew: true,
+    });
+
+    // The linked Course is a leaf in the saved hierarchy — present with no
+    // children (a link, not an expansion) — never modified as if authored.
+    expect(hierarchy['do_course1']).toEqual({ name: 'Intro to Python', children: [], root: false });
+    expect(hierarchy['temp-level1']).toMatchObject({ children: ['do_course1'] });
+  });
 });
