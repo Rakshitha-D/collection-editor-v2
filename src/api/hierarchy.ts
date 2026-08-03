@@ -124,7 +124,7 @@ export async function readCourseHierarchy(
   courseId: string,
 ): Promise<Record<string, unknown>> {
   const response = await apiClient.get(
-    `/course/v1/hierarchy/${courseId}`,
+    `/action/course/v1/hierarchy/${courseId}`,
     { params: { mode: 'edit' } },
   );
   const course = response.data?.result?.course as Record<string, unknown> | undefined;
