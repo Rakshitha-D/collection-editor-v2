@@ -1,4 +1,5 @@
 import { readCourseHierarchy } from '../api/hierarchy';
+import type { INode } from '../types/editor';
 
 export interface HierarchyLeafLike {
   objectType?: string;
@@ -51,4 +52,92 @@ export async function checkAssessmentCourse(courseId: string): Promise<boolean> 
 
 export function clearAssessmentCourseCache(): void {
   assessmentCourseCache.clear();
+}
+
+// ---------------------------------------------------------------------------
+// Structural rules — Levels are the LP's only direct children of root.
+// Roles are derived from position + content, never stored on the node.
+// ---------------------------------------------------------------------------
+
+export type LevelRole = 'pre' | 'post' | 'levelAssessment' | 'content';
+
+// A Level "is" an assessment Level once it wraps exactly one course flagged
+// isAssessmentCourse (set by the linking flow after the Phase 1 hierarchy
+// check) — it never holds anything else (doc: "assessment Levels contain
+// exactly the one assessment course").
+export function isAssessmentLevel(level: INode | undefined): boolean {
+  const children = level?.children ?? [];
+  return children.length === 1 && !!children[0]?.metadata?.['isAssessmentCourse'];
+}
+
+/**
+ * getLevelRole(levelIndex, levelCount, hasAssessmentCourse) → role.
+ * Level[0] wrapping an assessment course is Prior/diagnostic ("pre");
+ * Level[levelCount-1] wrapping one is Outcome/summative ("post"); an
+ * assessment course inside any other Level is a Level assessment; anything
+ * else is a regular content Level. When levelCount === 1 the sole Level is
+ * treated as "pre" (index-0 check wins the tie) rather than "post".
+ */
+export function getLevelRole(
+  levelIndex: number,
+  levelCount: number,
+  hasAssessmentCourse: boolean,
+): LevelRole {
+  if (!hasAssessmentCourse) return 'content';
+  if (levelIndex === 0) return 'pre';
+  if (levelIndex === levelCount - 1) return 'post';
+  return 'levelAssessment';
+}
+
+/**
+ * Which pre/post assessment slot (if any) is open to receive a newly-linked
+ * assessment course, given root's current Level children. Pre is checked
+ * first, so a lone empty path always fills "pre" before "post" — matching
+ * getLevelRole's tie-break for levelCount === 1. Returns null once both
+ * slots are already wrapping an assessment course.
+ */
+export function resolveOpenAssessmentSlot(levels: INode[]): 'pre' | 'post' | null {
+  const preFilled = levels.length > 0 && isAssessmentLevel(levels[0]);
+  if (!preFilled) return 'pre';
+  const postFilled = levels.length > 1 && isAssessmentLevel(levels[levels.length - 1]);
+  if (!postFilled) return 'post';
+  return null;
+}
+
+/**
+ * Guards reorder of root's direct Level children: the pre-assessment Level
+ * (if any) must stay pinned at index 0 and the post-assessment Level (if any)
+ * must stay pinned at the last index; reordering is only free for the
+ * content Levels between them. Simulates the same splice-based move
+ * `reorderInParent` performs and checks the pinned Levels didn't shift,
+ * rather than hand-deriving index-shift arithmetic.
+ */
+export function canReorderLevel(levels: INode[], fromIndex: number, toIndex: number): boolean {
+  if (fromIndex < 0 || fromIndex >= levels.length) return true;
+  const preLevel = isAssessmentLevel(levels[0]) ? levels[0] : null;
+  const postLevel = levels.length > 1 && isAssessmentLevel(levels[levels.length - 1])
+    ? levels[levels.length - 1]
+    : null;
+  if (!preLevel && !postLevel) return true;
+
+  const simulated = [...levels];
+  const [moved] = simulated.splice(fromIndex, 1);
+  simulated.splice(toIndex, 0, moved);
+
+  if (preLevel && simulated[0] !== preLevel) return false;
+  if (postLevel && simulated[simulated.length - 1] !== postLevel) return false;
+  return true;
+}
+
+/**
+ * Guards adding a course into a Level (doc rules, Phase 2 item 4):
+ * an assessment Level (pre/post) holds exactly one course, ever; a content
+ * Level allows any number of regular courses plus at most one Level
+ * assessment (a course flagged isAssessmentCourse).
+ */
+export function canAddCourseToLevel(level: INode | undefined, incomingIsAssessmentCourse: boolean): boolean {
+  if (isAssessmentLevel(level)) return false; // already full — assessment Levels hold exactly one course
+  if (!incomingIsAssessmentCourse) return true; // regular courses are unrestricted on content Levels
+  const children = level?.children ?? [];
+  return !children.some((c) => !!c.metadata?.['isAssessmentCourse']);
 }

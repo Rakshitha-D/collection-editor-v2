@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { INode } from '../types/editor';
 import type { IContent } from '../types/content';
 import { useEditorStore } from './editor.store';
+import { canAddCourseToLevel, canReorderLevel, resolveOpenAssessmentSlot } from '../utils/lpStructure';
 
 interface TreeState {
   treeData: INode[];
@@ -16,7 +17,7 @@ interface TreeState {
   addNode: (parentId: string, type: 'unit' | 'subunit') => string;
   deleteNode: (id: string) => void;
   reorderChildren: (parentId: string, fromIndex: number, toIndex: number) => void;
-  addResource: (content: IContent, nodeId: string) => boolean;
+  addResource: (content: IContent, nodeId: string, opts?: { isAssessmentCourse?: boolean }) => boolean;
   markDirty: () => void;
   getNodeById: (id: string) => INode | undefined;
   getChildrenOf: (id: string) => INode[];
@@ -264,12 +265,32 @@ export const useTreeStore = create<TreeState>((set, get) => ({
   },
 
   reorderChildren: (parentId, fromIndex, toIndex) => {
+    const profile = useEditorStore.getState().editorProfile;
+    const rootId = get().treeData[0]?.id;
+    // LP profile: the pre/post assessment Levels are pinned at index 0 / last
+    // (doc model) — reordering is only free for the content Levels between them.
+    if (profile.derivedRoles && parentId === rootId) {
+      const parent = bfsFind(get().treeData, parentId);
+      if (parent?.children && !canReorderLevel(parent.children, fromIndex, toIndex)) return;
+    }
     set((state) => ({
       treeData: reorderInParent(state.treeData, parentId, fromIndex, toIndex),
     }));
   },
 
   moveNode: (nodeId, _fromParentId, toParentId) => {
+    const profile = useEditorStore.getState().editorProfile;
+    if (profile.derivedRoles) {
+      const movedNode = bfsFind(get().treeData, nodeId);
+      const targetNode = bfsFind(get().treeData, toParentId);
+      // Dragging a course across Levels must still respect the one-course-per-
+      // assessment-Level / one-Level-assessment-per-content-Level caps (item 4)
+      // that addResource enforces for library-driven adds.
+      if (movedNode && !movedNode.isFolder && targetNode?.isFolder) {
+        const incomingIsAssessmentCourse = !!movedNode.metadata?.['isAssessmentCourse'];
+        if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) return;
+      }
+    }
     set((state) => {
       const node = bfsFind(state.treeData, nodeId);
       if (!node) return state;
@@ -280,17 +301,51 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     get().markDirty();
   },
 
-  addResource: (content, nodeId) => {
+  addResource: (content, nodeId, opts) => {
     const config = useEditorStore.getState().editorConfig;
+    const profile = useEditorStore.getState().editorProfile;
+    const rootId = get().treeData[0]?.id;
+    const incomingIsAssessmentCourse = !!opts?.isAssessmentCourse;
+
+    // LP profile: linking an assessment course targeted at root fills the
+    // open pre/post slot by auto-wrapping it in its own dedicated Level
+    // (doc: "assessment Levels contain exactly the one assessment course") —
+    // this is how the Prior/Outcome Assessment pickers add a course, instead
+    // of requiring the author to create the Level by hand first.
+    if (profile.derivedRoles && nodeId === rootId) {
+      if (!incomingIsAssessmentCourse) return false; // only assessment courses may target root directly
+      if (bfsFind(get().treeData, content.identifier)) return false; // duplicate guard
+
+      const rootNode = get().treeData[0];
+      const slot = resolveOpenAssessmentSlot(rootNode?.children ?? []);
+      if (!slot) return false; // both pre and post slots are already filled
+
+      const newLevelId = get().addNode(rootId, 'unit');
+      if (!newLevelId) return false;
+      if (slot === 'pre') {
+        // addNode always appends; pull the fresh Level back to index 0 for the pre slot.
+        const lastIndex = (get().treeData[0]?.children?.length ?? 1) - 1;
+        set((state) => ({
+          treeData: reorderInParent(state.treeData, rootId, lastIndex, 0),
+        }));
+      }
+      return get().addResource(content, newLevelId, opts);
+    }
+
     // Prevent adding content directly under the root node unless explicitly allowed by config
     const allowContentUnderRoot = config?.config?.allowContentUnderRoot ?? false;
-    const rootId = get().treeData[0]?.id;
     if (!allowContentUnderRoot && nodeId === rootId) {
       return false;
     }
 
     // Prevent duplicate content anywhere in the collection (cross-unit)
     if (bfsFind(get().treeData, content.identifier)) {
+      return false;
+    }
+
+    const targetNode = bfsFind(get().treeData, nodeId);
+    if (profile.derivedRoles && targetNode?.isFolder
+        && !canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) {
       return false;
     }
 
@@ -313,7 +368,10 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       contentType: content.contentType,
       appIcon: content.appIcon,
       status: content.status,
-      metadata: content as unknown as Record<string, unknown>,
+      metadata: {
+        ...(content as unknown as Record<string, unknown>),
+        ...(incomingIsAssessmentCourse ? { isAssessmentCourse: true } : {}),
+      },
     };
 
     set((state) => ({

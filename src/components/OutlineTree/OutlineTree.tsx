@@ -12,6 +12,7 @@ import { Button } from '../shared/Button';
 import { CsvUpload } from '../BulkUpload/CsvUpload';
 import { exportFolderCsv } from '../../api/bulkUpload';
 import { readHierarchy } from '../../api/hierarchy';
+import { isAssessmentLevel } from '../../utils/lpStructure';
 import styles from './OutlineTree.module.scss';
 
 interface OutlineTreeProps {
@@ -34,7 +35,7 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   const [showCsvUpload, setShowCsvUpload] = useState(false);
   const [csvMode, setCsvMode] = useState<'create' | 'update'>('create');
 
-  const { treeData, selectedNodeId, selectNode, addNode, deleteNode, reorderChildren, moveNode, setTreeData } = useTreeStore();
+  const { treeData, treeCache, selectedNodeId, selectNode, addNode, deleteNode, reorderChildren, moveNode, setTreeData } = useTreeStore();
   const editorProfile = useEditorStore(s => s.editorProfile);
   const isLearningPath = editorProfile.key === 'learningPath';
   const isEditable = editorMode === 'edit';
@@ -109,8 +110,24 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   );
 
   const handleDelete = useCallback(
-    ({ ids }: { ids: string[] }) => { ids.forEach((id) => deleteNode(id)); },
-    [deleteNode],
+    ({ ids }: { ids: string[] }) => {
+      const root = treeData[0];
+      // Diagnostic (Adaptive) paths waive Levels based on the prior assessment's
+      // score, so deleting it needs a confirm; Fixed/PriorLearning paths don't
+      // depend on it structurally, so deletion is allowed without one.
+      const strategy = root ? (treeCache[root.id]?.['strategy'] ?? root.metadata?.['strategy']) as string | undefined : undefined;
+      for (const id of ids) {
+        if (isLearningPath && root) {
+          const isPreSlot = root.children?.[0]?.id === id && isAssessmentLevel(root.children[0]);
+          if (isPreSlot && strategy === 'Diagnostic'
+              && !window.confirm('Deleting the Prior Assessment removes the score this path\'s Adaptive skips are based on. Continue?')) {
+            continue;
+          }
+        }
+        deleteNode(id);
+      }
+    },
+    [deleteNode, treeData, treeCache, isLearningPath],
   );
 
   const handleCreate = useCallback(
