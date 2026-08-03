@@ -1,8 +1,70 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEditorStore } from '../../store/editor.store';
+import { useTreeStore } from '../../store/tree.store';
+import { useSkillCategory } from '../../hooks/useSkillCategory';
+import { useSkillScope } from '../../hooks/useSkillScope';
+import { validateLearningPathStructure, revalidateAssessmentSlots, type LpValidationIssue } from '../../utils/lpStructure';
 import { Button } from '../shared/Button';
 import { useLabels } from '../../hooks/useLabels';
 import styles from './modals.module.scss';
+
+// LP profile: replaces the manual checkbox checklist with the derived
+// publish-readiness rules from learning_path_plan.md §5 — the gate is
+// automated, not self-attested.
+const LearningPathChecklist: React.FC<{ objectType: string; onConfirm: () => void; onCancel: () => void }> = ({
+  objectType, onConfirm, onCancel,
+}) => {
+  const lbl = useLabels();
+  const root = useTreeStore((s) => s.treeData[0]);
+  const skillCategory = useSkillCategory();
+  const { scope } = useSkillScope();
+  const [asyncIssues, setAsyncIssues] = useState<LpValidationIssue[] | null>(null);
+
+  const structuralIssues = validateLearningPathStructure(root, skillCategory?.code, scope);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAsyncIssues(null);
+    revalidateAssessmentSlots(root).then((issues) => { if (!cancelled) setAsyncIssues(issues); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [root]);
+
+  const isChecking = asyncIssues === null;
+  const issues = [...structuralIssues, ...(asyncIssues ?? [])];
+  const canPublish = !isChecking && issues.length === 0;
+
+  return (
+    <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="publish-modal-title">
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <span id="publish-modal-title">{lbl.publishChecklist.publishTitlePrefix} {objectType}</span>
+          <button className={styles.modalHeaderClose} onClick={onCancel} aria-label={lbl.publishChecklist.closeAriaLabel}>×</button>
+        </div>
+
+        <div className={styles.modalBody}>
+          {issues.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
+              {isChecking ? 'Verifying assessment courses…' : `${lbl.publishChecklist.confirmPublishPrefix} ${objectType}?`}
+            </p>
+          ) : (
+            <>
+              <p className={styles.sectionTitle}>Resolve these before publishing:</p>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.6 }}>
+                {issues.map((issue, i) => <li key={`${issue.code}-${issue.nodeId ?? i}`}>{issue.message}</li>)}
+              </ul>
+            </>
+          )}
+        </div>
+
+        <div className={styles.modalFooter}>
+          <Button variant="ghost" onClick={onCancel}>{lbl.publishChecklist.noButton}</Button>
+          <Button variant="primary" onClick={onConfirm} disabled={!canPublish}>{lbl.publishChecklist.yesButton}</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface PublishChecklistProps {
   contentId: string;
@@ -23,6 +85,7 @@ export const PublishChecklist: React.FC<PublishChecklistProps> = ({
   const lbl = useLabels();
   const objectType =
     useEditorStore((s) => s.editorConfig?.config?.objectType) || 'Content';
+  const isLearningPath = useEditorStore((s) => s.editorProfile.derivedRoles);
 
   // Manual confirmation items defined by the category definition (forms.publishchecklist).
   const checklistItems = useEditorStore((s) => s.publishChecklist) ?? [];
@@ -34,6 +97,10 @@ export const PublishChecklist: React.FC<PublishChecklistProps> = ({
   const handlePublish = () => {
     onConfirm();
   };
+
+  if (isLearningPath) {
+    return <LearningPathChecklist objectType={objectType} onConfirm={onConfirm} onCancel={onCancel} />;
+  }
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="publish-modal-title">

@@ -10,6 +10,8 @@ import {
   canAddCourseToLevel,
   computeSkillsCovered,
   computePathShape,
+  validateLearningPathStructure,
+  revalidateAssessmentSlots,
 } from './lpStructure';
 import { readCourseHierarchy } from '../api/hierarchy';
 import type { INode } from '../types/editor';
@@ -95,6 +97,8 @@ const course = (id: string, over: Partial<INode> = {}): INode => ({
   id, identifier: id, name: 'Course', isFolder: false, children: [], metadata: {}, ...over,
 });
 const assessmentCourse = (id: string): INode => course(id, { metadata: { isAssessmentCourse: true } });
+const assessmentCourseWithSkills = (id: string, skills: string[]): INode =>
+  course(id, { metadata: { isAssessmentCourse: true, skill: skills } });
 
 describe('isAssessmentLevel', () => {
   it('is true only for a Level wrapping exactly one assessment-flagged course', () => {
@@ -211,9 +215,6 @@ describe('canAddCourseToLevel', () => {
 });
 
 describe('computeSkillsCovered', () => {
-  const assessmentCourseWithSkills = (id: string, skills: string[]): INode =>
-    course(id, { metadata: { isAssessmentCourse: true, skill: skills } });
-
   it('unions the prior/outcome assessment skill tags with each content Level\'s selected skills', () => {
     const root = level({
       id: 'root',
@@ -262,5 +263,126 @@ describe('computePathShape', () => {
   it('returns zeros for a rootless or empty path', () => {
     expect(computePathShape(undefined)).toEqual({ levelCount: 0, courseCount: 0 });
     expect(computePathShape(level({ children: [] }))).toEqual({ levelCount: 0, courseCount: 0 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Publish validation (Phase 5)
+// ---------------------------------------------------------------------------
+
+function validPath(strategy = 'Fixed') {
+  return level({
+    id: 'root', metadata: { strategy },
+    children: [
+      level({ id: 'pre', children: [assessmentCourseWithSkills('a1', ['Python programming'])] }),
+      level({
+        id: 'lvl1', metadata: { competencies: ['Java'] },
+        children: [course('c1', { metadata: { skill: ['Java'] } })],
+      }),
+      level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
+    ],
+  });
+}
+
+describe('validateLearningPathStructure', () => {
+  it('is clean for a fully-valid Fixed-strategy path', () => {
+    expect(validateLearningPathStructure(validPath(), 'skill', [])).toEqual([]);
+  });
+
+  it('flags a missing strategy', () => {
+    const root = validPath();
+    delete root.metadata!['strategy'];
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('strategyMissing');
+  });
+
+  it('requires a Prior Assessment only for Diagnostic/PriorLearning, not Fixed', () => {
+    const noPrior = level({
+      id: 'root', metadata: { strategy: 'Fixed' },
+      children: [
+        level({ id: 'lvl1', metadata: { competencies: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } })] }),
+        level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
+      ],
+    });
+    expect(validateLearningPathStructure(noPrior, 'skill', []).map(i => i.code)).not.toContain('priorAssessmentRequired');
+
+    const diagnostic = { ...noPrior, metadata: { strategy: 'Diagnostic' } };
+    expect(validateLearningPathStructure(diagnostic, 'skill', []).map(i => i.code)).toContain('priorAssessmentRequired');
+  });
+
+  it('always requires an Outcome Assessment', () => {
+    const root = validPath();
+    root.children = root.children!.slice(0, -1); // drop the post slot
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('outcomeAssessmentMissing');
+  });
+
+  it('flags a pre/post slot that is not exactly one assessment course', () => {
+    const root = validPath();
+    root.children![0].children!.push(course('extra')); // second child in the pre slot
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('slotNotPure');
+  });
+
+  it('flags an empty content Level', () => {
+    const root = validPath();
+    root.children![1].children = [];
+    const issues = validateLearningPathStructure(root, 'skill', []);
+    expect(issues.map(i => i.code)).toContain('emptyLevel');
+    expect(issues.map(i => i.code)).not.toContain('levelMissingSkills'); // short-circuits on empty
+  });
+
+  it('flags a content Level with no selected skills', () => {
+    const root = validPath();
+    root.children![1].metadata = {};
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('levelMissingSkills');
+  });
+
+  it('flags a content Level whose selected skills fall outside the current scope', () => {
+    const root = validPath();
+    expect(validateLearningPathStructure(root, 'skill', ['Python programming']).map(i => i.code))
+      .toContain('levelSkillsOutOfScope');
+    // Within scope: no issue.
+    expect(validateLearningPathStructure(root, 'skill', ['Java']).map(i => i.code))
+      .not.toContain('levelSkillsOutOfScope');
+  });
+
+  it('flags a linked course with no skill tag', () => {
+    const root = validPath();
+    root.children![1].children![0].metadata = {};
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('courseMissingSkillTag');
+  });
+
+  it('flags a course that appears more than once in the path', () => {
+    const root = validPath();
+    root.children![1].children!.push(course('a1')); // same id as the prior-assessment course
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('duplicateCourse');
+  });
+
+  it('returns no issues for a rootless tree', () => {
+    expect(validateLearningPathStructure(undefined, 'skill', [])).toEqual([]);
+  });
+});
+
+describe('revalidateAssessmentSlots', () => {
+  beforeEach(() => {
+    clearAssessmentCourseCache();
+    vi.mocked(readCourseHierarchy).mockReset();
+  });
+
+  it('flags a slot whose course no longer qualifies as question-set-only', async () => {
+    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [videoResource('v1')] });
+    const root = validPath();
+    const issues = await revalidateAssessmentSlots(root);
+    expect(issues.length).toBeGreaterThan(0);
+    expect(issues.every(i => i.code === 'slotCourseChanged')).toBe(true);
+  });
+
+  it('is clean when both slots still qualify', async () => {
+    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [questionSet('q1')] });
+    expect(await revalidateAssessmentSlots(validPath())).toEqual([]);
+  });
+
+  it('skips slots that are not assessment Levels', async () => {
+    const root = level({ id: 'root', children: [level({ id: 'lvl1', children: [course('c1')] })] });
+    expect(await revalidateAssessmentSlots(root)).toEqual([]);
+    expect(readCourseHierarchy).not.toHaveBeenCalled();
   });
 });

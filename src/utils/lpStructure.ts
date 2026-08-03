@@ -182,3 +182,127 @@ export function computeSkillsCovered(root: INode | undefined, skillCategoryCode:
   }
   return Array.from(covered);
 }
+
+// ---------------------------------------------------------------------------
+// Publish validation (Phase 5) — every rule from learning_path_plan.md §5.
+// ---------------------------------------------------------------------------
+
+export interface LpValidationIssue {
+  code: string;
+  message: string;
+  nodeId?: string;
+}
+
+const REQUIRES_PRIOR_STRATEGIES = new Set(['Diagnostic', 'PriorLearning']);
+
+/**
+ * Every synchronous (no network) LP publish rule: strategy set; prior
+ * assessment required only for Diagnostic/PriorLearning (not Fixed —
+ * confirmed open question #1); outcome assessment required always; pre/post
+ * slot purity; every content Level has ≥1 course and ≥1 in-scope skill; no
+ * empty Levels; every linked course carries a skill tag; no duplicate course
+ * across the path. `skillScope` empty means "no scope constraint yet"
+ * (matches useSkillScope's manual-fallback catalog, not an empty scope).
+ */
+export function validateLearningPathStructure(
+  root: INode | undefined,
+  skillCategoryCode: string | undefined,
+  skillScope: string[],
+): LpValidationIssue[] {
+  const issues: LpValidationIssue[] = [];
+  if (!root) return issues;
+
+  const strategy = root.metadata?.['strategy'] as string | undefined;
+  if (!strategy) {
+    issues.push({ code: 'strategyMissing', message: 'Set a consumption policy for this path.' });
+  }
+
+  const levels = root.children ?? [];
+  const preLevel = levels[0];
+  const postLevel = levels.length > 1 ? levels[levels.length - 1] : undefined;
+  const preFilled = isAssessmentLevel(preLevel);
+  const postFilled = isAssessmentLevel(postLevel);
+
+  if (!preFilled && strategy && REQUIRES_PRIOR_STRATEGIES.has(strategy)) {
+    issues.push({ code: 'priorAssessmentRequired', message: 'A Prior Assessment is required for the Adaptive/Prior learning policy.' });
+  }
+  if (!postFilled) {
+    issues.push({ code: 'outcomeAssessmentMissing', message: 'Add an Outcome Assessment to close the path.' });
+  }
+
+  ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const).forEach(([lvl, label]) => {
+    if (!lvl) return;
+    const children = lvl.children ?? [];
+    if (children.length !== 1 || !children[0]?.metadata?.['isAssessmentCourse']) {
+      issues.push({ code: 'slotNotPure', nodeId: lvl.id, message: `${label} must contain exactly one question-set-only course.` });
+    }
+  });
+
+  const seenCourseIds = new Set<string>();
+  const registerCourse = (courseId: string, nodeId: string) => {
+    if (seenCourseIds.has(courseId)) {
+      issues.push({ code: 'duplicateCourse', nodeId, message: 'A course appears more than once in this path.' });
+    }
+    seenCourseIds.add(courseId);
+  };
+
+  const contentLevels = levels.slice(preFilled ? 1 : 0, levels.length - (postFilled ? 1 : 0));
+  if (preFilled) registerCourse(preLevel.children![0].id, preLevel.id);
+  if (postFilled) registerCourse(postLevel!.children![0].id, postLevel!.id);
+
+  for (const lvl of contentLevels) {
+    const children = lvl.children ?? [];
+    if (children.length === 0) {
+      issues.push({ code: 'emptyLevel', nodeId: lvl.id, message: `"${lvl.name}" has no courses yet.` });
+      continue;
+    }
+    const skills = toStringArray(lvl.metadata?.['competencies']);
+    if (skills.length === 0) {
+      issues.push({ code: 'levelMissingSkills', nodeId: lvl.id, message: `"${lvl.name}" needs at least one skill selected.` });
+    } else if (skillScope.length > 0) {
+      const outOfScope = skills.filter((s) => !skillScope.includes(s));
+      if (outOfScope.length > 0) {
+        issues.push({
+          code: 'levelSkillsOutOfScope', nodeId: lvl.id,
+          message: `"${lvl.name}" has skills outside the current scope: ${outOfScope.join(', ')}.`,
+        });
+      }
+    }
+    for (const course of children) {
+      registerCourse(course.id, lvl.id);
+      const tags = skillCategoryCode ? toStringArray(course.metadata?.[skillCategoryCode]) : [];
+      if (tags.length === 0) {
+        issues.push({ code: 'courseMissingSkillTag', nodeId: course.id, message: `"${course.name}" has no skill tag.` });
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Re-verifies the pre/post assessment courses are STILL question-set-only at
+ * publish time (Phase 1 item 6 / Phase 5: "the course may have changed since
+ * it was linked"). Separate from validateLearningPathStructure because it
+ * requires a network read; callers should run it alongside the sync checks,
+ * not instead of them.
+ */
+export async function revalidateAssessmentSlots(root: INode | undefined): Promise<LpValidationIssue[]> {
+  const issues: LpValidationIssue[] = [];
+  const levels = root?.children ?? [];
+  const preLevel = levels[0];
+  const postLevel = levels.length > 1 ? levels[levels.length - 1] : undefined;
+
+  for (const [lvl, label] of ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const)) {
+    if (!lvl || !isAssessmentLevel(lvl)) continue;
+    const courseId = lvl.children![0].id;
+    const stillQualifies = await checkAssessmentCourse(courseId);
+    if (!stillQualifies) {
+      issues.push({
+        code: 'slotCourseChanged', nodeId: lvl.id,
+        message: `${label}'s course is no longer question-set-only — pick a different course.`,
+      });
+    }
+  }
+  return issues;
+}
