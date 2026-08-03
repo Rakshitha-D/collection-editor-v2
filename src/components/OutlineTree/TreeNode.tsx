@@ -11,18 +11,21 @@ import {
   FolderPlus,
   Book,
   Folder,
+  Milestone,
   Video,
   FileText,
   Layers,
   Package,
   Music,
   HelpCircle,
+  BookOpen,
   File,
 } from 'lucide-react';
 import type { INode, EditorMode } from '../../types/editor';
 import { getCtStyle } from '../../hooks/useContentType';
 import { useIsDraftStatus } from '../../hooks/useContentStatus';
 import { useLabels } from '../../hooks/useLabels';
+import { useEditorStore } from '../../store/editor.store';
 import styles from './TreeNode.module.scss';
 
 const CT_ICON_COMPONENTS: Record<string, React.ElementType> = {
@@ -32,6 +35,7 @@ const CT_ICON_COMPONENTS: Record<string, React.ElementType> = {
   scorm: Package,
   audio: Music,
   quiz: HelpCircle,
+  course: BookOpen,
   default: File,
 };
 
@@ -50,6 +54,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   const [renameVal, setRenameVal] = useState(node.data.name);
   const menuRef = useRef<HTMLDivElement>(null);
   const lbl = useLabels();
+  const editorProfile = useEditorStore(s => s.editorProfile);
   const isEditable = editorMode === 'edit';
   const isDraft = useIsDraftStatus();
   const ctStyle = getCtStyle(node.data);
@@ -58,8 +63,15 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   const isRoot = node.level === 0;
   const isFolder =
     node.data.isFolder ?? (node.children && node.children.length > 0);
-  // Root (Course) → Book, Unit/Sub-Unit (folders) → Folder, leaf → content-type icon.
-  const NodeIcon = isRoot ? Book : isFolder ? Folder : CtIcon;
+  const isLearningPath = editorProfile.key === 'learningPath';
+  // Root (Course/Learning Path) → Book, Level folders → Milestone,
+  // Unit/Sub-Unit (folders) → Folder, leaf → content-type icon.
+  const NodeIcon = isRoot ? Book : isFolder ? (isLearningPath ? Milestone : Folder) : CtIcon;
+  // Adding a folder inside the current node would exceed the profile's maxDepth
+  // (e.g. LP Levels can't contain sub-levels) — hide rather than error on click.
+  const canAddChildFolder = node.level + 1 <= editorProfile.maxDepth;
+  const addUnitLabel = isLearningPath ? 'Add Level' : lbl.treeNode.addSubunitMenuItem;
+  const addSiblingLabel = isLearningPath ? 'Add Level' : lbl.treeNode.addSiblingMenuItem;
 
   // Close menu on outside click
   useEffect(() => {
@@ -184,7 +196,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
               >
                 <Pencil size={13} /> {lbl.treeNode.renameMenuItem}
               </button>
-              {isFolder && isDraft && (
+              {isFolder && isDraft && canAddChildFolder && (
                 <button
                   role="menuitem"
                   onClick={() => {
@@ -192,7 +204,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
                     setMenuOpen(false);
                   }}
                 >
-                  <FolderPlus size={13} /> {lbl.treeNode.addSubunitMenuItem}
+                  <FolderPlus size={13} /> {addUnitLabel}
                 </button>
               )}
               {node.data.parent && isDraft && (
@@ -203,7 +215,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
                     setMenuOpen(false);
                   }}
                 >
-                  <Plus size={13} /> {lbl.treeNode.addSiblingMenuItem}
+                  <Plus size={13} /> {addSiblingLabel}
                 </button>
               )}
               {!isRoot && (

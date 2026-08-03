@@ -35,10 +35,16 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   const [csvMode, setCsvMode] = useState<'create' | 'update'>('create');
 
   const { treeData, selectedNodeId, selectNode, addNode, deleteNode, reorderChildren, moveNode, setTreeData } = useTreeStore();
+  const editorProfile = useEditorStore(s => s.editorProfile);
+  const isLearningPath = editorProfile.key === 'learningPath';
   const isEditable = editorMode === 'edit';
   const isDraft = useIsDraftStatus();
   // Adding units/content is only allowed while the collection is in Draft.
   const canAdd = isEditable && isDraft;
+  const addUnitLabel = isLearningPath ? 'Add Level' : lbl.outlineTree.addUnitButton;
+  // LP Levels can't contain sub-levels (maxDepth: 1) — the footer's generic
+  // "Add Sub-unit" would only ever error for this profile, so hide it.
+  const showAddSubunit = editorProfile.maxDepth > 1;
   // Mirror Angular: "Create" is only useful when no folders exist yet;
   // "Download/Update" only make sense when folders already exist.
   const hasFolders = (treeData[0]?.children ?? []).some(c => c.isFolder);
@@ -275,16 +281,18 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
             onClick={handleAddUnit}
             disabled={!canAdd}
           >
-            <Plus size={14} /> {lbl.outlineTree.addUnitButton}
+            <Plus size={14} /> {addUnitLabel}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleAddSubunit}
-            disabled={!canAdd || !selectedNodeId}
-          >
-            <FolderPlus size={14} /> {lbl.outlineTree.addSubunitButton}
-          </Button>
+          {showAddSubunit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAddSubunit}
+              disabled={!canAdd || !selectedNodeId}
+            >
+              <FolderPlus size={14} /> {lbl.outlineTree.addSubunitButton}
+            </Button>
+          )}
         </div>
       )}
 
