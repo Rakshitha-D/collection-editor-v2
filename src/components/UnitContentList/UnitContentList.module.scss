@@ -130,6 +130,14 @@
   color: var(--sbx-gray-400);
 }
 
+.pathShapeRow {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--sbx-gray-700);
+  font-weight: 500;
+}
+
 .addRow {
   display: flex;
   align-items: center;

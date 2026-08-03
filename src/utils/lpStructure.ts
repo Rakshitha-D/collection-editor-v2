@@ -154,6 +154,22 @@ function toStringArray(value: unknown): string[] {
  * Assessment Levels contribute their course's skillCategoryCode tags;
  * content Levels contribute their own `competencies` metadata.
  */
+/**
+ * "Path shape" (root summary, Phase 4): level count excludes the pre/post
+ * assessment slots (design: "Neither counts as a level"); course count
+ * includes every linked course, assessment courses included.
+ */
+export function computePathShape(root: INode | undefined): { levelCount: number; courseCount: number } {
+  const levels = root?.children ?? [];
+  let levelCount = 0;
+  let courseCount = 0;
+  for (const lvl of levels) {
+    if (!isAssessmentLevel(lvl)) levelCount++;
+    courseCount += (lvl.children ?? []).length;
+  }
+  return { levelCount, courseCount };
+}
+
 export function computeSkillsCovered(root: INode | undefined, skillCategoryCode: string | undefined): string[] {
   if (!root || !skillCategoryCode) return [];
   const covered = new Set<string>();

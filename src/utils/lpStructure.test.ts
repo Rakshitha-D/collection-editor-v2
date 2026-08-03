@@ -9,6 +9,7 @@ import {
   canReorderLevel,
   canAddCourseToLevel,
   computeSkillsCovered,
+  computePathShape,
 } from './lpStructure';
 import { readCourseHierarchy } from '../api/hierarchy';
 import type { INode } from '../types/editor';
@@ -241,5 +242,25 @@ describe('computeSkillsCovered', () => {
   it('returns an empty array without a root node or a resolved skill category', () => {
     expect(computeSkillsCovered(undefined, 'skill')).toEqual([]);
     expect(computeSkillsCovered(level({ children: [] }), undefined)).toEqual([]);
+  });
+});
+
+describe('computePathShape', () => {
+  it('excludes pre/post assessment slots from the level count, includes their courses in the course count', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'pre', children: [assessmentCourse('a1')] }),
+        level({ id: 'lvl1', children: [course('c1'), course('c2')] }),
+        level({ id: 'lvl2', children: [course('c3')] }),
+        level({ id: 'post', children: [assessmentCourse('a2')] }),
+      ],
+    });
+    expect(computePathShape(root)).toEqual({ levelCount: 2, courseCount: 5 });
+  });
+
+  it('returns zeros for a rootless or empty path', () => {
+    expect(computePathShape(undefined)).toEqual({ levelCount: 0, courseCount: 0 });
+    expect(computePathShape(level({ children: [] }))).toEqual({ levelCount: 0, courseCount: 0 });
   });
 });

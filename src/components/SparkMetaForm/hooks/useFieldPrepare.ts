@@ -1,4 +1,15 @@
 import type { IFrameworkDetails, ITerm } from '../../../types/framework';
+import type { IEditorProfile } from '../../../types/profile';
+
+// Design labels for the LP root's consumption-policy field — the schema enum
+// (learning_path_ocd.md §1) uses the raw values; friendly labels are an
+// editor-side concern regardless of whether the field came from the category
+// definition's `range` or the local fallback below.
+export const STRATEGY_OPTIONS: Array<{ label: string; value: string }> = [
+  { label: 'Strict', value: 'Fixed' },
+  { label: 'Adaptive', value: 'Diagnostic' },
+  { label: 'Prior learning', value: 'PriorLearning' },
+];
 
 export interface NestedSelectLevel {
   code: string;
@@ -35,6 +46,7 @@ export const SECTION_DISPLAY: Record<string, { title: string; description?: stri
   'Target Framework Terms': { title: 'Target Audience', description: 'Curriculum alignment for the intended learners.' },
   'Fourth Section': { title: 'Licensing & Attribution', description: 'Copyright and usage rights information.' },
   'Sixth Section':  { title: 'Licensing & Attribution', description: 'Copyright and usage rights information.' },
+  'Consumption policy': { title: 'Consumption policy', description: 'How learners move through this path.' },
 };
 
 export interface IFieldConfig extends PreparedField {
@@ -70,6 +82,10 @@ export interface IPrepareContext {
   contentAdditionalCategories?: string[];
   /** Count of the active node's direct children — feeds maxQuestions range. */
   childCount?: number;
+  /** Active editor profile — used to render profile-specific fallback fields
+   *  (e.g. the LP root's `strategy` field) when no category-definition form
+   *  config is available yet. */
+  profile?: IEditorProfile;
 }
 
 const REVIEW_MODES = new Set(['review', 'read', 'sourcingreview', 'orgreview']);
@@ -134,7 +150,7 @@ export function useFieldPrepare(
 ): PreparedField[] {
   if (!formConfig?.length) {
     return adaptFrameworkFields(
-      getDefaultFields(nodeMetadata, isRoot, frameworkDetails),
+      getDefaultFields(nodeMetadata, isRoot, frameworkDetails, ctx),
       frameworkDetails, nodeMetadata, isRoot,
     );
   }
@@ -391,6 +407,11 @@ function resolveOptions(
 ): Array<{ label: string; value: string }> | undefined {
   const code = (field.code as string) ?? '';
 
+  // strategy: the schema/form range carries raw values (Fixed/Diagnostic/
+  // PriorLearning) — always render the design's friendly labels regardless
+  // of what the category definition's `range` declares.
+  if (code === 'strategy') return STRATEGY_OPTIONS;
+
   // maxQuestions: range is 1..(child count) — mirrors Angular's _.times(childCount).
   if (code === 'maxQuestions') {
     const n = ctx.childCount ?? 0;
@@ -632,6 +653,7 @@ function getDefaultFields(
   meta: Record<string, unknown>,
   isRoot: boolean,
   fw: IFrameworkDetails,
+  ctx: IPrepareContext = {},
 ): PreparedField[] {
   const fields: PreparedField[] = [
     {
@@ -649,6 +671,19 @@ function getDefaultFields(
   ];
 
   if (!isRoot) return fields;
+
+  // LP root fallback (no "Learning Path" category definition available yet,
+  // §5.1 backend dependency) — the Course BMGS skeleton below doesn't apply
+  // to a Learning Path at all, so render just the consumption-policy field
+  // instead of empty/irrelevant required dropdowns.
+  if (ctx.profile?.key === 'learningPath') {
+    fields.push({
+      code: 'strategy', label: 'Consumption policy', inputType: 'select',
+      required: true, editable: true, tab: 'details', section: 'Consumption policy',
+      options: STRATEGY_OPTIONS, currentValue: cv(meta, 'strategy', 'select') || 'Fixed',
+    });
+    return fields;
+  }
 
   // ── Root node — Details tab ───────────────────────────────────────────────
   fields.push(

@@ -44,6 +44,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
 }) => {
   const lbl = useLabels();
   const config = useEditorStore(s => s.editorConfig);
+  const editorProfile = useEditorStore(s => s.editorProfile);
   const rootFormConfig = useEditorStore(s => s.rootFormConfig);
   const unitFormConfig = useEditorStore(s => s.unitFormConfig);
   const categoryMeta = useEditorStore(s => s.categoryMeta);
@@ -113,6 +114,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
     collectionAdditionalCategories,
     contentAdditionalCategories,
     childCount,
+    profile: editorProfile,
   };
 
   // Use category-definition API fields if available, fall back to static config

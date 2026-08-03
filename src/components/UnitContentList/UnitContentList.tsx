@@ -7,7 +7,7 @@ import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useLabels } from '../../hooks/useLabels';
 import { useSkillScope } from '../../hooks/useSkillScope';
-import { computeSkillsCovered, isAssessmentLevel } from '../../utils/lpStructure';
+import { computePathShape, computeSkillsCovered, isAssessmentLevel } from '../../utils/lpStructure';
 import { useSkillCategory } from '../../hooks/useSkillCategory';
 import { ContentRow } from './ContentRow';
 import { SkillPicker } from './SkillPicker';
@@ -37,6 +37,7 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
     : [];
   const outOfScopeSkills = source === 'prior' ? selectedSkills.filter(s => !scope.includes(s)) : [];
   const skillsCovered = isLpRoot ? computeSkillsCovered(treeData[0], skillCategory?.code) : [];
+  const pathShape = isLpRoot ? computePathShape(treeData[0]) : { levelCount: 0, courseCount: 0 };
 
   const handleSkillsChange = useCallback((skills: string[]) => {
     if (!selectedNodeId) return;
@@ -72,6 +73,11 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
     <div className={styles.container}>
       {isLpRoot && (
         <div className={styles.skillsCovered}>
+          <span className={styles.heading}>Path shape</span>
+          <div className={styles.pathShapeRow}>
+            <span>{pathShape.levelCount} level{pathShape.levelCount === 1 ? '' : 's'}</span>
+            <span>{pathShape.courseCount} course{pathShape.courseCount === 1 ? '' : 's'}</span>
+          </div>
           <span className={styles.heading}>Skills covered</span>
           {skillsCovered.length > 0 ? (
             <div className={styles.chips}>
