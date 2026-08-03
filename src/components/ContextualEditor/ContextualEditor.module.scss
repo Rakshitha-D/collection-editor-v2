@@ -1,3 +1,17 @@
+.backToPathButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin: 12px 16px 0;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  color: var(--sbx-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
 // Leaf content: one scrollable column — player (intrinsic 16:9 via the
 // ContentPlayer 'flow' layout), info strip, then the edit form. The panel
 // itself scrolls so the bottom information is always reachable.

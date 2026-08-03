@@ -43,7 +43,7 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   const isDraft = useIsDraftStatus();
   // Adding units/content is only allowed while the collection is in Draft.
   const canAdd = isEditable && isDraft;
-  const addUnitLabel = isLearningPath ? 'Add Level' : lbl.outlineTree.addUnitButton;
+  const addUnitLabel = isLearningPath ? lbl.learningPath.addLevelButton : lbl.outlineTree.addUnitButton;
   // LP Levels can't contain sub-levels (maxDepth: 1) — the footer's generic
   // "Add Sub-unit" would only ever error for this profile, so hide it.
   const showAddSubunit = editorProfile.maxDepth > 1;
@@ -67,11 +67,13 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   );
 
   // enableBulkUpload from sourcingSettings controls CSV menu visibility.
-  // Default to true when the category definition hasn't loaded yet.
-  const enableBulkUpload = useEditorStore(s => {
+  // Default to true when the category definition hasn't loaded yet. LP never
+  // supports CSV bulk upload regardless of sourcingSettings (profile.features).
+  const sourcingAllowsBulkUpload = useEditorStore(s => {
     const sourcing = s.categoryMeta?.sourcingSettings?.collection as Record<string, unknown> | undefined;
     return sourcing?.enableBulkUpload !== false;
   });
+  const enableBulkUpload = editorProfile.features.csvUpload && sourcingAllowsBulkUpload;
 
   // Measure wrapper height for react-arborist virtualization
   useEffect(() => {
@@ -133,7 +135,7 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
         if (isLearningPath && root) {
           const isPreSlot = root.children?.[0]?.id === id && isAssessmentLevel(root.children[0]);
           if (isPreSlot && strategy === 'Diagnostic'
-              && !window.confirm('Deleting the Prior Assessment removes the score this path\'s Adaptive skips are based on. Continue?')) {
+              && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
             continue;
           }
         }
@@ -281,8 +283,8 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
       {isLearningPath && (
         <AssessmentSlotRow
           slot="pre"
-          label="Prior Assessment"
-          hint="Always required · not a level"
+          label={lbl.learningPath.priorAssessmentLabel}
+          hint={lbl.learningPath.priorAssessmentHint}
           level={preLevel}
           filled={preFilled}
           isActive={activeAssessmentSlot === 'pre'}
@@ -320,8 +322,8 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
       {isLearningPath && (
         <AssessmentSlotRow
           slot="post"
-          label="Outcome Assessment"
-          hint="Confirms outcome · not a level"
+          label={lbl.learningPath.outcomeAssessmentLabel}
+          hint={lbl.learningPath.outcomeAssessmentHint}
           level={postLevel}
           filled={postFilled}
           isActive={activeAssessmentSlot === 'post'}
@@ -386,6 +388,7 @@ interface AssessmentSlotRowProps {
 const AssessmentSlotRow: React.FC<AssessmentSlotRowProps> = ({
   label, hint, level, filled, isActive, canEdit, onFillClick, onRemoveClick,
 }) => {
+  const lbl = useLabels();
   const courseName = filled ? level?.children?.[0]?.name : undefined;
   return (
     <div className={styles.assessmentSlot}>
@@ -397,7 +400,7 @@ const AssessmentSlotRow: React.FC<AssessmentSlotRowProps> = ({
           </div>
           {canEdit && (
             <button type="button" className={styles.assessmentSlotRemove} onClick={onRemoveClick}>
-              Remove
+              {lbl.learningPath.removeAssessmentSlotButton}
             </button>
           )}
         </div>
@@ -407,7 +410,7 @@ const AssessmentSlotRow: React.FC<AssessmentSlotRowProps> = ({
           className={[styles.assessmentSlotEmpty, isActive ? styles.assessmentSlotActive : ''].join(' ')}
           onClick={onFillClick}
         >
-          <Plus size={13} /> Add {label} — a course with only a question set
+          <Plus size={13} /> {lbl.learningPath.addAssessmentSlotButton.replace('{label}', label)}
         </button>
       ) : (
         <div className={styles.assessmentSlotEmpty}>

@@ -73,18 +73,24 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
     <div className={styles.container}>
       {isLpRoot && (
         <div className={styles.skillsCovered}>
-          <span className={styles.heading}>Path shape</span>
+          <span className={styles.heading}>{lbl.learningPath.pathShapeHeading}</span>
           <div className={styles.pathShapeRow}>
-            <span>{pathShape.levelCount} level{pathShape.levelCount === 1 ? '' : 's'}</span>
-            <span>{pathShape.courseCount} course{pathShape.courseCount === 1 ? '' : 's'}</span>
+            <span>
+              {(pathShape.levelCount === 1 ? lbl.learningPath.levelCountLabel : lbl.learningPath.levelCountLabelPlural)
+                .replace('{count}', String(pathShape.levelCount))}
+            </span>
+            <span>
+              {(pathShape.courseCount === 1 ? lbl.learningPath.courseCountLabel : lbl.learningPath.courseCountLabelPlural)
+                .replace('{count}', String(pathShape.courseCount))}
+            </span>
           </div>
-          <span className={styles.heading}>Skills covered</span>
+          <span className={styles.heading}>{lbl.learningPath.skillsCoveredHeading}</span>
           {skillsCovered.length > 0 ? (
             <div className={styles.chips}>
               {skillsCovered.map(s => <span key={s} className={styles.chip}>{s}</span>)}
             </div>
           ) : (
-            <span className={styles.emptyHint}>No skills yet</span>
+            <span className={styles.emptyHint}>{lbl.learningPath.noSkillsYet}</span>
           )}
         </div>
       )}
@@ -97,8 +103,8 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
           onChange={handleSkillsChange}
           isEditable={isEditable}
           note={source === 'prior'
-            ? 'Skills are scoped to the Prior Assessment.'
-            : 'No Prior Assessment linked — choose from the full skill catalog.'}
+            ? lbl.learningPath.skillScopeFromPriorNote
+            : lbl.learningPath.skillScopeManualNote}
         />
       )}
 

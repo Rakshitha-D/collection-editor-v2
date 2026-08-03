@@ -263,7 +263,9 @@ export const Topbar: React.FC<TopbarProps> = ({
   // generateDIALCodes default "Yes" means QR codes are enabled for this content type.
   // Default to showing if the API hasn't loaded yet (backward compat).
   const categoryMeta = useEditorStore((s) => s.categoryMeta);
-  const showDialcode = !categoryMeta || categoryMeta.schemaDefaults.generateDIALCodes !== 'No';
+  const editorProfile = useEditorStore((s) => s.editorProfile);
+  const showDialcode = editorProfile.features.dialcodes
+    && (!categoryMeta || categoryMeta.schemaDefaults.generateDIALCodes !== 'No');
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showConfirmReview, setShowConfirmReview] = useState(false);

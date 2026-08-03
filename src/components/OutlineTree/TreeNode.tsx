@@ -70,8 +70,8 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   // Adding a folder inside the current node would exceed the profile's maxDepth
   // (e.g. LP Levels can't contain sub-levels) — hide rather than error on click.
   const canAddChildFolder = node.level + 1 <= editorProfile.maxDepth;
-  const addUnitLabel = isLearningPath ? 'Add Level' : lbl.treeNode.addSubunitMenuItem;
-  const addSiblingLabel = isLearningPath ? 'Add Level' : lbl.treeNode.addSiblingMenuItem;
+  const addUnitLabel = isLearningPath ? lbl.learningPath.addLevelButton : lbl.treeNode.addSubunitMenuItem;
+  const addSiblingLabel = isLearningPath ? lbl.learningPath.addLevelButton : lbl.treeNode.addSiblingMenuItem;
 
   // Close menu on outside click
   useEffect(() => {

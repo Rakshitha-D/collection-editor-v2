@@ -80,19 +80,19 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       try {
         const qualifies = await checkAssessmentCourse(item.identifier);
         if (!qualifies) {
-          toast.error(`"${item.name}" isn't a question-set-only course, so it can't be used as an assessment.`);
+          toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
           return;
         }
         const added = addResource(item, rootId, { isAssessmentCourse: true });
         if (added === false) {
-          toast.error('Both Prior and Outcome Assessment slots are already filled.');
+          toast.error(lbl.learningPath.bothSlotsFilledToast);
           return;
         }
         toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
         setActiveAssessmentSlot(null);
       } catch (e) {
         console.error('[LibraryDock] assessment-course check failed:', e);
-        toast.error('Could not verify this course. Please try again.');
+        toast.error(lbl.learningPath.assessmentCheckFailedToast);
       } finally {
         setCheckingAssessmentCourseId(null);
       }
@@ -229,8 +229,13 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           course for the Prior/Outcome Assessment, unfiltered by competency. */}
       {activeAssessmentSlot && (
         <div className={styles.slotBanner}>
-          <span>Selecting a course for the {activeAssessmentSlot === 'pre' ? 'Prior' : 'Outcome'} Assessment</span>
-          <button type="button" onClick={() => setActiveAssessmentSlot(null)}>Cancel</button>
+          <span>
+            {lbl.learningPath.slotBannerSelecting.replace(
+              '{slot}',
+              activeAssessmentSlot === 'pre' ? lbl.learningPath.priorAssessmentLabel : lbl.learningPath.outcomeAssessmentLabel,
+            )}
+          </span>
+          <button type="button" onClick={() => setActiveAssessmentSlot(null)}>{lbl.learningPath.slotBannerCancelButton}</button>
         </div>
       )}
 
@@ -241,8 +246,8 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           {needsSkillSelection ? (
             <div className={styles.emptyState}>
               <Search size={24} />
-              <p>Select skills for this Level first</p>
-              <span>Courses are found by matching the skills you choose in the Level panel.</span>
+              <p>{lbl.learningPath.selectSkillsFirstTitle}</p>
+              <span>{lbl.learningPath.selectSkillsFirstHint}</span>
             </div>
           ) : isLoading && content.length === 0 ? (
             // Loading skeleton

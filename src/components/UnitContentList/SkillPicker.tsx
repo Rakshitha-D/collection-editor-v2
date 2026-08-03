@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
+import { useLabels } from '../../hooks/useLabels';
 import styles from './UnitContentList.module.scss';
 
 interface SkillPickerProps {
@@ -18,6 +19,7 @@ interface SkillPickerProps {
 export const SkillPicker: React.FC<SkillPickerProps> = ({
   options, selected, outOfScope, onChange, isEditable, note,
 }) => {
+  const lbl = useLabels();
   const [query, setQuery] = useState('');
   const filtered = query
     ? options.filter(o => o.toLowerCase().includes(query.toLowerCase()))
@@ -31,13 +33,13 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
   return (
     <div className={styles.skillPicker}>
       <div className={styles.header}>
-        <span className={styles.heading}>Skills</span>
+        <span className={styles.heading}>{lbl.learningPath.skillsHeading}</span>
         <span className={styles.count}>{selected.length}</span>
       </div>
 
       {outOfScope.length > 0 && (
         <div className={styles.skillWarning} role="alert">
-          Out of scope, please re-select: {outOfScope.join(', ')}
+          {lbl.learningPath.skillsOutOfScopeWarning.replace('{skills}', outOfScope.join(', '))}
         </div>
       )}
 
@@ -47,18 +49,18 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
           <input
             type="search"
             className={styles.skillSearchInput}
-            placeholder="Search skills"
+            placeholder={lbl.learningPath.searchSkillsPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search skills"
+            aria-label={lbl.learningPath.searchSkillsPlaceholder}
           />
         </div>
       )}
 
       {options.length === 0 ? (
-        <span className={styles.emptyHint}>No skills available yet</span>
+        <span className={styles.emptyHint}>{lbl.learningPath.noSkillsAvailable}</span>
       ) : filtered.length === 0 ? (
-        <span className={styles.emptyHint}>No matching skills</span>
+        <span className={styles.emptyHint}>{lbl.learningPath.noMatchingSkills}</span>
       ) : (
         <div className={styles.chips}>
           {filtered.map((skill) => {

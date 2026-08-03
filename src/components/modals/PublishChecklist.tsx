@@ -45,11 +45,11 @@ const LearningPathChecklist: React.FC<{ objectType: string; onConfirm: () => voi
         <div className={styles.modalBody}>
           {issues.length === 0 ? (
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
-              {isChecking ? 'Verifying assessment courses…' : `${lbl.publishChecklist.confirmPublishPrefix} ${objectType}?`}
+              {isChecking ? lbl.learningPath.verifyingAssessmentCourses : `${lbl.publishChecklist.confirmPublishPrefix} ${objectType}?`}
             </p>
           ) : (
             <>
-              <p className={styles.sectionTitle}>Resolve these before publishing:</p>
+              <p className={styles.sectionTitle}>{lbl.learningPath.resolveBeforePublishing}</p>
               <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.6 }}>
                 {issues.map((issue, i) => <li key={`${issue.code}-${issue.nodeId ?? i}`}>{issue.message}</li>)}
               </ul>

@@ -12,6 +12,8 @@ import { ResourceReorderDialog } from '../ResourceReorder/ResourceReorderDialog'
 import { AssignPageNumber } from '../AssignPageNumber/AssignPageNumber';
 import { ContentEditForm } from './ContentEditForm';
 import { TitleAppIcon } from './TitleAppIcon';
+import { CourseDetailsPanel } from '../shared/CourseDetailsPanel';
+import { ArrowLeft } from 'lucide-react';
 import { useLabels } from '../../hooks/useLabels';
 import styles from './ContextualEditor.module.scss';
 
@@ -46,10 +48,11 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const titleRef = useRef<HTMLDivElement>(null);
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const { selectedNodeId, breadcrumb, activeNodeMeta, updateNode, treeData } = useTreeStore();
+  const { selectedNodeId, breadcrumb, activeNodeMeta, updateNode, treeData, selectNode } = useTreeStore();
   const contentId = useEditorStore(
     s => s.editorConfig?.context?.contentId ?? s.editorConfig?.context?.identifier ?? '',
   );
+  const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
 
   const selectedNode = selectedNodeId ? findNodeById(treeData, selectedNodeId) : null;
 
@@ -104,6 +107,27 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         type="quml"
         singleQuestion={isSingleQuestion}
       />
+    );
+  }
+
+  // LP profile: a linked Course is never authored/played inline — show the
+  // read-only "Course details" (Title, Units, Topics) instead of
+  // ContentPlayer + ContentEditForm (design: "Course details ... Back to path").
+  if (isLearningPath && isLeafContent && selectedNode.primaryCategory === 'Course') {
+    return (
+      <div className={styles.container}>
+        <button
+          type="button"
+          className={styles.backToPathButton}
+          onClick={() => selectedNode.parent && selectNode(selectedNode.parent)}
+        >
+          <ArrowLeft size={14} /> {lbl.learningPath.backToPathButton}
+        </button>
+        <div className={styles.titleRow}>
+          <div className={styles.nodeTitle}>{selectedNode.name}</div>
+        </div>
+        <CourseDetailsPanel courseId={selectedNode.identifier} />
+      </div>
     );
   }
 
