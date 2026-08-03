@@ -6,6 +6,8 @@ import { CT_FILTERS } from '../../types/content';
 import { useLibrary } from '../../hooks/useLibrary';
 import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
+import { useUiStore } from '../../store/ui.store';
+import { checkAssessmentCourse } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -49,21 +51,61 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     applyAdvancedFilters,
     toggleSort,
     loadMore,
+    needsSkillSelection,
+    activeAssessmentSlot,
   } = useLibrary();
 
   const { addResource, selectedNodeId, treeData } = useTreeStore();
+  const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
   const isEditable = editorMode === 'edit';
 
   // Panel state
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<LibraryFilters>({});
   const [previewContent, setPreviewContent] = useState<IContent | null>(null);
+  const [checkingAssessmentCourseId, setCheckingAssessmentCourseId] = useState<string | null>(null);
 
   // Build a set of already-added resource identifiers for O(1) lookup
   const addedIds = useMemo(() => collectResourceIds(treeData), [treeData]);
 
+  // Filling the Prior/Outcome Assessment slot: only a question-set-only
+  // course qualifies, and there's no metadata marker for that — the check
+  // requires reading the course's own hierarchy (Phase 1), done here on
+  // selection rather than filtering search results.
+  const handleFillAssessmentSlot = useCallback(
+    async (item: IContent) => {
+      const rootId = treeData[0]?.id;
+      if (!rootId || checkingAssessmentCourseId) return;
+      setCheckingAssessmentCourseId(item.identifier);
+      try {
+        const qualifies = await checkAssessmentCourse(item.identifier);
+        if (!qualifies) {
+          toast.error(`"${item.name}" isn't a question-set-only course, so it can't be used as an assessment.`);
+          return;
+        }
+        const added = addResource(item, rootId, { isAssessmentCourse: true });
+        if (added === false) {
+          toast.error('Both Prior and Outcome Assessment slots are already filled.');
+          return;
+        }
+        toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
+        setActiveAssessmentSlot(null);
+      } catch (e) {
+        console.error('[LibraryDock] assessment-course check failed:', e);
+        toast.error('Could not verify this course. Please try again.');
+      } finally {
+        setCheckingAssessmentCourseId(null);
+      }
+    },
+    [treeData, addResource, setActiveAssessmentSlot, checkingAssessmentCourseId, lbl],
+  );
+
   const handleAdd = useCallback(
     (item: IContent) => {
+      if (activeAssessmentSlot) {
+        handleFillAssessmentSlot(item);
+        return;
+      }
       if (!selectedNodeId) {
         toast.error(lbl.libraryDock.selectUnitFirstToast);
         return;
@@ -83,7 +125,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
     },
-    [selectedNodeId, addResource, treeData, lbl],
+    [activeAssessmentSlot, handleFillAssessmentSlot, selectedNodeId, addResource, treeData, lbl],
   );
 
   const handleApplyFilters = useCallback(
@@ -183,11 +225,26 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
         <FilterChips filters={CT_FILTERS} active={activeFilter} onChange={setFilter} />
       </div>
 
+      {/* Slot-filling banner (LP profile) — the dock is currently sourcing a
+          course for the Prior/Outcome Assessment, unfiltered by competency. */}
+      {activeAssessmentSlot && (
+        <div className={styles.slotBanner}>
+          <span>Selecting a course for the {activeAssessmentSlot === 'pre' ? 'Prior' : 'Outcome'} Assessment</span>
+          <button type="button" onClick={() => setActiveAssessmentSlot(null)}>Cancel</button>
+        </div>
+      )}
+
       {/* Main area: card list + optional side panels */}
       <div className={styles.mainArea}>
         {/* Card list */}
         <div className={styles.cardList} role="list" aria-label={lbl.libraryDock.libraryContentAriaLabel}>
-          {isLoading && content.length === 0 ? (
+          {needsSkillSelection ? (
+            <div className={styles.emptyState}>
+              <Search size={24} />
+              <p>Select skills for this Level first</p>
+              <span>Courses are found by matching the skills you choose in the Level panel.</span>
+            </div>
+          ) : isLoading && content.length === 0 ? (
             // Loading skeleton
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={styles.skeleton} aria-hidden="true">

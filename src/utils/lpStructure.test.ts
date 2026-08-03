@@ -8,6 +8,7 @@ import {
   resolveOpenAssessmentSlot,
   canReorderLevel,
   canAddCourseToLevel,
+  computeSkillsCovered,
 } from './lpStructure';
 import { readCourseHierarchy } from '../api/hierarchy';
 import type { INode } from '../types/editor';
@@ -205,5 +206,40 @@ describe('canAddCourseToLevel', () => {
   it('allows the first course into a brand-new empty Level regardless of flag', () => {
     expect(canAddCourseToLevel(level({ children: [] }), true)).toBe(true);
     expect(canAddCourseToLevel(level({ children: [] }), false)).toBe(true);
+  });
+});
+
+describe('computeSkillsCovered', () => {
+  const assessmentCourseWithSkills = (id: string, skills: string[]): INode =>
+    course(id, { metadata: { isAssessmentCourse: true, skill: skills } });
+
+  it('unions the prior/outcome assessment skill tags with each content Level\'s selected skills', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'pre', children: [assessmentCourseWithSkills('a1', ['Python programming'])] }),
+        level({ id: 'lvl1', metadata: { competencies: ['Java'] }, children: [course('c1')] }),
+        level({ id: 'lvl2', metadata: { competencies: ['Java', 'SQL'] }, children: [course('c2')] }),
+        level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL', 'Testing'])] }),
+      ],
+    });
+    expect(computeSkillsCovered(root, 'skill').sort()).toEqual(
+      ['Java', 'Python programming', 'SQL', 'Testing'].sort(),
+    );
+  });
+
+  it('never pulls skills from a content Level\'s linked courses, only its own competencies field', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'lvl1', children: [course('c1', { metadata: { skill: ['Should not leak'] } })] }),
+      ],
+    });
+    expect(computeSkillsCovered(root, 'skill')).toEqual([]);
+  });
+
+  it('returns an empty array without a root node or a resolved skill category', () => {
+    expect(computeSkillsCovered(undefined, 'skill')).toEqual([]);
+    expect(computeSkillsCovered(level({ children: [] }), undefined)).toEqual([]);
   });
 });

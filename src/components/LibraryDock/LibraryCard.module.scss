@@ -58,6 +58,21 @@
   white-space: nowrap;
 }
 
+.skillTags {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.skillTag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--sbx-r-xl);
+  background: var(--sbx-gray-100);
+  color: var(--sbx-gray-600);
+}
+
 .addBtn {
   flex-shrink: 0;
   display: flex;

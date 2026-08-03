@@ -141,3 +141,28 @@ export function canAddCourseToLevel(level: INode | undefined, incomingIsAssessme
   const children = level?.children ?? [];
   return !children.some((c) => !!c.metadata?.['isAssessmentCourse']);
 }
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  return value ? [String(value)] : [];
+}
+
+/**
+ * "Skills covered" (root summary, Phase 4): the union of skills tagged
+ * across the Prior Assessment, each Level's *selected* skills, and the
+ * Outcome Assessment — never skills scraped from linked courses' content.
+ * Assessment Levels contribute their course's skillCategoryCode tags;
+ * content Levels contribute their own `competencies` metadata.
+ */
+export function computeSkillsCovered(root: INode | undefined, skillCategoryCode: string | undefined): string[] {
+  if (!root || !skillCategoryCode) return [];
+  const covered = new Set<string>();
+  for (const lvl of root.children ?? []) {
+    if (isAssessmentLevel(lvl)) {
+      toStringArray(lvl.children![0].metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
+    } else {
+      toStringArray(lvl.metadata?.['competencies']).forEach((s) => covered.add(s));
+    }
+  }
+  return Array.from(covered);
+}

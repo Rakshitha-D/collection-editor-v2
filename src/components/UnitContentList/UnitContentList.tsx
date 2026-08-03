@@ -4,19 +4,44 @@ import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinat
 import { Plus } from 'lucide-react';
 import type { EditorMode } from '../../types/editor';
 import { useTreeStore } from '../../store/tree.store';
+import { useEditorStore } from '../../store/editor.store';
 import { useLabels } from '../../hooks/useLabels';
+import { useSkillScope } from '../../hooks/useSkillScope';
+import { computeSkillsCovered, isAssessmentLevel } from '../../utils/lpStructure';
+import { useSkillCategory } from '../../hooks/useSkillCategory';
 import { ContentRow } from './ContentRow';
+import { SkillPicker } from './SkillPicker';
 import styles from './UnitContentList.module.scss';
 
 interface UnitContentListProps {
   editorMode: EditorMode;
+  isRoot?: boolean;
 }
 
-export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode }) => {
+export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, isRoot = false }) => {
   const lbl = useLabels();
-  const { selectedNodeId, getChildrenOf, reorderChildren, deleteNode } = useTreeStore();
+  const { selectedNodeId, getChildrenOf, getNodeById, reorderChildren, deleteNode, activeNodeMeta, updateNode, treeData } = useTreeStore();
+  const editorProfile = useEditorStore(s => s.editorProfile);
   const children = selectedNodeId ? getChildrenOf(selectedNodeId) : [];
   const isEditable = editorMode === 'edit';
+  const selectedNode = selectedNodeId ? getNodeById(selectedNodeId) : undefined;
+  // Assessment Levels (pre/post/level-assessment) hold exactly one course
+  // whose own skill tags apply — no manual skill picker for them.
+  const isLpLevel = editorProfile.competencyScoped && !isRoot && !isAssessmentLevel(selectedNode);
+  const isLpRoot = editorProfile.competencyScoped && isRoot;
+
+  const { scope, source } = useSkillScope();
+  const skillCategory = useSkillCategory();
+  const selectedSkills = Array.isArray(activeNodeMeta['competencies'])
+    ? activeNodeMeta['competencies'] as string[]
+    : [];
+  const outOfScopeSkills = source === 'prior' ? selectedSkills.filter(s => !scope.includes(s)) : [];
+  const skillsCovered = isLpRoot ? computeSkillsCovered(treeData[0], skillCategory?.code) : [];
+
+  const handleSkillsChange = useCallback((skills: string[]) => {
+    if (!selectedNodeId) return;
+    updateNode(selectedNodeId, { metadata: { competencies: skills } });
+  }, [selectedNodeId, updateNode]);
 
   const sensors = useSensors(
     // distance:5 prevents conflict with outer DnD context (distance:8) while still feeling responsive
@@ -45,6 +70,32 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode }) 
 
   return (
     <div className={styles.container}>
+      {isLpRoot && (
+        <div className={styles.skillsCovered}>
+          <span className={styles.heading}>Skills covered</span>
+          {skillsCovered.length > 0 ? (
+            <div className={styles.chips}>
+              {skillsCovered.map(s => <span key={s} className={styles.chip}>{s}</span>)}
+            </div>
+          ) : (
+            <span className={styles.emptyHint}>No skills yet</span>
+          )}
+        </div>
+      )}
+
+      {isLpLevel && (
+        <SkillPicker
+          options={scope}
+          selected={selectedSkills}
+          outOfScope={outOfScopeSkills}
+          onChange={handleSkillsChange}
+          isEditable={isEditable}
+          note={source === 'prior'
+            ? 'Skills are scoped to the Prior Assessment.'
+            : 'No Prior Assessment linked — choose from the full skill catalog.'}
+        />
+      )}
+
       <div className={styles.header}>
         <span className={styles.heading}>{lbl.unitContentList.heading}</span>
         <span className={styles.count}>{children.length}</span>
@@ -72,7 +123,7 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode }) 
         </div>
       )}
 
-      {isEditable && (
+      {isEditable && !isAssessmentLevel(selectedNode) && (
         <button className={styles.addRow} type="button" aria-label={lbl.unitContentList.addContentAriaLabel}>
           <Plus size={14} /> {lbl.unitContentList.addContent}
         </button>

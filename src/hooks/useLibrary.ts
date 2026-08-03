@@ -2,11 +2,34 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useLibraryStore } from '../store/library.store';
 import { useEditorStore } from '../store/editor.store';
 import { useTreeStore } from '../store/tree.store';
+import { useUiStore } from '../store/ui.store';
+import { useSkillCategory } from './useSkillCategory';
 import { compositeSearch } from '../api/content';
 import { LIBRARY_PRIMARY_CATEGORIES } from '../types/content';
 import type { LibraryFilters } from '../components/LibraryDock/LibraryFilterPanel';
 
+/**
+ * LP profile library filters: search is strictly constrained to Courses.
+ * Filling the pre/post assessment slot has no competency constraint (the
+ * prior assessment *defines* the skill scope, so it can't be filtered by
+ * it); browsing a Level otherwise requires skills selected first — returns
+ * null (rather than an unfiltered query) so the caller can prompt for skill
+ * selection instead of listing every Course.
+ */
+export function buildLpLibraryFilters(
+  activeAssessmentSlot: 'pre' | 'post' | null,
+  selectedSkills: string[],
+  skillCategoryCode: string | undefined,
+): Record<string, unknown> | null {
+  const filters: Record<string, unknown> = { primaryCategory: ['Course'] };
+  if (activeAssessmentSlot) return filters;
+  if (!selectedSkills.length) return null;
+  if (skillCategoryCode) filters[skillCategoryCode] = selectedSkills;
+  return filters;
+}
+
 const PAGE_SIZE = 20;
+const EMPTY_SKILLS: string[] = [];
 
 /**
  * Returns allowed primaryCategory values for the currently selected unit,
@@ -51,7 +74,21 @@ export function useLibrary() {
   const store = useLibraryStore();
   const channel = useEditorStore((s) => s.editorConfig?.context?.channel ?? '');
   const allowedCategories = useAllowedCategories();
+  const editorProfile = useEditorStore((s) => s.editorProfile);
+  const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
+  const activeNodeMeta = useTreeStore((s) => s.activeNodeMeta);
+  const skillCategory = useSkillCategory();
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const selectedLevelSkills = Array.isArray(activeNodeMeta['competencies'])
+    ? activeNodeMeta['competencies'] as string[]
+    : EMPTY_SKILLS;
+  // True once the LP profile is browsing a Level (not filling an assessment
+  // slot) with no skills chosen yet — the dock should prompt for skills
+  // rather than list every Course unfiltered.
+  const needsSkillSelection = editorProfile.competencyScoped
+    && !activeAssessmentSlot
+    && selectedLevelSkills.length === 0;
 
   const load = useCallback(
     async (
@@ -61,19 +98,34 @@ export function useLibrary() {
       reset = true,
       sortAZ = false,
     ) => {
+      if (needsSkillSelection) {
+        store.setContent([], 0);
+        return;
+      }
+
       store.setLoading(true);
       try {
-        const filters: Record<string, unknown> = {
-          status: ['Live'],
-          primaryCategory: filter && filter !== 'all'
-            ? [filter]
-            : allowedCategories,
-        };
-        if (advancedFilters?.board?.length) filters['board'] = advancedFilters.board;
-        if (advancedFilters?.medium?.length) filters['medium'] = advancedFilters.medium;
-        if (advancedFilters?.gradeLevel?.length) filters['gradeLevel'] = advancedFilters.gradeLevel;
-        if (advancedFilters?.subject?.length) filters['subject'] = advancedFilters.subject;
-        if (advancedFilters?.primaryCategory?.length) filters['primaryCategory'] = advancedFilters.primaryCategory;
+        let filters: Record<string, unknown>;
+        if (editorProfile.competencyScoped) {
+          const lpFilters = buildLpLibraryFilters(activeAssessmentSlot, selectedLevelSkills, skillCategory?.code);
+          if (!lpFilters) {
+            store.setContent([], 0);
+            return;
+          }
+          filters = { status: ['Live'], ...lpFilters };
+        } else {
+          filters = {
+            status: ['Live'],
+            primaryCategory: filter && filter !== 'all'
+              ? [filter]
+              : allowedCategories,
+          };
+          if (advancedFilters?.board?.length) filters['board'] = advancedFilters.board;
+          if (advancedFilters?.medium?.length) filters['medium'] = advancedFilters.medium;
+          if (advancedFilters?.gradeLevel?.length) filters['gradeLevel'] = advancedFilters.gradeLevel;
+          if (advancedFilters?.subject?.length) filters['subject'] = advancedFilters.subject;
+          if (advancedFilters?.primaryCategory?.length) filters['primaryCategory'] = advancedFilters.primaryCategory;
+        }
 
         const currentOffset = reset ? 0 : store.offset;
 
@@ -98,13 +150,13 @@ export function useLibrary() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allowedCategories, channel],
+    [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory, needsSkillSelection],
   );
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel]);
+  }, [channel, activeAssessmentSlot, selectedLevelSkills.join('|')]);
 
   const search = useCallback(
     (query: string) => {
@@ -166,5 +218,9 @@ export function useLibrary() {
     toggleSort,
     loadMore,
     refetch: () => load(store.searchQuery, store.activeFilter, store.advancedFilters, true, store.sortAZ),
+    // LP profile only — drives the dock's "select skills first" / "filling
+    // the Prior/Outcome Assessment slot" banners.
+    needsSkillSelection,
+    activeAssessmentSlot,
   };
 }
