@@ -193,11 +193,11 @@ export interface LpValidationIssue {
   nodeId?: string;
 }
 
-const REQUIRES_PRIOR_STRATEGIES = new Set(['Diagnostic', 'PriorLearning']);
+const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic', 'PriorLearning']);
 
 /**
- * Every synchronous (no network) LP publish rule: strategy set; prior
- * assessment required only for Diagnostic/PriorLearning (not Fixed —
+ * Every synchronous (no network) LP publish rule: consumption policy set;
+ * prior assessment required only for Diagnostic/PriorLearning (not Fixed —
  * confirmed open question #1); outcome assessment required always; pre/post
  * slot purity; every content Level has ≥1 course and ≥1 in-scope skill; no
  * empty Levels; every linked course carries a skill tag; no duplicate course
@@ -212,9 +212,9 @@ export function validateLearningPathStructure(
   const issues: LpValidationIssue[] = [];
   if (!root) return issues;
 
-  const strategy = root.metadata?.['strategy'] as string | undefined;
-  if (!strategy) {
-    issues.push({ code: 'strategyMissing', message: 'Set a consumption policy for this path.' });
+  const policy = root.metadata?.['policy'] as string | undefined;
+  if (!policy) {
+    issues.push({ code: 'policyMissing', message: 'Set a consumption policy for this path.' });
   }
 
   const levels = root.children ?? [];
@@ -223,7 +223,7 @@ export function validateLearningPathStructure(
   const preFilled = isAssessmentLevel(preLevel);
   const postFilled = isAssessmentLevel(postLevel);
 
-  if (!preFilled && strategy && REQUIRES_PRIOR_STRATEGIES.has(strategy)) {
+  if (!preFilled && policy && REQUIRES_PRIOR_POLICIES.has(policy)) {
     issues.push({ code: 'priorAssessmentRequired', message: 'A Prior Assessment is required for the Adaptive/Prior learning policy.' });
   }
   if (!postFilled) {

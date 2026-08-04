@@ -123,7 +123,7 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
     ({ ids }: { ids: string[] }) => {
       for (const id of ids) {
         // Deleting the pre-assessment Level via the tree's own delete UI goes
-        // through the same Diagnostic-strategy confirm as the pinned row's
+        // through the same Diagnostic-policy confirm as the pinned row's
         // Remove button.
         if (isLearningPath && preLevel?.id === id) {
           deleteSlot('pre');

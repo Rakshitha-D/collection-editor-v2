@@ -3,27 +3,27 @@ import { useFormContext, Controller } from 'react-hook-form';
 import { Lock, Zap, ShieldCheck } from 'lucide-react';
 import { useLabels } from '../../../hooks/useLabels';
 import fieldStyles from './Field.module.scss';
-import styles from './StrategyCardField.module.scss';
+import styles from './PolicyCardField.module.scss';
 
-interface StrategyCardFieldProps {
+interface PolicyCardFieldProps {
   name: string;
   label: string;
   required?: boolean;
   disabled?: boolean;
 }
 
-// Custom 3-card selector for the LP root's `strategy` (consumption policy)
+// Custom 3-card selector for the LP root's `policy` (consumption policy)
 // field — replaces the generic SelectField rendering for this one field code
 // (design: Strict/lock, Adaptive/lightning, Prior learning/shield-check,
 // each with a title + description + radio indicator).
-export const StrategyCardField: React.FC<StrategyCardFieldProps> = ({ name, label, required, disabled }) => {
+export const PolicyCardField: React.FC<PolicyCardFieldProps> = ({ name, label, required, disabled }) => {
   const lbl = useLabels();
   const { control } = useFormContext();
 
   const cards = [
-    { value: 'Fixed', Icon: Lock, title: lbl.learningPath.strategyStrictLabel, description: lbl.learningPath.strategyStrictDescription },
-    { value: 'Diagnostic', Icon: Zap, title: lbl.learningPath.strategyAdaptiveLabel, description: lbl.learningPath.strategyAdaptiveDescription },
-    { value: 'PriorLearning', Icon: ShieldCheck, title: lbl.learningPath.strategyPriorLearningLabel, description: lbl.learningPath.strategyPriorLearningDescription },
+    { value: 'Fixed', Icon: Lock, title: lbl.learningPath.policyStrictLabel, description: lbl.learningPath.policyStrictDescription },
+    { value: 'Diagnostic', Icon: Zap, title: lbl.learningPath.policyAdaptiveLabel, description: lbl.learningPath.policyAdaptiveDescription },
+    { value: 'PriorLearning', Icon: ShieldCheck, title: lbl.learningPath.policyPriorLearningLabel, description: lbl.learningPath.policyPriorLearningDescription },
   ];
 
   return (

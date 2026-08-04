@@ -5,7 +5,7 @@ import type { IEditorProfile } from '../../../types/profile';
 // (learning_path_ocd.md §1) uses the raw values; friendly labels are an
 // editor-side concern regardless of whether the field came from the category
 // definition's `range` or the local fallback below.
-export const STRATEGY_OPTIONS: Array<{ label: string; value: string }> = [
+export const POLICY_OPTIONS: Array<{ label: string; value: string }> = [
   { label: 'Strict', value: 'Fixed' },
   { label: 'Adaptive', value: 'Diagnostic' },
   { label: 'Prior learning', value: 'PriorLearning' },
@@ -83,7 +83,7 @@ export interface IPrepareContext {
   /** Count of the active node's direct children — feeds maxQuestions range. */
   childCount?: number;
   /** Active editor profile — used to render profile-specific fallback fields
-   *  (e.g. the LP root's `strategy` field) when no category-definition form
+   *  (e.g. the LP root's `policy` field) when no category-definition form
    *  config is available yet. */
   profile?: IEditorProfile;
 }
@@ -167,6 +167,10 @@ export function useFieldPrepare(
   const prepared = formConfig.filter((field) => {
     // QR/Dial Code is managed via header buttons, not the root form
     if (isRoot && (field.code === 'dialCode' || field.code === 'dialcode')) return false;
+    // LP's frameworkMetadata declares targetFWType: [] (no target framework at
+    // all) — defensively drop any target* field a category definition might
+    // still declare, rather than relying on the OCD simply not having them.
+    if (ctx.profile?.key === 'learningPath' && TARGET_FW_FIELDS.has(field.code as string)) return false;
     // Honor the API `visible` flag
     if (field.visible === false) return false;
     // Deduplicate — first occurrence of each code wins
@@ -407,10 +411,10 @@ function resolveOptions(
 ): Array<{ label: string; value: string }> | undefined {
   const code = (field.code as string) ?? '';
 
-  // strategy: the schema/form range carries raw values (Fixed/Diagnostic/
+  // policy: the schema/form range carries raw values (Fixed/Diagnostic/
   // PriorLearning) — always render the design's friendly labels regardless
   // of what the category definition's `range` declares.
-  if (code === 'strategy') return STRATEGY_OPTIONS;
+  if (code === 'policy') return POLICY_OPTIONS;
 
   // maxQuestions: range is 1..(child count) — mirrors Angular's _.times(childCount).
   if (code === 'maxQuestions') {
@@ -678,9 +682,9 @@ function getDefaultFields(
   // instead of empty/irrelevant required dropdowns.
   if (ctx.profile?.key === 'learningPath') {
     fields.push({
-      code: 'strategy', label: 'Consumption policy', inputType: 'select',
+      code: 'policy', label: 'Consumption policy', inputType: 'select',
       required: true, editable: true, tab: 'details', section: 'Consumption policy',
-      options: STRATEGY_OPTIONS, currentValue: cv(meta, 'strategy', 'select') || 'Fixed',
+      options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'Fixed',
     });
     return fields;
   }

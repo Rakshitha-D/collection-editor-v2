@@ -16,7 +16,7 @@ export interface UseAssessmentSlotsResult {
   activeAssessmentSlot: 'pre' | 'post' | null;
   setActiveAssessmentSlot: (slot: 'pre' | 'post' | null) => void;
   /** Deletes the pre/post slot's Level, confirming first if it's the Prior
-   *  Assessment under the Diagnostic strategy (it drives the Adaptive skip). */
+   *  Assessment under the Diagnostic policy (it drives the Adaptive skip). */
   deleteSlot: (slot: 'pre' | 'post') => void;
 }
 
@@ -42,8 +42,8 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
     const level = slot === 'pre' ? preLevel : postLevel;
     if (!level) return;
     const root = treeData[0];
-    const strategy = root ? (treeCache[root.id]?.['strategy'] ?? root.metadata?.['strategy']) as string | undefined : undefined;
-    if (slot === 'pre' && strategy === 'Diagnostic' && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
+    const policy = root ? (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined : undefined;
+    if (slot === 'pre' && policy === 'Diagnostic' && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
       return;
     }
     deleteNode(level.id);

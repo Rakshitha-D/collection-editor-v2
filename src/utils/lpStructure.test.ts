@@ -270,9 +270,9 @@ describe('computePathShape', () => {
 // Publish validation (Phase 5)
 // ---------------------------------------------------------------------------
 
-function validPath(strategy = 'Fixed') {
+function validPath(policy = 'Fixed') {
   return level({
-    id: 'root', metadata: { strategy },
+    id: 'root', metadata: { policy },
     children: [
       level({ id: 'pre', children: [assessmentCourseWithSkills('a1', ['Python programming'])] }),
       level({
@@ -285,19 +285,19 @@ function validPath(strategy = 'Fixed') {
 }
 
 describe('validateLearningPathStructure', () => {
-  it('is clean for a fully-valid Fixed-strategy path', () => {
+  it('is clean for a fully-valid Fixed-policy path', () => {
     expect(validateLearningPathStructure(validPath(), 'skill', [])).toEqual([]);
   });
 
-  it('flags a missing strategy', () => {
+  it('flags a missing policy', () => {
     const root = validPath();
-    delete root.metadata!['strategy'];
-    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('strategyMissing');
+    delete root.metadata!['policy'];
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('policyMissing');
   });
 
   it('requires a Prior Assessment only for Diagnostic/PriorLearning, not Fixed', () => {
     const noPrior = level({
-      id: 'root', metadata: { strategy: 'Fixed' },
+      id: 'root', metadata: { policy: 'Fixed' },
       children: [
         level({ id: 'lvl1', metadata: { competencies: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } })] }),
         level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
@@ -305,7 +305,7 @@ describe('validateLearningPathStructure', () => {
     });
     expect(validateLearningPathStructure(noPrior, 'skill', []).map(i => i.code)).not.toContain('priorAssessmentRequired');
 
-    const diagnostic = { ...noPrior, metadata: { strategy: 'Diagnostic' } };
+    const diagnostic = { ...noPrior, metadata: { policy: 'Diagnostic' } };
     expect(validateLearningPathStructure(diagnostic, 'skill', []).map(i => i.code)).toContain('priorAssessmentRequired');
   });
 

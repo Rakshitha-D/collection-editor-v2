@@ -505,11 +505,11 @@
     "libraryAddToLevel": "Add to {level}",
     "libraryAddPriorAssessmentCourse": "Add Prior Assessment course",
     "libraryAddOutcomeAssessmentCourse": "Add Outcome Assessment course",
-    "strategyStrictLabel": "Strict",
-    "strategyStrictDescription": "Every learner completes every level, in order — regardless of prior assessment score.",
-    "strategyAdaptiveLabel": "Adaptive",
-    "strategyAdaptiveDescription": "A level can be skipped, but only when the learner's score on the Prior Assessment clears its waiver threshold.",
-    "strategyPriorLearningLabel": "Prior learning",
-    "strategyPriorLearningDescription": "Skips can also draw on skills the learner already holds — a verified certificate or prior course — not the assessment alone."
+    "policyStrictLabel": "Strict",
+    "policyStrictDescription": "Every learner completes every level, in order — regardless of prior assessment score.",
+    "policyAdaptiveLabel": "Adaptive",
+    "policyAdaptiveDescription": "A level can be skipped, but only when the learner's score on the Prior Assessment clears its waiver threshold.",
+    "policyPriorLearningLabel": "Prior learning",
+    "policyPriorLearningDescription": "Skips can also draw on skills the learner already holds — a verified certificate or prior course — not the assessment alone."
   }
 }

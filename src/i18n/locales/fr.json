@@ -505,11 +505,11 @@
     "libraryAddToLevel": "Ajouter à {level}",
     "libraryAddPriorAssessmentCourse": "Ajouter le cours d'évaluation préalable",
     "libraryAddOutcomeAssessmentCourse": "Ajouter le cours d'évaluation finale",
-    "strategyStrictLabel": "Strict",
-    "strategyStrictDescription": "Chaque apprenant termine chaque niveau, dans l'ordre — quel que soit le score de l'évaluation préalable.",
-    "strategyAdaptiveLabel": "Adaptatif",
-    "strategyAdaptiveDescription": "Un niveau peut être ignoré, mais seulement si le score de l'apprenant à l'évaluation préalable dépasse le seuil de dispense.",
-    "strategyPriorLearningLabel": "Acquis antérieurs",
-    "strategyPriorLearningDescription": "Les sauts peuvent aussi s'appuyer sur des compétences déjà détenues par l'apprenant — un certificat vérifié ou un cours antérieur — pas seulement l'évaluation."
+    "policyStrictLabel": "Strict",
+    "policyStrictDescription": "Chaque apprenant termine chaque niveau, dans l'ordre — quel que soit le score de l'évaluation préalable.",
+    "policyAdaptiveLabel": "Adaptatif",
+    "policyAdaptiveDescription": "Un niveau peut être ignoré, mais seulement si le score de l'apprenant à l'évaluation préalable dépasse le seuil de dispense.",
+    "policyPriorLearningLabel": "Acquis antérieurs",
+    "policyPriorLearningDescription": "Les sauts peuvent aussi s'appuyer sur des compétences déjà détenues par l'apprenant — un certificat vérifié ou un cours antérieur — pas seulement l'évaluation."
   }
 }

@@ -505,11 +505,11 @@
     "libraryAddToLevel": "إضافة إلى {level}",
     "libraryAddPriorAssessmentCourse": "إضافة مقرر التقييم المسبق",
     "libraryAddOutcomeAssessmentCourse": "إضافة مقرر تقييم النتائج",
-    "strategyStrictLabel": "صارمة",
-    "strategyStrictDescription": "يُنهي كل متعلم كل مستوى، بالترتيب — بصرف النظر عن درجة التقييم المسبق.",
-    "strategyAdaptiveLabel": "تكيفية",
-    "strategyAdaptiveDescription": "يمكن تخطي مستوى، ولكن فقط عندما تتجاوز درجة المتعلم في التقييم المسبق حد الإعفاء.",
-    "strategyPriorLearningLabel": "التعلم المسبق",
-    "strategyPriorLearningDescription": "يمكن أن يستند التخطي أيضًا إلى مهارات يمتلكها المتعلم بالفعل — شهادة موثقة أو مقرر سابق — لا التقييم وحده."
+    "policyStrictLabel": "صارمة",
+    "policyStrictDescription": "يُنهي كل متعلم كل مستوى، بالترتيب — بصرف النظر عن درجة التقييم المسبق.",
+    "policyAdaptiveLabel": "تكيفية",
+    "policyAdaptiveDescription": "يمكن تخطي مستوى، ولكن فقط عندما تتجاوز درجة المتعلم في التقييم المسبق حد الإعفاء.",
+    "policyPriorLearningLabel": "التعلم المسبق",
+    "policyPriorLearningDescription": "يمكن أن يستند التخطي أيضًا إلى مهارات يمتلكها المتعلم بالفعل — شهادة موثقة أو مقرر سابق — لا التقييم وحده."
   }
 }
