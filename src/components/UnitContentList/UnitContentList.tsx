@@ -110,37 +110,41 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
         />
       )}
 
-      <div className={styles.header}>
-        <span className={styles.heading}>{lbl.unitContentList.heading}</span>
-        <span className={styles.count}>{children.length}</span>
-      </div>
+      {!isLpRoot && (
+        <>
+          <div className={styles.header}>
+            <span className={styles.heading}>{lbl.unitContentList.heading}</span>
+            <span className={styles.count}>{children.length}</span>
+          </div>
 
-      {children.length > 0 ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={children.map(c => c.id)} strategy={verticalListSortingStrategy}>
-            <div className={styles.list} role="list">
-              {children.map(child => (
-                <ContentRow
-                  key={child.id}
-                  item={child}
-                  onRemove={handleRemove}
-                  isEditable={isEditable}
-                />
-              ))}
+          {children.length > 0 ? (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={children.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                <div className={styles.list} role="list">
+                  {children.map(child => (
+                    <ContentRow
+                      key={child.id}
+                      item={child}
+                      onRemove={handleRemove}
+                      isEditable={isEditable}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <div className={styles.emptyState}>
+              <p>{lbl.unitContentList.emptyTitle}</p>
+              <span>{lbl.unitContentList.emptyHint}</span>
             </div>
-          </SortableContext>
-        </DndContext>
-      ) : (
-        <div className={styles.emptyState}>
-          <p>{lbl.unitContentList.emptyTitle}</p>
-          <span>{lbl.unitContentList.emptyHint}</span>
-        </div>
-      )}
+          )}
 
-      {isEditable && !isAssessmentLevel(selectedNode) && (
-        <button className={styles.addRow} type="button" aria-label={lbl.unitContentList.addContentAriaLabel}>
-          <Plus size={14} /> {lbl.unitContentList.addContent}
-        </button>
+          {isEditable && !isAssessmentLevel(selectedNode) && (
+            <button className={styles.addRow} type="button" aria-label={lbl.unitContentList.addContentAriaLabel}>
+              <Plus size={14} /> {lbl.unitContentList.addContent}
+            </button>
+          )}
+        </>
       )}
     </div>
   );
