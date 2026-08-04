@@ -58,6 +58,7 @@ export function useEditorInit({ config, onError }: UseEditorInitOptions) {
 
         setEditorConfig(config);
         setEditorMode(config.config.mode);
+        setEditorProfile(resolveEditorProfile(config));
 
         const contentId =
           config.context.contentId ?? config.context.identifier ?? '';
