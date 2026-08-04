@@ -29,7 +29,7 @@ describe('tree.store (Learning Path) — assessment-slot auto-wrap', () => {
     const root = useTreeStore.getState().treeData[0];
     expect(root.children).toHaveLength(1);
     const preLevel = root.children![0];
-    expect(preLevel.metadata?.contentType).toBe('Competency Level');
+    expect(preLevel.metadata?.contentType).toBe('Level');
     expect(preLevel.metadata?.primaryCategory).toBe('Level');
     expect(preLevel.children).toHaveLength(1);
     expect(preLevel.children![0].id).toBe('c1');

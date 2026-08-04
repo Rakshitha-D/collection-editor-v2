@@ -42,7 +42,7 @@ export const collectionProfile: IEditorProfile = {
 export const learningPathProfile: IEditorProfile = {
   key: 'learningPath',
   unitPrimaryCategory: 'Level',
-  unitContentType: 'Competency Level',
+  unitContentType: 'Level',
   unitLabelKey: 'level',
   defaultUnitName: 'Untitled Level',
   maxDepth: 1,

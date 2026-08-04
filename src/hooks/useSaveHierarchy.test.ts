@@ -107,7 +107,7 @@ describe('buildSavePayload (learningPath profile)', () => {
   it('stamps new unit nodes with the Level contentType/primaryCategory instead of CourseUnit', () => {
     const { nodesModified } = buildSavePayload(tree, treeCache, 'test-channel', learningPathProfile);
     expect(nodesModified['temp-newunit']).toMatchObject({
-      metadata: { contentType: 'Competency Level', primaryCategory: 'Level' },
+      metadata: { contentType: 'Level', primaryCategory: 'Level' },
     });
   });
 
@@ -119,7 +119,7 @@ describe('buildSavePayload (learningPath profile)', () => {
         children: [
           {
             id: 'temp-level1', identifier: 'temp-level1', name: 'Level 1', isFolder: true, parent: 'do_lp',
-            metadata: { name: 'Level 1', contentType: 'Competency Level', primaryCategory: 'Level' },
+            metadata: { name: 'Level 1', contentType: 'Level', primaryCategory: 'Level' },
             children: [
               {
                 // A linked, published Course — never authored, never in nodesModified.
@@ -139,7 +139,7 @@ describe('buildSavePayload (learningPath profile)', () => {
 
     expect(Object.keys(nodesModified).sort()).toEqual(['do_lp', 'temp-level1']);
     expect(nodesModified['temp-level1']).toMatchObject({
-      metadata: { contentType: 'Competency Level', primaryCategory: 'Level' },
+      metadata: { contentType: 'Level', primaryCategory: 'Level' },
       isNew: true,
     });
 
