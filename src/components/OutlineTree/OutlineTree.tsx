@@ -213,7 +213,10 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
         )}
 
         <div className={styles.headerActions}>
-          {isEditable && (
+          {/* The dropdown only ever holds CSV bulk-upload actions, which LP
+              never supports (features.csvUpload is always false) — hide the
+              button entirely rather than opening an empty menu. */}
+          {isEditable && enableBulkUpload && (
             <div className={styles.menuWrap} ref={menuRef}>
               <button
                 type="button"
@@ -229,37 +232,33 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
 
               {showMenu && (
                 <div className={styles.dropdownMenu} role="menu">
-                  {enableBulkUpload && (
-                    <>
-                      <button
-                        role="menuitem"
-                        type="button"
-                        disabled={hasFolders}
-                        title={hasFolders ? lbl.outlineTree.foldersExistTitle : undefined}
-                        onClick={() => { setShowMenu(false); setCsvMode('create'); setShowCsvUpload(true); }}
-                      >
-                        {lbl.outlineTree.createFoldersCsvButton}
-                      </button>
-                      <button
-                        role="menuitem"
-                        type="button"
-                        disabled={!hasFolders}
-                        title={!hasFolders ? lbl.outlineTree.noFoldersYetTitle : undefined}
-                        onClick={handleDownloadCsv}
-                      >
-                        {lbl.outlineTree.downloadFoldersCsvButton}
-                      </button>
-                      <button
-                        role="menuitem"
-                        type="button"
-                        disabled={!hasFolders}
-                        title={!hasFolders ? lbl.outlineTree.noFoldersYetTitle : undefined}
-                        onClick={() => { setShowMenu(false); setCsvMode('update'); setShowCsvUpload(true); }}
-                      >
-                        {lbl.outlineTree.updateFoldersCsvButton}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    role="menuitem"
+                    type="button"
+                    disabled={hasFolders}
+                    title={hasFolders ? lbl.outlineTree.foldersExistTitle : undefined}
+                    onClick={() => { setShowMenu(false); setCsvMode('create'); setShowCsvUpload(true); }}
+                  >
+                    {lbl.outlineTree.createFoldersCsvButton}
+                  </button>
+                  <button
+                    role="menuitem"
+                    type="button"
+                    disabled={!hasFolders}
+                    title={!hasFolders ? lbl.outlineTree.noFoldersYetTitle : undefined}
+                    onClick={handleDownloadCsv}
+                  >
+                    {lbl.outlineTree.downloadFoldersCsvButton}
+                  </button>
+                  <button
+                    role="menuitem"
+                    type="button"
+                    disabled={!hasFolders}
+                    title={!hasFolders ? lbl.outlineTree.noFoldersYetTitle : undefined}
+                    onClick={() => { setShowMenu(false); setCsvMode('update'); setShowCsvUpload(true); }}
+                  >
+                    {lbl.outlineTree.updateFoldersCsvButton}
+                  </button>
                 </div>
               )}
             </div>
