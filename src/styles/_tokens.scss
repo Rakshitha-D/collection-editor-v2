@@ -2,7 +2,7 @@
 //
 // When mounted in spark-portal the host CSS vars on :root resolve and the
 // editor adopts the host theme (primary colour, radius, shadows, font).
-// Standalone / no host vars: fallback values → default blue theme.
+// Standalone / no host vars: fallback values → default terracotta theme.
 //
 // Host vars consumed (set by spark-portal ThemeProvider + index.css):
 //   --primary                          bare HSL triple, e.g. "12 50% 45%"
@@ -16,17 +16,19 @@
 
 :root {
   // ── Primary palette ───────────────────────────────────────────────────────
-  --sbx-primary:       hsl(var(--primary, 217 71% 46%));
+  // Fallback (no host theme vars): spark-portal's "Terracotta" theme seed
+  // (primaryH: 12, primaryS: 50%, primaryL: 45%).
+  --sbx-primary:       hsl(var(--primary, 12 50% 45%));
   // Dark and light variants derived from the host's seed channels.
   // Lightness is locked (32% dark, 96% light); hue + saturation follow theme.
   --sbx-primary-dark:  hsl(
-    var(--sunbird-spark-theme-primary-h, 217)
-    var(--sunbird-spark-theme-primary-s, 71%)
+    var(--sunbird-spark-theme-primary-h, 12)
+    var(--sunbird-spark-theme-primary-s, 50%)
     32%
   );
   --sbx-primary-light: hsl(
-    var(--sunbird-spark-theme-primary-h, 217)
-    var(--sunbird-spark-theme-primary-s, 71%)
+    var(--sunbird-spark-theme-primary-h, 12)
+    var(--sunbird-spark-theme-primary-s, 50%)
     96%
   );
   --sbx-ai: #7A5BFF;
@@ -91,8 +93,8 @@
 
   // ── Phase 3 — status-band tokens (extracted from component files) ─────────
   // Uploading / processing band — primary-tinted, shifts with theme
-  --sbx-status-info-bg:     hsl(var(--primary, 217 71% 46%) / 0.06);
-  --sbx-status-info-border: hsl(var(--primary, 217 71% 46%) / 0.22);
+  --sbx-status-info-bg:     hsl(var(--primary, 12 50% 45%) / 0.06);
+  --sbx-status-info-border: hsl(var(--primary, 12 50% 45%) / 0.22);
   // Success band — semantic green, fixed
   --sbx-status-ok-bg:     #F0FDF4;
   --sbx-status-ok-border: #BBF7D0;
