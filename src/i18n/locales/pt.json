@@ -456,6 +456,8 @@
     "loading": "Carregando"
   },
   "learningPath": {
+    "profileBadgeLabel": "Trilha de Aprendizagem",
+    "pathStructureLabel": "Estrutura da trilha",
     "addLevelButton": "Adicionar nível",
     "priorAssessmentLabel": "Avaliação prévia",
     "outcomeAssessmentLabel": "Avaliação de resultado",

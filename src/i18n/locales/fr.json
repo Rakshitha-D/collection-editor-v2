@@ -456,6 +456,8 @@
     "loading": "Chargement"
   },
   "learningPath": {
+    "profileBadgeLabel": "Parcours d'apprentissage",
+    "pathStructureLabel": "Structure du parcours",
     "addLevelButton": "Ajouter un niveau",
     "priorAssessmentLabel": "Évaluation préalable",
     "outcomeAssessmentLabel": "Évaluation finale",

@@ -17,6 +17,7 @@ import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
 import { Button } from '../shared/Button';
+import { LearningPathIcon } from '../shared/LearningPathIcon';
 import { PublishChecklist } from '../modals/PublishChecklist';
 import { QualityParamsModal } from '../modals/QualityParamsModal';
 import { ManageCollaborators } from '../Collaborators/ManageCollaborators';
@@ -264,6 +265,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   // Default to showing if the API hasn't loaded yet (backward compat).
   const categoryMeta = useEditorStore((s) => s.categoryMeta);
   const editorProfile = useEditorStore((s) => s.editorProfile);
+  const isLearningPath = editorProfile.key === 'learningPath';
   const showDialcode = editorProfile.features.dialcodes
     && (!categoryMeta || categoryMeta.schemaDefaults.generateDIALCodes !== 'No');
 
@@ -413,6 +415,13 @@ export const Topbar: React.FC<TopbarProps> = ({
           <h1 className={styles.title} title={title}>
             {title}
           </h1>
+
+          {isLearningPath && (
+            <span className={styles.profileBadge}>
+              <LearningPathIcon size={13} aria-hidden="true" />
+              {lbl.learningPath.profileBadgeLabel}
+            </span>
+          )}
 
           <span className={`sbx-chip ${styles.statusChip}`} aria-label={`${lbl.topbar.statusAriaLabelPrefix} ${statusLabel}`}>
             {statusLabel}

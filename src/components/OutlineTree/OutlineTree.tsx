@@ -208,6 +208,10 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
     <div className={styles.container}>
       {/* Header bar */}
       <div className={styles.header}>
+        {isLearningPath && (
+          <span className={styles.sectionLabel}>{lbl.learningPath.pathStructureLabel}</span>
+        )}
+
         <div className={styles.headerActions}>
           {isEditable && (
             <div className={styles.menuWrap} ref={menuRef}>

@@ -456,6 +456,8 @@
     "loading": "Loading"
   },
   "learningPath": {
+    "profileBadgeLabel": "Learning Path",
+    "pathStructureLabel": "Path Structure",
     "addLevelButton": "Add Level",
     "priorAssessmentLabel": "Prior Assessment",
     "outcomeAssessmentLabel": "Outcome Assessment",

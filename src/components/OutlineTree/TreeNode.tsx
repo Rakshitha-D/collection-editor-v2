@@ -26,6 +26,7 @@ import { getCtStyle } from '../../hooks/useContentType';
 import { useIsDraftStatus } from '../../hooks/useContentStatus';
 import { useLabels } from '../../hooks/useLabels';
 import { useEditorStore } from '../../store/editor.store';
+import { LearningPathIcon } from '../shared/LearningPathIcon';
 import styles from './TreeNode.module.scss';
 
 const CT_ICON_COMPONENTS: Record<string, React.ElementType> = {
@@ -64,9 +65,9 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   const isFolder =
     node.data.isFolder ?? (node.children && node.children.length > 0);
   const isLearningPath = editorProfile.key === 'learningPath';
-  // Root (Course/Learning Path) → Book, Level folders → Milestone,
-  // Unit/Sub-Unit (folders) → Folder, leaf → content-type icon.
-  const NodeIcon = isRoot ? Book : isFolder ? (isLearningPath ? Milestone : Folder) : CtIcon;
+  // Root → Book (Collection) / LearningPathIcon (Learning Path), Level
+  // folders → Milestone, Unit/Sub-Unit (folders) → Folder, leaf → content-type icon.
+  const NodeIcon = isRoot ? (isLearningPath ? LearningPathIcon : Book) : isFolder ? (isLearningPath ? Milestone : Folder) : CtIcon;
   // Adding a folder inside the current node would exceed the profile's maxDepth
   // (e.g. LP Levels can't contain sub-levels) — hide rather than error on click.
   const canAddChildFolder = node.level + 1 <= editorProfile.maxDepth;

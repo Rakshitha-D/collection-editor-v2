@@ -456,6 +456,8 @@
     "loading": "جارٍ التحميل"
   },
   "learningPath": {
+    "profileBadgeLabel": "مسار التعلم",
+    "pathStructureLabel": "بنية المسار",
     "addLevelButton": "إضافة مستوى",
     "priorAssessmentLabel": "التقييم المسبق",
     "outcomeAssessmentLabel": "تقييم النتائج",
