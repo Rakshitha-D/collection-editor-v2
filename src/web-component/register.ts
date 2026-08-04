@@ -7,8 +7,8 @@ function injectGlobalStyles(): void {
   if (document.getElementById('sb-ce-react-styles')) return;
   const style = document.createElement('style');
   style.id = 'sb-ce-react-styles';
-  // Inject the Google Fonts import for Plus Jakarta Sans
-  style.textContent = "@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');";
+  // Inject the Google Fonts import for Rubik
+  style.textContent = "@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap');";
   document.head.insertBefore(style, document.head.firstChild);
 }
 
