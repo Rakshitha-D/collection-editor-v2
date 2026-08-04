@@ -26,6 +26,7 @@ import { KeywordSuggestField } from './fields/KeywordSuggestField';
 import { NestedSelectField } from './fields/NestedSelectField';
 import { LicenseSelectField } from './fields/LicenseSelectField';
 import { DialcodeInputField } from './fields/DialcodeInputField';
+import { StrategyCardField } from './fields/StrategyCardField';
 import styles from './SparkMetaForm.module.scss';
 
 interface SparkMetaFormProps {
@@ -303,6 +304,12 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
       required: field.required,
       disabled: field.editable === false,
     };
+    // LP root's consumption-policy field gets the design's 3-card selector
+    // instead of a plain dropdown, regardless of the category definition's
+    // declared inputType (select) — same special-casing pattern as dialcodes.
+    if (field.code === 'strategy') {
+      return <StrategyCardField {...commonProps} />;
+    }
     switch (field.inputType) {
       case 'textarea':
         return <TextField {...commonProps} multiline maxLength={field.maxLength} />;

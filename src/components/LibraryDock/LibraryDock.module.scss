@@ -14,6 +14,13 @@
   flex-shrink: 0;
 }
 
+.libraryTargetLabel {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--sbx-primary);
+  white-space: nowrap;
+}
+
 .headerLeft {
   display: flex;
   align-items: center;

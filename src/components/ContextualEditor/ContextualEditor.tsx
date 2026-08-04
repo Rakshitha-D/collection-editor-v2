@@ -13,8 +13,10 @@ import { AssignPageNumber } from '../AssignPageNumber/AssignPageNumber';
 import { ContentEditForm } from './ContentEditForm';
 import { TitleAppIcon } from './TitleAppIcon';
 import { CourseDetailsPanel } from '../shared/CourseDetailsPanel';
+import { AssessmentDetailPanel } from './AssessmentDetailPanel';
 import { ArrowLeft } from 'lucide-react';
 import { useLabels } from '../../hooks/useLabels';
+import { isAssessmentLevel } from '../../utils/lpStructure';
 import styles from './ContextualEditor.module.scss';
 
 const QUESTIONSET_MIME = 'application/vnd.sunbird.questionset';
@@ -66,6 +68,13 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const isQuml = selectedNode && QUML_TYPES.includes(selectedNode.mimeType ?? '');
   const isSingleQuestion = selectedNode?.mimeType === QUESTION_MIME;
   const isLeafContent = selectedNode && !selectedNode.isFolder && !isQuml && !isCurrentNodeRoot;
+
+  // LP profile: the pre/post assessment Level gets a dedicated view instead
+  // of the generic Level panel — see AssessmentDetailPanel.
+  const isAssessmentSlot = isLearningPath && isCurrentNodeFolder && isAssessmentLevel(selectedNode ?? undefined);
+  const assessmentSlotType: 'pre' | 'post' | null = isAssessmentSlot
+    ? (treeData[0]?.children?.[0]?.id === selectedNode?.id ? 'pre' : 'post')
+    : null;
 
   // Review comment from previous rejection cycle — only while still in the
   // Draft-after-reject state; hidden once resubmitted for review or published.
@@ -129,6 +138,10 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         <CourseDetailsPanel courseId={selectedNode.identifier} />
       </div>
     );
+  }
+
+  if (assessmentSlotType) {
+    return <AssessmentDetailPanel slot={assessmentSlotType} isEditable={editorMode === 'edit'} />;
   }
 
   if (isLeafContent) {

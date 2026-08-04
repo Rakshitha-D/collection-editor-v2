@@ -1,0 +1,59 @@
+import { useTreeStore } from '../store/tree.store';
+import { useUiStore } from '../store/ui.store';
+import { useLabels } from './useLabels';
+import { isAssessmentLevel } from '../utils/lpStructure';
+import type { INode } from '../types/editor';
+
+export interface AssessmentSlotInfo {
+  level: INode | undefined;
+  filled: boolean;
+  courseName: string | undefined;
+}
+
+export interface UseAssessmentSlotsResult {
+  pre: AssessmentSlotInfo;
+  post: AssessmentSlotInfo;
+  activeAssessmentSlot: 'pre' | 'post' | null;
+  setActiveAssessmentSlot: (slot: 'pre' | 'post' | null) => void;
+  /** Deletes the pre/post slot's Level, confirming first if it's the Prior
+   *  Assessment under the Diagnostic strategy (it drives the Adaptive skip). */
+  deleteSlot: (slot: 'pre' | 'post') => void;
+}
+
+// Shared derivation for the Prior/Outcome assessment slots — consumed by
+// OutlineTree's pinned tree rows and the root panel's "Prior & outcome
+// assessments" card, so both surfaces agree on what's filled and what a
+// "fill this slot" click arms.
+export function useAssessmentSlots(): UseAssessmentSlotsResult {
+  const lbl = useLabels();
+  const treeData = useTreeStore((s) => s.treeData);
+  const treeCache = useTreeStore((s) => s.treeCache);
+  const deleteNode = useTreeStore((s) => s.deleteNode);
+  const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
+  const setActiveAssessmentSlot = useUiStore((s) => s.setActiveAssessmentSlot);
+
+  const rootLevels = treeData[0]?.children ?? [];
+  const preLevel = rootLevels[0];
+  const postLevel = rootLevels.length > 1 ? rootLevels[rootLevels.length - 1] : undefined;
+  const preFilled = isAssessmentLevel(preLevel);
+  const postFilled = isAssessmentLevel(postLevel);
+
+  const deleteSlot = (slot: 'pre' | 'post') => {
+    const level = slot === 'pre' ? preLevel : postLevel;
+    if (!level) return;
+    const root = treeData[0];
+    const strategy = root ? (treeCache[root.id]?.['strategy'] ?? root.metadata?.['strategy']) as string | undefined : undefined;
+    if (slot === 'pre' && strategy === 'Diagnostic' && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
+      return;
+    }
+    deleteNode(level.id);
+  };
+
+  return {
+    pre: { level: preLevel, filled: preFilled, courseName: preFilled ? preLevel?.children?.[0]?.name : undefined },
+    post: { level: postLevel, filled: postFilled, courseName: postFilled ? postLevel?.children?.[0]?.name : undefined },
+    activeAssessmentSlot,
+    setActiveAssessmentSlot,
+    deleteSlot,
+  };
+}

@@ -12,8 +12,7 @@ import { Button } from '../shared/Button';
 import { CsvUpload } from '../BulkUpload/CsvUpload';
 import { exportFolderCsv } from '../../api/bulkUpload';
 import { readHierarchy } from '../../api/hierarchy';
-import { isAssessmentLevel } from '../../utils/lpStructure';
-import { useUiStore } from '../../store/ui.store';
+import { useAssessmentSlots } from '../../hooks/useAssessmentSlots';
 import styles from './OutlineTree.module.scss';
 
 interface OutlineTreeProps {
@@ -36,7 +35,7 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   const [showCsvUpload, setShowCsvUpload] = useState(false);
   const [csvMode, setCsvMode] = useState<'create' | 'update'>('create');
 
-  const { treeData, treeCache, selectedNodeId, selectNode, addNode, deleteNode, reorderChildren, moveNode, setTreeData } = useTreeStore();
+  const { treeData, selectedNodeId, selectNode, addNode, deleteNode, reorderChildren, moveNode, setTreeData } = useTreeStore();
   const editorProfile = useEditorStore(s => s.editorProfile);
   const isLearningPath = editorProfile.key === 'learningPath';
   const isEditable = editorMode === 'edit';
@@ -55,13 +54,9 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   // tree so authors can jump straight to filling them, in addition to the
   // regular Level row the wrapper still renders (doc: they stay ordinary
   // Levels at index min/max in the saved hierarchy).
-  const rootLevels = treeData[0]?.children ?? [];
-  const preLevel = rootLevels[0];
-  const preFilled = isAssessmentLevel(preLevel);
-  const postLevel = rootLevels.length > 1 ? rootLevels[rootLevels.length - 1] : undefined;
-  const postFilled = isAssessmentLevel(postLevel);
-  const activeAssessmentSlot = useUiStore(s => s.activeAssessmentSlot);
-  const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
+  const { pre: preSlot, post: postSlot, activeAssessmentSlot, setActiveAssessmentSlot, deleteSlot } = useAssessmentSlots();
+  const { level: preLevel, filled: preFilled } = preSlot;
+  const { level: postLevel, filled: postFilled } = postSlot;
   const contentId = useEditorStore(
     s => s.editorConfig?.context?.contentId ?? s.editorConfig?.context?.identifier ?? '',
   );
@@ -126,23 +121,22 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
 
   const handleDelete = useCallback(
     ({ ids }: { ids: string[] }) => {
-      const root = treeData[0];
-      // Diagnostic (Adaptive) paths waive Levels based on the prior assessment's
-      // score, so deleting it needs a confirm; Fixed/PriorLearning paths don't
-      // depend on it structurally, so deletion is allowed without one.
-      const strategy = root ? (treeCache[root.id]?.['strategy'] ?? root.metadata?.['strategy']) as string | undefined : undefined;
       for (const id of ids) {
-        if (isLearningPath && root) {
-          const isPreSlot = root.children?.[0]?.id === id && isAssessmentLevel(root.children[0]);
-          if (isPreSlot && strategy === 'Diagnostic'
-              && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
-            continue;
-          }
+        // Deleting the pre-assessment Level via the tree's own delete UI goes
+        // through the same Diagnostic-strategy confirm as the pinned row's
+        // Remove button.
+        if (isLearningPath && preLevel?.id === id) {
+          deleteSlot('pre');
+          continue;
+        }
+        if (isLearningPath && postLevel?.id === id) {
+          deleteSlot('post');
+          continue;
         }
         deleteNode(id);
       }
     },
-    [deleteNode, treeData, treeCache, isLearningPath],
+    [deleteNode, deleteSlot, isLearningPath, preLevel, postLevel],
   );
 
   const handleCreate = useCallback(
@@ -290,7 +284,7 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
           isActive={activeAssessmentSlot === 'pre'}
           canEdit={isEditable && isDraft}
           onFillClick={() => setActiveAssessmentSlot('pre')}
-          onRemoveClick={() => preLevel && handleDelete({ ids: [preLevel.id] })}
+          onRemoveClick={() => deleteSlot('pre')}
         />
       )}
 
@@ -329,7 +323,7 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
           isActive={activeAssessmentSlot === 'post'}
           canEdit={isEditable && isDraft}
           onFillClick={() => setActiveAssessmentSlot('post')}
-          onRemoveClick={() => postLevel && handleDelete({ ids: [postLevel.id] })}
+          onRemoveClick={() => deleteSlot('post')}
         />
       )}
 

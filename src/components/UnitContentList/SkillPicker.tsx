@@ -11,13 +11,15 @@ interface SkillPickerProps {
   outOfScope: string[];
   onChange: (skills: string[]) => void;
   isEditable: boolean;
-  note: string;
+  /** Explains where the options come from — prior assessment scope, or the
+   *  manual-selection fallback. Rendered directly under the heading. */
+  description: string;
 }
 
 // Searchable skill multi-select for a Level's "Skills" field (design:
 // lvl.hasSkillPicker, "No matching skills" empty state).
 export const SkillPicker: React.FC<SkillPickerProps> = ({
-  options, selected, outOfScope, onChange, isEditable, note,
+  options, selected, outOfScope, onChange, isEditable, description,
 }) => {
   const lbl = useLabels();
   const [query, setQuery] = useState('');
@@ -36,6 +38,7 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
         <span className={styles.heading}>{lbl.learningPath.skillsHeading}</span>
         <span className={styles.count}>{selected.length}</span>
       </div>
+      <span className={styles.skillPickerNote}>{description}</span>
 
       {outOfScope.length > 0 && (
         <div className={styles.skillWarning} role="alert">
@@ -85,8 +88,6 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
           })}
         </div>
       )}
-
-      <span className={styles.skillPickerNote}>{note}</span>
     </div>
   );
 };

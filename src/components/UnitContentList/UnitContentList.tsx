@@ -7,10 +7,11 @@ import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useLabels } from '../../hooks/useLabels';
 import { useSkillScope } from '../../hooks/useSkillScope';
-import { computePathShape, computeSkillsCovered, isAssessmentLevel } from '../../utils/lpStructure';
+import { computeSkillsCovered, isAssessmentLevel } from '../../utils/lpStructure';
 import { useSkillCategory } from '../../hooks/useSkillCategory';
 import { ContentRow } from './ContentRow';
 import { SkillPicker } from './SkillPicker';
+import { AssessmentSlotItem } from './AssessmentSlotItem';
 import styles from './UnitContentList.module.scss';
 
 interface UnitContentListProps {
@@ -37,7 +38,6 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
     : [];
   const outOfScopeSkills = source === 'prior' ? selectedSkills.filter(s => !scope.includes(s)) : [];
   const skillsCovered = isLpRoot ? computeSkillsCovered(treeData[0], skillCategory?.code) : [];
-  const pathShape = isLpRoot ? computePathShape(treeData[0]) : { levelCount: 0, courseCount: 0 };
 
   const handleSkillsChange = useCallback((skills: string[]) => {
     if (!selectedNodeId) return;
@@ -72,27 +72,29 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
   return (
     <div className={styles.container}>
       {isLpRoot && (
-        <div className={styles.skillsCovered}>
-          <span className={styles.heading}>{lbl.learningPath.pathShapeHeading}</span>
-          <div className={styles.pathShapeRow}>
-            <span>
-              {(pathShape.levelCount === 1 ? lbl.learningPath.levelCountLabel : lbl.learningPath.levelCountLabelPlural)
-                .replace('{count}', String(pathShape.levelCount))}
-            </span>
-            <span>
-              {(pathShape.courseCount === 1 ? lbl.learningPath.courseCountLabel : lbl.learningPath.courseCountLabelPlural)
-                .replace('{count}', String(pathShape.courseCount))}
-            </span>
+        <>
+          <div className={styles.skillsCovered}>
+            <span className={styles.heading}>{lbl.learningPath.skillsCoveredHeading}</span>
+            <span className={styles.emptyHint}>{lbl.learningPath.skillsCoveredDescription}</span>
+            {skillsCovered.length > 0 && (
+              <div className={styles.chips}>
+                {skillsCovered.map(s => <span key={s} className={styles.chip}>{s}</span>)}
+              </div>
+            )}
+            {skillsCovered.length === 0 && (
+              <span className={styles.emptyHint}>{lbl.learningPath.noSkillsYet}</span>
+            )}
           </div>
-          <span className={styles.heading}>{lbl.learningPath.skillsCoveredHeading}</span>
-          {skillsCovered.length > 0 ? (
-            <div className={styles.chips}>
-              {skillsCovered.map(s => <span key={s} className={styles.chip}>{s}</span>)}
+
+          <div className={styles.assessmentsCard}>
+            <span className={styles.heading}>{lbl.learningPath.assessmentsCardHeading}</span>
+            <span className={styles.emptyHint}>{lbl.learningPath.assessmentsCardDescription}</span>
+            <div className={styles.assessmentSlots}>
+              <AssessmentSlotItem slot="pre" isEditable={isEditable} />
+              <AssessmentSlotItem slot="post" isEditable={isEditable} />
             </div>
-          ) : (
-            <span className={styles.emptyHint}>{lbl.learningPath.noSkillsYet}</span>
-          )}
-        </div>
+          </div>
+        </>
       )}
 
       {isLpLevel && (
@@ -102,7 +104,7 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
           outOfScope={outOfScopeSkills}
           onChange={handleSkillsChange}
           isEditable={isEditable}
-          note={source === 'prior'
+          description={source === 'prior'
             ? lbl.learningPath.skillScopeFromPriorNote
             : lbl.learningPath.skillScopeManualNote}
         />

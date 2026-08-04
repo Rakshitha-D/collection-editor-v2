@@ -6,6 +6,7 @@ import { CT_FILTERS } from '../../types/content';
 import { useLibrary } from '../../hooks/useLibrary';
 import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
+import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
 import { checkAssessmentCourse } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
@@ -21,6 +22,10 @@ interface LibraryDockProps {
   onToggleCollapse?: () => void;
   editorMode: EditorMode;
 }
+
+// Single permanently-active chip for the LP profile — 'all' so it renders
+// filled by default without needing extra state.
+const LP_COURSE_FILTER = [{ label: 'Courses', value: 'all' }] as const;
 
 // Collect all resource identifiers from the tree (non-folder nodes)
 function collectResourceIds(nodes: ReturnType<typeof useTreeStore.getState>['treeData']): Set<string> {
@@ -55,9 +60,26 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     activeAssessmentSlot,
   } = useLibrary();
 
-  const { addResource, selectedNodeId, treeData } = useTreeStore();
+  const { addResource, selectedNodeId, treeData, getNodeById } = useTreeStore();
   const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
+  const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
   const isEditable = editorMode === 'edit';
+
+  // LP profile: the header shows where an "Add" click will land — "Open a
+  // level to add" (root/nothing selected), "Add to {Level}" (a Level is
+  // selected), or the slot-specific label while an assessment slot is armed.
+  const rootId = treeData[0]?.id;
+  const libraryTargetLabel = (() => {
+    if (!isLearningPath) return null;
+    if (activeAssessmentSlot === 'pre') return lbl.learningPath.libraryAddPriorAssessmentCourse;
+    if (activeAssessmentSlot === 'post') return lbl.learningPath.libraryAddOutcomeAssessmentCourse;
+    if (selectedNodeId && selectedNodeId !== rootId) {
+      const level = getNodeById(selectedNodeId);
+      const levelTitle = level?.name?.split(' • ')[0] ?? level?.name ?? '';
+      return lbl.learningPath.libraryAddToLevel.replace('{level}', levelTitle);
+    }
+    return lbl.learningPath.libraryOpenLevelToAdd;
+  })();
 
   // Panel state
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
@@ -178,6 +200,9 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
             <span className={styles.count}>{totalCount}</span>
           )}
         </div>
+        {libraryTargetLabel && (
+          <span className={styles.libraryTargetLabel}>{libraryTargetLabel}</span>
+        )}
       </div>
 
       {/* Search + Filter button row */}
@@ -220,9 +245,15 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
         </button>
       </div>
 
-      {/* Content type filter chips */}
+      {/* Content type filter chips — LP profile only ever searches Courses
+          (see useLibrary's buildLpLibraryFilters), so show that as the sole,
+          permanently-active chip instead of the generic category list. */}
       <div className={styles.filters}>
-        <FilterChips filters={CT_FILTERS} active={activeFilter} onChange={setFilter} />
+        <FilterChips
+          filters={isLearningPath ? LP_COURSE_FILTER : CT_FILTERS}
+          active={activeFilter}
+          onChange={setFilter}
+        />
       </div>
 
       {/* Slot-filling banner (LP profile) — the dock is currently sourcing a

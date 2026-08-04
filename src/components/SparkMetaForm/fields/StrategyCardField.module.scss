@@ -1,0 +1,80 @@
+.cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--sbx-gray-200);
+  border-radius: var(--sbx-r-md);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+
+  &:hover {
+    border-color: var(--sbx-primary);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+}
+
+.cardActive {
+  border-color: var(--sbx-primary);
+  background: var(--sbx-primary-light);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--sbx-r-sm);
+  background: var(--sbx-gray-100);
+  color: var(--sbx-gray-500);
+}
+
+.cardIconActive {
+  background: var(--sbx-primary);
+  color: #fff;
+}
+
+.radioDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--sbx-gray-300);
+  flex-shrink: 0;
+}
+
+.radioDotActive {
+  border-color: var(--sbx-primary);
+  border-width: 4px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sbx-gray-800);
+}
+
+.cardDescription {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--sbx-gray-500);
+}

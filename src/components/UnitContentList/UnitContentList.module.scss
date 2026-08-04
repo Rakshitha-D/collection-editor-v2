@@ -138,6 +138,123 @@
   font-weight: 500;
 }
 
+// ── Prior & outcome assessments card (Learning Path root) ─────
+.assessmentsCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--sbx-gray-100);
+}
+
+.assessmentSlots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.assessmentItemRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--sbx-gray-200);
+  border-radius: var(--sbx-r-md);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--sbx-primary);
+  }
+}
+
+.assessmentItemIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--sbx-r-sm);
+  background: var(--sbx-primary-light);
+  color: var(--sbx-primary);
+  flex-shrink: 0;
+}
+
+.assessmentItemInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.assessmentItemTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sbx-gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assessmentItemMeta {
+  font-size: 11px;
+  color: var(--sbx-gray-500);
+}
+
+.menuWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menuBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: var(--sbx-gray-400);
+  border-radius: var(--sbx-r-xs);
+
+  &:hover {
+    background: var(--sbx-gray-100);
+    color: var(--sbx-gray-700);
+  }
+}
+
+.dropmenu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 100;
+  background: white;
+  border: 1px solid var(--sbx-gray-200);
+  border-radius: var(--sbx-r-md);
+  box-shadow: var(--sbx-shadow-3);
+  min-width: 140px;
+  padding: 4px;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border: none;
+    background: none;
+    font-size: 12.5px;
+    color: var(--sbx-gray-700);
+    cursor: pointer;
+    border-radius: var(--sbx-r-xs);
+    text-align: left;
+
+    &:hover {
+      background: var(--sbx-gray-50);
+    }
+  }
+}
+
+.dangerItem {
+  color: var(--sbx-error, #dc2626) !important;
+}
+
 .addRow {
   display: flex;
   align-items: center;
