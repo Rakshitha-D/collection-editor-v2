@@ -56,7 +56,6 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     applyAdvancedFilters,
     toggleSort,
     loadMore,
-    needsSkillSelection,
     activeAssessmentSlot,
   } = useLibrary();
 
@@ -274,13 +273,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       <div className={styles.mainArea}>
         {/* Card list */}
         <div className={styles.cardList} role="list" aria-label={lbl.libraryDock.libraryContentAriaLabel}>
-          {needsSkillSelection ? (
-            <div className={styles.emptyState}>
-              <Search size={24} />
-              <p>{lbl.learningPath.selectSkillsFirstTitle}</p>
-              <span>{lbl.learningPath.selectSkillsFirstHint}</span>
-            </div>
-          ) : isLoading && content.length === 0 ? (
+          {isLoading && content.length === 0 ? (
             // Loading skeleton
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={styles.skeleton} aria-hidden="true">

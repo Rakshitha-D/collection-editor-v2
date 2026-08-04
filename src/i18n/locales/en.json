@@ -467,8 +467,6 @@
     "notAssessmentCourseToast": "\"{name}\" isn't a question-set-only course, so it can't be used as an assessment.",
     "bothSlotsFilledToast": "Both Prior and Outcome Assessment slots are already filled.",
     "assessmentCheckFailedToast": "Could not verify this course. Please try again.",
-    "selectSkillsFirstTitle": "Select skills for this Level first",
-    "selectSkillsFirstHint": "Courses are found by matching the skills you choose in the Level panel.",
     "skillsHeading": "Skills",
     "skillsOutOfScopeWarning": "Out of scope, please re-select: {skills}",
     "searchSkillsPlaceholder": "Search skills",

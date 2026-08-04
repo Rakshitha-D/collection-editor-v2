@@ -467,8 +467,6 @@
     "notAssessmentCourseToast": "« {name} » n'est pas un cours composé uniquement d'un questionnaire, il ne peut donc pas être utilisé comme évaluation.",
     "bothSlotsFilledToast": "Les évaluations préalable et finale sont déjà renseignées.",
     "assessmentCheckFailedToast": "Impossible de vérifier ce cours. Veuillez réessayer.",
-    "selectSkillsFirstTitle": "Sélectionnez d'abord les compétences de ce niveau",
-    "selectSkillsFirstHint": "Les cours sont trouvés en fonction des compétences choisies dans le panneau du niveau.",
     "skillsHeading": "Compétences",
     "skillsOutOfScopeWarning": "Hors du périmètre, veuillez resélectionner : {skills}",
     "searchSkillsPlaceholder": "Rechercher des compétences",

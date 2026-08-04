@@ -467,8 +467,6 @@
     "notAssessmentCourseToast": "\"{name}\" ليس مقررًا يحتوي على بنك أسئلة فقط، لذا لا يمكن استخدامه كتقييم.",
     "bothSlotsFilledToast": "تم تعبئة تقييمي المسبق والنتائج بالفعل.",
     "assessmentCheckFailedToast": "تعذر التحقق من هذا المقرر. حاول مرة أخرى.",
-    "selectSkillsFirstTitle": "اختر مهارات هذا المستوى أولاً",
-    "selectSkillsFirstHint": "يتم العثور على المقررات بمطابقة المهارات التي تختارها في لوحة المستوى.",
     "skillsHeading": "المهارات",
     "skillsOutOfScopeWarning": "خارج النطاق، يرجى إعادة الاختيار: {skills}",
     "searchSkillsPlaceholder": "البحث عن المهارات",

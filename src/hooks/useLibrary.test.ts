@@ -7,8 +7,8 @@ describe('buildLpLibraryFilters', () => {
     expect(buildLpLibraryFilters('post', ['Java'], 'skill')).toEqual({ primaryCategory: ['Course'] });
   });
 
-  it('returns null (prompt for skills) when browsing a Level with none selected yet', () => {
-    expect(buildLpLibraryFilters(null, [], 'skill')).toBeNull();
+  it('shows every Course, unfiltered, when browsing a Level with no skills selected yet', () => {
+    expect(buildLpLibraryFilters(null, [], 'skill')).toEqual({ primaryCategory: ['Course'] });
   });
 
   it('filters Courses by the selected skills under the resolved skill-category code', () => {

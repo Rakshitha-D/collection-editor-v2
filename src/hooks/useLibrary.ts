@@ -12,19 +12,18 @@ import type { LibraryFilters } from '../components/LibraryDock/LibraryFilterPane
  * LP profile library filters: search is strictly constrained to Courses.
  * Filling the pre/post assessment slot has no competency constraint (the
  * prior assessment *defines* the skill scope, so it can't be filtered by
- * it); browsing a Level otherwise requires skills selected first — returns
- * null (rather than an unfiltered query) so the caller can prompt for skill
- * selection instead of listing every Course.
+ * it). Browsing a Level otherwise shows every Course by default, narrowed
+ * to the selected skills once the author has picked any.
  */
 export function buildLpLibraryFilters(
   activeAssessmentSlot: 'pre' | 'post' | null,
   selectedSkills: string[],
   skillCategoryCode: string | undefined,
-): Record<string, unknown> | null {
+): Record<string, unknown> {
   const filters: Record<string, unknown> = { primaryCategory: ['Course'] };
-  if (activeAssessmentSlot) return filters;
-  if (!selectedSkills.length) return null;
-  if (skillCategoryCode) filters[skillCategoryCode] = selectedSkills;
+  if (!activeAssessmentSlot && selectedSkills.length && skillCategoryCode) {
+    filters[skillCategoryCode] = selectedSkills;
+  }
   return filters;
 }
 
@@ -83,12 +82,6 @@ export function useLibrary() {
   const selectedLevelSkills = Array.isArray(activeNodeMeta['competencies'])
     ? activeNodeMeta['competencies'] as string[]
     : EMPTY_SKILLS;
-  // True once the LP profile is browsing a Level (not filling an assessment
-  // slot) with no skills chosen yet — the dock should prompt for skills
-  // rather than list every Course unfiltered.
-  const needsSkillSelection = editorProfile.competencyScoped
-    && !activeAssessmentSlot
-    && selectedLevelSkills.length === 0;
 
   const load = useCallback(
     async (
@@ -98,20 +91,11 @@ export function useLibrary() {
       reset = true,
       sortAZ = false,
     ) => {
-      if (needsSkillSelection) {
-        store.setContent([], 0);
-        return;
-      }
-
       store.setLoading(true);
       try {
         let filters: Record<string, unknown>;
         if (editorProfile.competencyScoped) {
           const lpFilters = buildLpLibraryFilters(activeAssessmentSlot, selectedLevelSkills, skillCategory?.code);
-          if (!lpFilters) {
-            store.setContent([], 0);
-            return;
-          }
           filters = { status: ['Live'], ...lpFilters };
         } else {
           filters = {
@@ -150,7 +134,7 @@ export function useLibrary() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory, needsSkillSelection],
+    [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory],
   );
 
   useEffect(() => {
@@ -218,9 +202,8 @@ export function useLibrary() {
     toggleSort,
     loadMore,
     refetch: () => load(store.searchQuery, store.activeFilter, store.advancedFilters, true, store.sortAZ),
-    // LP profile only — drives the dock's "select skills first" / "filling
-    // the Prior/Outcome Assessment slot" banners.
-    needsSkillSelection,
+    // LP profile only — drives the dock's "filling the Prior/Outcome
+    // Assessment slot" banner.
     activeAssessmentSlot,
   };
 }
