@@ -459,6 +459,7 @@
     "profileBadgeLabel": "مسار التعلم",
     "pathStructureLabel": "بنية المسار",
     "addLevelButton": "إضافة مستوى",
+    "levelNumberPrefix": "المستوى {n}",
     "priorAssessmentLabel": "التقييم المسبق",
     "priorAssessmentHint": "مطلوب دائمًا · لا يُحسب كمستوى",
     "outcomeAssessmentLabel": "تقييم النتائج",

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import type { INode, EditorMode } from '../../types/editor';
 import { getCtStyle } from '../../hooks/useContentType';
+import { isAssessmentLevel } from '../../utils/lpStructure';
 import { useIsDraftStatus } from '../../hooks/useContentStatus';
 import { useLabels } from '../../hooks/useLabels';
 import { useEditorStore } from '../../store/editor.store';
@@ -68,6 +69,14 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   // Root → Book (Collection) / LearningPathIcon (Learning Path), Level
   // folders → Milestone, Unit/Sub-Unit (folders) → Folder, leaf → content-type icon.
   const NodeIcon = isRoot ? (isLearningPath ? LearningPathIcon : Book) : isFolder ? (isLearningPath ? Milestone : Folder) : CtIcon;
+  // Regular (non pre/post-assessment) Levels get a numbered badge + "Level N
+  // • {name}" label instead of the generic icon+name row (design). The
+  // number is this Level's 1-based position among sibling non-assessment
+  // Levels — Prior/Outcome Assessment slots aren't numbered.
+  const isRegularLpLevel = isLearningPath && isFolder && !isRoot && !isAssessmentLevel(node.data);
+  const levelNumber = isRegularLpLevel
+    ? (node.parent?.children ?? []).filter(c => !isAssessmentLevel(c.data)).findIndex(c => c.id === node.id) + 1
+    : null;
   // Adding a folder inside the current node would exceed the profile's maxDepth
   // (e.g. LP Levels can't contain sub-levels) — hide rather than error on click.
   const canAddChildFolder = node.level + 1 <= editorProfile.maxDepth;
@@ -137,13 +146,18 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
         {node.isClosed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
       </button>
 
-      {/* Node icon: Book (root) / Folder (unit) / content-type (leaf) */}
-      <span
-        className={`${styles.ctIcon} ${isRoot || isFolder ? styles.folderIcon ?? '' : ctStyle.bgClass}`}
-        aria-hidden="true"
-      >
-        <NodeIcon size={12} />
-      </span>
+      {/* Node icon: Book (root) / Folder (unit) / content-type (leaf) —
+          regular Levels get a numbered badge instead (design). */}
+      {isRegularLpLevel ? (
+        <span className={styles.levelBadge} aria-hidden="true">{levelNumber}</span>
+      ) : (
+        <span
+          className={`${styles.ctIcon} ${isRoot || isFolder ? styles.folderIcon ?? '' : ctStyle.bgClass}`}
+          aria-hidden="true"
+        >
+          <NodeIcon size={12} />
+        </span>
+      )}
 
       {/* Title or rename input */}
       {isRenaming ? (
@@ -158,11 +172,13 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
         />
       ) : (
         <span
-          className={styles.title}
+          className={[styles.title, isRegularLpLevel ? styles.levelTitle : ''].join(' ')}
           title={node.data.name}
           onDoubleClick={() => isEditable && setIsRenaming(true)}
         >
-          {node.data.name.length > 25 ? `${node.data.name.slice(0, 25)}...` : node.data.name}
+          {isRegularLpLevel
+            ? `${lbl.learningPath.levelNumberPrefix.replace('{n}', String(levelNumber))} • ${node.data.name}`
+            : (node.data.name.length > 25 ? `${node.data.name.slice(0, 25)}...` : node.data.name)}
         </span>
       )}
 

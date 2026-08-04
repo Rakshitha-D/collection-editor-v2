@@ -459,6 +459,7 @@
     "profileBadgeLabel": "Learning Path",
     "pathStructureLabel": "Path Structure",
     "addLevelButton": "Add Level",
+    "levelNumberPrefix": "Level {n}",
     "priorAssessmentLabel": "Prior Assessment",
     "priorAssessmentHint": "Always required · not a level",
     "outcomeAssessmentLabel": "Outcome Assessment",

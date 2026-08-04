@@ -459,6 +459,7 @@
     "profileBadgeLabel": "Trilha de Aprendizagem",
     "pathStructureLabel": "Estrutura da trilha",
     "addLevelButton": "Adicionar nível",
+    "levelNumberPrefix": "Nível {n}",
     "priorAssessmentLabel": "Avaliação prévia",
     "priorAssessmentHint": "Sempre obrigatória · não conta como um nível",
     "outcomeAssessmentLabel": "Avaliação de resultado",

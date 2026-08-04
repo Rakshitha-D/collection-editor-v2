@@ -205,12 +205,14 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         </div>
       </div>
 
-      {/* Tabs — root shows all three; units show only Details */}
+      {/* Tabs — Collection root shows all three; units, and the LP root
+          (no target framework / audience fields at all — profile sets
+          targetFWType: []), show only Details. */}
       <TabBar
         activeTab={activeTab}
         onChange={tab => setActiveTab(tab as TabId)}
         errorTabs={errorTabs}
-        visibleTabs={isCurrentNodeRoot ? undefined : ['details']}
+        visibleTabs={isCurrentNodeRoot && !isLearningPath ? undefined : ['details']}
       />
 
       {/* Form */}
