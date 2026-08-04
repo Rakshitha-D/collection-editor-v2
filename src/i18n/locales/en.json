@@ -458,9 +458,7 @@
   "learningPath": {
     "addLevelButton": "Add Level",
     "priorAssessmentLabel": "Prior Assessment",
-    "priorAssessmentHint": "Always required · not a level",
     "outcomeAssessmentLabel": "Outcome Assessment",
-    "outcomeAssessmentHint": "Confirms outcome · not a level",
     "addAssessmentSlotButton": "Add {label} — a course with only a question set",
     "removeAssessmentSlotButton": "Remove",
     "deletePriorAssessmentConfirm": "Deleting the Prior Assessment removes the score this path's Adaptive skips are based on. Continue?",

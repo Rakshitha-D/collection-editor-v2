@@ -50,13 +50,14 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   // "Download/Update" only make sense when folders already exist.
   const hasFolders = (treeData[0]?.children ?? []).some(c => c.isFolder);
 
-  // Pre/post assessment slots (LP profile only) — pinned rows above/below the
-  // tree so authors can jump straight to filling them, in addition to the
-  // regular Level row the wrapper still renders (doc: they stay ordinary
-  // Levels at index min/max in the saved hierarchy).
-  const { pre: preSlot, post: postSlot, activeAssessmentSlot, setActiveAssessmentSlot, deleteSlot } = useAssessmentSlots();
-  const { level: preLevel, filled: preFilled } = preSlot;
-  const { level: postLevel, filled: postFilled } = postSlot;
+  // Pre/post assessment slots (LP profile only) — the tree's delete handler
+  // routes deletes of these Levels through the same confirm as the root
+  // panel's "Assessments" card (AssessmentSlotItem), which is where authors
+  // fill/view/remove them; they stay ordinary Levels at index min/max in the
+  // saved hierarchy.
+  const { pre: preSlot, post: postSlot, deleteSlot } = useAssessmentSlots();
+  const { level: preLevel } = preSlot;
+  const { level: postLevel } = postSlot;
   const contentId = useEditorStore(
     s => s.editorConfig?.context?.contentId ?? s.editorConfig?.context?.identifier ?? '',
   );
@@ -274,20 +275,6 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
         </div>
       </div>
 
-      {isLearningPath && (
-        <AssessmentSlotRow
-          slot="pre"
-          label={lbl.learningPath.priorAssessmentLabel}
-          hint={lbl.learningPath.priorAssessmentHint}
-          level={preLevel}
-          filled={preFilled}
-          isActive={activeAssessmentSlot === 'pre'}
-          canEdit={isEditable && isDraft}
-          onFillClick={() => setActiveAssessmentSlot('pre')}
-          onRemoveClick={() => deleteSlot('pre')}
-        />
-      )}
-
       <div className={styles.treeWrapper} ref={wrapperRef}>
         <Tree
           ref={treeRef}
@@ -312,20 +299,6 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
           )}
         </Tree>
       </div>
-
-      {isLearningPath && (
-        <AssessmentSlotRow
-          slot="post"
-          label={lbl.learningPath.outcomeAssessmentLabel}
-          hint={lbl.learningPath.outcomeAssessmentHint}
-          level={postLevel}
-          filled={postFilled}
-          isActive={activeAssessmentSlot === 'post'}
-          canEdit={isEditable && isDraft}
-          onFillClick={() => setActiveAssessmentSlot('post')}
-          onRemoveClick={() => deleteSlot('post')}
-        />
-      )}
 
       {isEditable && (
         <div className={styles.footer}>
@@ -358,57 +331,6 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
             onComplete={handleCsvComplete}
             onClose={() => setShowCsvUpload(false)}
           />
-        </div>
-      )}
-    </div>
-  );
-};
-
-interface AssessmentSlotRowProps {
-  slot: 'pre' | 'post';
-  label: string;
-  hint: string;
-  level: INode | undefined;
-  filled: boolean;
-  isActive: boolean;
-  canEdit: boolean;
-  onFillClick: () => void;
-  onRemoveClick: () => void;
-}
-
-// Pinned slot row (design: "Prior/Outcome Assessment ... Neither counts as a
-// level") — shown above/below the Level tree so authors have a direct path to
-// filling the pre/post assessment, without hunting through the tree for it.
-const AssessmentSlotRow: React.FC<AssessmentSlotRowProps> = ({
-  label, hint, level, filled, isActive, canEdit, onFillClick, onRemoveClick,
-}) => {
-  const lbl = useLabels();
-  const courseName = filled ? level?.children?.[0]?.name : undefined;
-  return (
-    <div className={styles.assessmentSlot}>
-      {filled ? (
-        <div className={styles.assessmentSlotFilled}>
-          <div className={styles.assessmentSlotInfo}>
-            <span className={styles.assessmentSlotLabel}>{label}</span>
-            <span className={styles.assessmentSlotCourse} title={courseName}>{courseName}</span>
-          </div>
-          {canEdit && (
-            <button type="button" className={styles.assessmentSlotRemove} onClick={onRemoveClick}>
-              {lbl.learningPath.removeAssessmentSlotButton}
-            </button>
-          )}
-        </div>
-      ) : canEdit ? (
-        <button
-          type="button"
-          className={[styles.assessmentSlotEmpty, isActive ? styles.assessmentSlotActive : ''].join(' ')}
-          onClick={onFillClick}
-        >
-          <Plus size={13} /> {lbl.learningPath.addAssessmentSlotButton.replace('{label}', label)}
-        </button>
-      ) : (
-        <div className={styles.assessmentSlotEmpty}>
-          <span>{label} — {hint}</span>
         </div>
       )}
     </div>

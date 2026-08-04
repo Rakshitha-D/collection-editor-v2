@@ -458,9 +458,7 @@
   "learningPath": {
     "addLevelButton": "Adicionar nível",
     "priorAssessmentLabel": "Avaliação prévia",
-    "priorAssessmentHint": "Sempre obrigatória · não conta como um nível",
     "outcomeAssessmentLabel": "Avaliação de resultado",
-    "outcomeAssessmentHint": "Confirma o resultado · não conta como um nível",
     "addAssessmentSlotButton": "Adicionar {label} — um curso com apenas um banco de questões",
     "removeAssessmentSlotButton": "Remover",
     "deletePriorAssessmentConfirm": "Excluir a Avaliação prévia remove a pontuação usada pelos avanços adaptativos deste percurso. Continuar?",

@@ -458,9 +458,7 @@
   "learningPath": {
     "addLevelButton": "Ajouter un niveau",
     "priorAssessmentLabel": "Évaluation préalable",
-    "priorAssessmentHint": "Toujours requise · ne compte pas comme un niveau",
     "outcomeAssessmentLabel": "Évaluation finale",
-    "outcomeAssessmentHint": "Confirme le résultat · ne compte pas comme un niveau",
     "addAssessmentSlotButton": "Ajouter {label} — un cours contenant uniquement un questionnaire",
     "removeAssessmentSlotButton": "Retirer",
     "deletePriorAssessmentConfirm": "Supprimer l'évaluation préalable retire le score sur lequel se basent les sauts adaptatifs de ce parcours. Continuer ?",

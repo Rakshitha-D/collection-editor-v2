@@ -458,9 +458,7 @@
   "learningPath": {
     "addLevelButton": "إضافة مستوى",
     "priorAssessmentLabel": "التقييم المسبق",
-    "priorAssessmentHint": "مطلوب دائمًا · لا يُحسب كمستوى",
     "outcomeAssessmentLabel": "تقييم النتائج",
-    "outcomeAssessmentHint": "يؤكد النتيجة · لا يُحسب كمستوى",
     "addAssessmentSlotButton": "إضافة {label} — مقرر يحتوي على بنك أسئلة فقط",
     "removeAssessmentSlotButton": "إزالة",
     "deletePriorAssessmentConfirm": "حذف التقييم المسبق يزيل الدرجة التي يعتمد عليها التخطي التكيفي لهذا المسار. هل تريد الاستمرار؟",
