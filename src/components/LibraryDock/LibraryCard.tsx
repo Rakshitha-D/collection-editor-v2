@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Plus, Video, FileText, Layers, Package, Music, HelpCircle, File, Check } from 'lucide-react';
+import { Plus, Video, FileText, Layers, Package, Music, HelpCircle, BookOpen, File, Check } from 'lucide-react';
 import type { IContent } from '../../types/content';
 import { getCtStyle } from '../../hooks/useContentType';
 import { useIsDraftStatus, useSelectedNodeIsUnit } from '../../hooks/useContentStatus';
@@ -11,7 +11,7 @@ import styles from './LibraryCard.module.scss';
 
 const CT_ICONS: Record<string, React.ElementType> = {
   video: Video, pdf: FileText, h5p: Layers, scorm: Package,
-  audio: Music, quiz: HelpCircle, default: File,
+  audio: Music, quiz: HelpCircle, course: BookOpen, default: File,
 };
 
 interface LibraryCardProps {

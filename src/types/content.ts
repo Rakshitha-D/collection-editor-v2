@@ -26,7 +26,7 @@ export const CT_COLOR_MAP = {
   scorm: '#7C3AED',
   audio: '#DB2777',
   quiz: '#16A34A',
-  course: '#2563EB',
+  course: '#AC5039',
   default: '#6B7280',
 } as const satisfies Record<string, string>;
 
