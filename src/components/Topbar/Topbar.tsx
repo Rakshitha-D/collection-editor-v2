@@ -471,16 +471,19 @@ export const Topbar: React.FC<TopbarProps> = ({
                 &nbsp;{lbl.topbar.sendForReviewButton}
               </Button>
 
-              {/* Collaborators — icon only with tooltip */}
-              <button
-                className={styles.iconBtn}
-                onClick={() => openModal('manageCollaborators')}
-                aria-label={lbl.topbar.collaboratorsLabel}
-                title={lbl.topbar.collaboratorsLabel}
-                type="button"
-              >
-                <Users size={16} aria-hidden="true" />
-              </button>
+              {/* Collaborators — icon only with tooltip. Not applicable to
+                  Learning Path (no per-content collaborator model). */}
+              {editorProfile.features.collaborators && (
+                <button
+                  className={styles.iconBtn}
+                  onClick={() => openModal('manageCollaborators')}
+                  aria-label={lbl.topbar.collaboratorsLabel}
+                  title={lbl.topbar.collaboratorsLabel}
+                  type="button"
+                >
+                  <Users size={16} aria-hidden="true" />
+                </button>
+              )}
 
               {/* QR Codes dropdown — hidden when generateDIALCodes is "No" for this category */}
               {showDialcode && <div className={styles.qrDropdown} ref={qrMenuRef}>

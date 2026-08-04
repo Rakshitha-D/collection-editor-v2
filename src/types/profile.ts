@@ -22,6 +22,7 @@ export interface IEditorProfile {
     dialcodes: boolean;
     pageNumbers: boolean;
     bulkUpload: boolean;
+    collaborators: boolean;
   };
 }
 
@@ -36,7 +37,7 @@ export const collectionProfile: IEditorProfile = {
   leafPrimaryCategories: [],
   derivedRoles: false,
   competencyScoped: false,
-  features: { csvUpload: true, dialcodes: true, pageNumbers: true, bulkUpload: true },
+  features: { csvUpload: true, dialcodes: true, pageNumbers: true, bulkUpload: true, collaborators: true },
 };
 
 export const learningPathProfile: IEditorProfile = {
@@ -50,7 +51,7 @@ export const learningPathProfile: IEditorProfile = {
   leafPrimaryCategories: ['Course'],
   derivedRoles: true,
   competencyScoped: true,
-  features: { csvUpload: false, dialcodes: false, pageNumbers: false, bulkUpload: false },
+  features: { csvUpload: false, dialcodes: false, pageNumbers: false, bulkUpload: false, collaborators: false },
 };
 
 export function resolveEditorProfile(config: { config: { primaryCategory?: string } }): IEditorProfile {
