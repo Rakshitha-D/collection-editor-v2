@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import type { EditorMode, ToolbarAction, INode } from '../../types/editor';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
+import { useUiStore } from '../../store/ui.store';
 import { Breadcrumb } from './Breadcrumb';
 import { TabBar } from './TabBar';
 import { SparkMetaForm } from '../SparkMetaForm';
@@ -51,6 +52,7 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { selectedNodeId, breadcrumb, activeNodeMeta, updateNode, treeData, selectNode } = useTreeStore();
+  const activeAssessmentSlot = useUiStore(s => s.activeAssessmentSlot);
   const contentId = useEditorStore(
     s => s.editorConfig?.context?.contentId ?? s.editorConfig?.context?.identifier ?? '',
   );
@@ -70,11 +72,14 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const isLeafContent = selectedNode && !selectedNode.isFolder && !isQuml && !isCurrentNodeRoot;
 
   // LP profile: the pre/post assessment Level gets a dedicated view instead
-  // of the generic Level panel — see AssessmentDetailPanel.
+  // of the generic Level panel — see AssessmentDetailPanel. An unfilled slot
+  // has no Level to select yet (derived, not stored), so "Add Prior/Outcome
+  // Assessment" navigates here virtually via activeAssessmentSlot instead;
+  // any other explicit navigation clears it (see tree.store's selectNode).
   const isAssessmentSlot = isLearningPath && isCurrentNodeFolder && isAssessmentLevel(selectedNode ?? undefined);
   const assessmentSlotType: 'pre' | 'post' | null = isAssessmentSlot
     ? (treeData[0]?.children?.[0]?.id === selectedNode?.id ? 'pre' : 'post')
-    : null;
+    : (isLearningPath ? activeAssessmentSlot : null);
 
   // Review comment from previous rejection cycle — only while still in the
   // Draft-after-reject state; hidden once resubmitted for review or published.

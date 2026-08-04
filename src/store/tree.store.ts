@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { INode } from '../types/editor';
 import type { IContent } from '../types/content';
 import { useEditorStore } from './editor.store';
+import { useUiStore } from './ui.store';
 import { canAddCourseToLevel, canReorderLevel, resolveOpenAssessmentSlot } from '../utils/lpStructure';
 
 interface TreeState {
@@ -192,6 +193,11 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       isRoot: !node?.parent,
       isQuml: false,
     });
+
+    // Any explicit navigation cancels a pending "filling the Prior/Outcome
+    // Assessment slot" virtual view (LP profile) — otherwise there'd be no
+    // way to back out of it short of actually adding a course.
+    useUiStore.getState().setActiveAssessmentSlot(null);
 
     set({ selectedNodeId: id, breadcrumb, activeNodeMeta });
   },

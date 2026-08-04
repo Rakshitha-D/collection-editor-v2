@@ -1,7 +1,8 @@
 import React from 'react';
-import { ArrowLeft, Info, Award } from 'lucide-react';
+import { ArrowLeft, Info, Award, Flag, Activity } from 'lucide-react';
 import { useTreeStore } from '../../store/tree.store';
 import { useLabels } from '../../hooks/useLabels';
+import { useAssessmentSlots } from '../../hooks/useAssessmentSlots';
 import { AssessmentSlotItem } from '../UnitContentList/AssessmentSlotItem';
 import styles from './ContextualEditor.module.scss';
 
@@ -11,16 +12,23 @@ interface AssessmentDetailPanelProps {
 }
 
 // Dedicated view for the Prior/Outcome assessment slot — replaces the
-// generic Level panel when that slot's Level is selected. Shows the linked
-// course (or the "not added yet" placeholder) plus a slot-specific explainer
-// of why it exists (design: "Why this can't be skipped" / "Closes the path").
+// generic Level panel when that slot's Level is selected (or, while unfilled,
+// when "Add Prior/Outcome Assessment" was clicked — see ContextualEditor's
+// activeAssessmentSlot fallback). Shows the linked course (or the "not added
+// yet" placeholder) inside a "Course" card, plus a slot-specific explainer of
+// why it exists (design: "Why this can't be skipped" / "Closes the path").
 export const AssessmentDetailPanel: React.FC<AssessmentDetailPanelProps> = ({ slot, isEditable }) => {
   const lbl = useLabels();
   const treeData = useTreeStore((s) => s.treeData);
   const selectNode = useTreeStore((s) => s.selectNode);
   const rootId = treeData[0]?.id;
+  const { pre, post } = useAssessmentSlots();
+  const isFilled = (slot === 'pre' ? pre : post).filled;
 
   const title = slot === 'pre' ? lbl.learningPath.priorAssessmentLabel : lbl.learningPath.outcomeAssessmentLabel;
+  const hint = slot === 'pre' ? lbl.learningPath.priorAssessmentHint : lbl.learningPath.outcomeAssessmentHint;
+  const purposeLabel = slot === 'pre' ? lbl.learningPath.priorAssessmentPurposeLabel : lbl.learningPath.outcomeAssessmentPurposeLabel;
+  const PurposeIcon = slot === 'pre' ? Activity : Award;
   const ExplainerIcon = slot === 'pre' ? Info : Award;
   const explainerTitle = slot === 'pre' ? lbl.learningPath.priorAssessmentExplainerTitle : lbl.learningPath.outcomeAssessmentExplainerTitle;
   const explainerBody = slot === 'pre' ? lbl.learningPath.priorAssessmentExplainerBody : lbl.learningPath.outcomeAssessmentExplainerBody;
@@ -39,8 +47,25 @@ export const AssessmentDetailPanel: React.FC<AssessmentDetailPanelProps> = ({ sl
         <div className={styles.nodeTitle}>{title}</div>
       </div>
 
+      <div className={styles.slotPills}>
+        <span className={`${styles.slotPill} ${styles.slotPillHint}`}>
+          <Flag size={12} /> {hint}
+        </span>
+        <span className={`${styles.slotPill} ${styles.slotPillPurpose}`}>
+          <PurposeIcon size={12} /> {purposeLabel}
+        </span>
+      </div>
+
       <div className={styles.formArea}>
-        <AssessmentSlotItem slot={slot} isEditable={isEditable} />
+        <div className={styles.courseCard}>
+          <div className={styles.courseCardHeading}>{lbl.learningPath.assessmentCourseSectionTitle}</div>
+          <p className={styles.courseCardDescription}>{lbl.learningPath.assessmentCourseSectionDescription}</p>
+          {isFilled ? (
+            <AssessmentSlotItem slot={slot} isEditable={isEditable} />
+          ) : (
+            <div className={styles.courseNotAdded}>{lbl.learningPath.assessmentNotAddedYet}</div>
+          )}
+        </div>
 
         <div className={styles.assessmentExplainer}>
           <div className={styles.assessmentExplainerHeading}>
