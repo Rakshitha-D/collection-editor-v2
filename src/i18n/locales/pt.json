@@ -464,8 +464,6 @@
     "addAssessmentSlotButton": "Adicionar {label} — um curso com apenas um banco de questões",
     "removeAssessmentSlotButton": "Remover",
     "deletePriorAssessmentConfirm": "Excluir a Avaliação prévia remove a pontuação usada pelos avanços adaptativos deste percurso. Continuar?",
-    "slotBannerSelecting": "Selecionando um curso para {slot}",
-    "slotBannerCancelButton": "Cancelar",
     "notAssessmentCourseToast": "\"{name}\" não é um curso composto somente por um banco de questões, portanto não pode ser usado como avaliação.",
     "bothSlotsFilledToast": "As avaliações prévia e de resultado já estão preenchidas.",
     "assessmentCheckFailedToast": "Não foi possível verificar este curso. Tente novamente.",

@@ -464,8 +464,6 @@
     "addAssessmentSlotButton": "إضافة {label} — مقرر يحتوي على بنك أسئلة فقط",
     "removeAssessmentSlotButton": "إزالة",
     "deletePriorAssessmentConfirm": "حذف التقييم المسبق يزيل الدرجة التي يعتمد عليها التخطي التكيفي لهذا المسار. هل تريد الاستمرار؟",
-    "slotBannerSelecting": "جارٍ اختيار مقرر لـ {slot}",
-    "slotBannerCancelButton": "إلغاء",
     "notAssessmentCourseToast": "\"{name}\" ليس مقررًا يحتوي على بنك أسئلة فقط، لذا لا يمكن استخدامه كتقييم.",
     "bothSlotsFilledToast": "تم تعبئة تقييمي المسبق والنتائج بالفعل.",
     "assessmentCheckFailedToast": "تعذر التحقق من هذا المقرر. حاول مرة أخرى.",

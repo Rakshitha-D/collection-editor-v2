@@ -255,20 +255,6 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
         />
       </div>
 
-      {/* Slot-filling banner (LP profile) — the dock is currently sourcing a
-          course for the Prior/Outcome Assessment, unfiltered by competency. */}
-      {activeAssessmentSlot && (
-        <div className={styles.slotBanner}>
-          <span>
-            {lbl.learningPath.slotBannerSelecting.replace(
-              '{slot}',
-              activeAssessmentSlot === 'pre' ? lbl.learningPath.priorAssessmentLabel : lbl.learningPath.outcomeAssessmentLabel,
-            )}
-          </span>
-          <button type="button" onClick={() => setActiveAssessmentSlot(null)}>{lbl.learningPath.slotBannerCancelButton}</button>
-        </div>
-      )}
-
       {/* Main area: card list + optional side panels */}
       <div className={styles.mainArea}>
         {/* Card list */}

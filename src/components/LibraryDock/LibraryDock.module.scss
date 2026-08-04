@@ -146,29 +146,6 @@
   &::-webkit-scrollbar { display: none; }
 }
 
-.slotBanner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 12px 8px;
-  padding: 8px 10px;
-  border-radius: var(--sbx-r-md);
-  background: var(--sbx-primary-light);
-  color: var(--sbx-primary);
-  font-size: 12px;
-  flex-shrink: 0;
-
-  button {
-    border: none;
-    background: none;
-    color: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-}
-
 // mainArea fills remaining vertical space and lets cardList scroll inside it
 .mainArea {
   flex: 1;

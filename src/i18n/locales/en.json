@@ -464,8 +464,6 @@
     "addAssessmentSlotButton": "Add {label} — a course with only a question set",
     "removeAssessmentSlotButton": "Remove",
     "deletePriorAssessmentConfirm": "Deleting the Prior Assessment removes the score this path's Adaptive skips are based on. Continue?",
-    "slotBannerSelecting": "Selecting a course for the {slot}",
-    "slotBannerCancelButton": "Cancel",
     "notAssessmentCourseToast": "\"{name}\" isn't a question-set-only course, so it can't be used as an assessment.",
     "bothSlotsFilledToast": "Both Prior and Outcome Assessment slots are already filled.",
     "assessmentCheckFailedToast": "Could not verify this course. Please try again.",
