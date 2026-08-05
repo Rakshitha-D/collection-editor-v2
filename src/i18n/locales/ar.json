@@ -527,6 +527,12 @@
     "policyAdaptiveDescriptionPre": "يمكن تخطي مستوى، ولكن فقط عندما تتجاوز درجة المتعلم في التقييم المسبق",
     "policyAdaptiveDescriptionPost": " حد الإعفاء.",
     "policyPriorLearningLabel": "التعلم المسبق",
-    "policyPriorLearningDescription": "يمكن أن يستند التخطي أيضًا إلى مهارات يمتلكها المتعلم بالفعل — شهادة موثقة أو مقرر سابق — لا التقييم وحده."
+    "policyPriorLearningDescription": "يمكن أن يستند التخطي أيضًا إلى مهارات يمتلكها المتعلم بالفعل — شهادة موثقة أو مقرر سابق — لا التقييم وحده.",
+    "selectLevelFirstToast": "اختر مستوى أولاً",
+    "selectLevelFromOutlineToast": "افتح مستوى في هيكل المسار لإضافة المقررات — لا يمكن إضافة المقررات إلى المسار نفسه أو داخل مقرر آخر.",
+    "itemAlreadyInPathToast": "\"{name}\" موجود بالفعل في مسار التعلم هذا",
+    "addedToLevelSuccess": "تمت إضافة \"{name}\" إلى المستوى",
+    "dropOntoLevelError": "أفلِت على مستوى لإضافة مقرر",
+    "dropOntoPathError": "أفلِت المقررات على مستوى، وليس على مسار التعلم مباشرة."
   }
 }

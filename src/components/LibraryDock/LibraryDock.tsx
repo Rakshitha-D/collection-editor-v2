@@ -118,12 +118,19 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
         return;
       }
       if (!selectedNodeId) {
-        toast.error(lbl.libraryDock.selectUnitFirstToast);
+        toast.error(isLearningPath
+          ? lbl.learningPath.selectLevelFirstToast
+          : lbl.libraryDock.selectUnitFirstToast);
         return;
       }
       const rootId = treeData[0]?.id;
-      if (selectedNodeId === rootId) {
-        toast(lbl.libraryDock.selectUnitFromOutlineToast, {
+      const selectedNode = useTreeStore.getState().getNodeById(selectedNodeId);
+      // Root and leaf targets both need a unit/Level picked first — a course
+      // can never receive children (LP rule: no course under a course).
+      if (selectedNodeId === rootId || !selectedNode?.isFolder) {
+        toast(isLearningPath
+          ? lbl.learningPath.selectLevelFromOutlineToast
+          : lbl.libraryDock.selectUnitFromOutlineToast, {
           icon: <Info size={16} />,
           duration: 4000,
         });
@@ -131,12 +138,14 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       const added = addResource(item, selectedNodeId);
       if (added === false) {
-        toast.error(lbl.libraryDock.itemAlreadyAddedToast.replace('{name}', item.name));
+        toast.error((isLearningPath
+          ? lbl.learningPath.itemAlreadyInPathToast
+          : lbl.libraryDock.itemAlreadyAddedToast).replace('{name}', item.name));
         return;
       }
       toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
     },
-    [activeAssessmentSlot, handleFillAssessmentSlot, selectedNodeId, addResource, treeData, lbl],
+    [activeAssessmentSlot, handleFillAssessmentSlot, selectedNodeId, addResource, treeData, lbl, isLearningPath],
   );
 
   const handleApplyFilters = useCallback(

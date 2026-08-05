@@ -98,6 +98,15 @@ describe('tree.store (Learning Path) — per-Level course caps (addResource)', (
     const preLevelId = useTreeStore.getState().treeData[0].children![0].id;
     expect(useTreeStore.getState().addResource(course('c2'), preLevelId)).toBe(false);
   });
+
+  it('rejects adding a course under a course — courses are terminal leaves', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(course('c1'), levelId);
+    expect(useTreeStore.getState().addResource(course('c2'), 'c1')).toBe(false);
+
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.children!.find((c) => c.id === 'c1')!.children).toHaveLength(0);
+  });
 });
 
 describe('tree.store (Learning Path) — slot pinning (reorderChildren)', () => {
@@ -166,6 +175,18 @@ describe('tree.store (Learning Path) — per-Level course caps on cross-Level dr
     const other = useTreeStore.getState().treeData[0].children!.find((c) => c.id === otherId)!;
     expect(other.children!.some((c) => c.id === 'c1')).toBe(true);
   });
+
+  it('blocks moving a course under another course — courses are terminal leaves', () => {
+    const midId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(course('c1'), midId);
+    useTreeStore.getState().addResource(course('c2'), midId);
+
+    useTreeStore.getState().moveNode('c2', midId, 'c1');
+
+    const mid = useTreeStore.getState().treeData[0].children!.find((c) => c.id === midId)!;
+    expect(mid.children!.some((c) => c.id === 'c2')).toBe(true); // still there — move blocked
+    expect(mid.children!.find((c) => c.id === 'c1')!.children).toHaveLength(0);
+  });
 });
 
 describe('tree.store — collection profile is unaffected by the LP guards', () => {
@@ -182,5 +203,11 @@ describe('tree.store — collection profile is unaffected by the LP guards', () 
 
   it('addResource still refuses to target root directly (unrelated allowContentUnderRoot guard)', () => {
     expect(useTreeStore.getState().addResource(course('c1'), 'root', { isAssessmentCourse: true })).toBe(false);
+  });
+
+  it('also rejects adding content under leaf content (terminal-leaf rule is profile-independent)', () => {
+    const unitId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(course('c1'), unitId);
+    expect(useTreeStore.getState().addResource(course('c2'), 'c1')).toBe(false);
   });
 });

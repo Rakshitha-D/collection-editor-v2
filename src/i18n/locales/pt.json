@@ -527,6 +527,12 @@
     "policyAdaptiveDescriptionPre": "Um nível pode ser pulado, mas somente quando a pontuação do aprendiz na Avaliação prévia",
     "policyAdaptiveDescriptionPost": " atinge o limite de dispensa.",
     "policyPriorLearningLabel": "Aprendizagem prévia",
-    "policyPriorLearningDescription": "Os avanços também podem se basear em habilidades que o aprendiz já possui — um certificado verificado ou curso anterior — não apenas na avaliação."
+    "policyPriorLearningDescription": "Os avanços também podem se basear em habilidades que o aprendiz já possui — um certificado verificado ou curso anterior — não apenas na avaliação.",
+    "selectLevelFirstToast": "Selecione um nível primeiro",
+    "selectLevelFromOutlineToast": "Abra um nível na estrutura da trilha para adicionar cursos — cursos não podem ser adicionados à própria trilha nem dentro de outro curso.",
+    "itemAlreadyInPathToast": "\"{name}\" já está nesta trilha de aprendizagem",
+    "addedToLevelSuccess": "\"{name}\" adicionado ao nível",
+    "dropOntoLevelError": "Solte sobre um nível para adicionar um curso",
+    "dropOntoPathError": "Solte os cursos sobre um nível, não diretamente na trilha de aprendizagem."
   }
 }

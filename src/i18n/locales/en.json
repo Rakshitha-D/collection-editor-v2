@@ -527,6 +527,12 @@
     "policyAdaptiveDescriptionPre": "A level can be skipped, but only when the learner's score on the Prior Assessment",
     "policyAdaptiveDescriptionPost": " clears its waiver threshold.",
     "policyPriorLearningLabel": "Prior learning",
-    "policyPriorLearningDescription": "Skips can also draw on skills the learner already holds — a verified certificate or prior course — not the assessment alone."
+    "policyPriorLearningDescription": "Skips can also draw on skills the learner already holds — a verified certificate or prior course — not the assessment alone.",
+    "selectLevelFirstToast": "Select a level first",
+    "selectLevelFromOutlineToast": "Open a level in the path structure to add courses — courses cannot be added to the path itself or under another course.",
+    "itemAlreadyInPathToast": "\"{name}\" is already in this learning path",
+    "addedToLevelSuccess": "Added \"{name}\" to level",
+    "dropOntoLevelError": "Drop onto a level to add a course",
+    "dropOntoPathError": "Drop courses onto a level, not directly on the learning path."
   }
 }

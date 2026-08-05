@@ -77,25 +77,43 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
       if (!item) return;
       const over = event.over;
       const targetNodeId = (over?.id as string | undefined) ?? selectedNodeId ?? undefined;
+      // LP drops land on Levels within a path; collections drop on units within
+      // a course — same guards, profile-specific wording.
+      const dropOntoFolderError = isLearningPath
+        ? lbl.learningPath.dropOntoLevelError
+        : lbl.splitBuilderShell.dropOntoUnitError;
       if (!targetNodeId) {
-        toast.error(lbl.splitBuilderShell.dropOntoUnitError);
+        toast.error(dropOntoFolderError);
         return;
       }
       const rootId = treeData[0]?.id;
       const allowContentUnderRoot = false; // matches tree.store guard
       if (!allowContentUnderRoot && targetNodeId === rootId) {
-        toast.error(lbl.splitBuilderShell.dropOntoCourseError);
+        toast.error(isLearningPath
+          ? lbl.learningPath.dropOntoPathError
+          : lbl.splitBuilderShell.dropOntoCourseError);
+        return;
+      }
+      // A leaf (e.g. a linked course) can't receive children — the store would
+      // reject it; surface the "drop onto a unit/level" message, not "already added".
+      const targetNode = useTreeStore.getState().getNodeById(targetNodeId);
+      if (!targetNode?.isFolder) {
+        toast.error(dropOntoFolderError);
         return;
       }
       const added = addResource(item, targetNodeId);
       if (!added) {
-        toast.error(lbl.splitBuilderShell.alreadyInCollectionError.replace('{name}', item.name));
+        toast.error((isLearningPath
+          ? lbl.learningPath.itemAlreadyInPathToast
+          : lbl.splitBuilderShell.alreadyInCollectionError).replace('{name}', item.name));
         return;
       }
       onContentAdded?.(item, targetNodeId);
-      toast.success(lbl.splitBuilderShell.addedToUnitSuccess.replace('{name}', item.name));
+      toast.success((isLearningPath
+        ? lbl.learningPath.addedToLevelSuccess
+        : lbl.splitBuilderShell.addedToUnitSuccess).replace('{name}', item.name));
     },
-    [selectedNodeId, addResource, onContentAdded, lbl],
+    [selectedNodeId, addResource, onContentAdded, lbl, isLearningPath],
   );
 
   const handleToolbarEvent = useCallback(

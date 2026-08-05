@@ -286,16 +286,17 @@ export const useTreeStore = create<TreeState>((set, get) => ({
 
   moveNode: (nodeId, _fromParentId, toParentId) => {
     const profile = useEditorStore.getState().editorProfile;
-    if (profile.derivedRoles) {
-      const movedNode = bfsFind(get().treeData, nodeId);
-      const targetNode = bfsFind(get().treeData, toParentId);
+    const movedNode = bfsFind(get().treeData, nodeId);
+    const targetNode = bfsFind(get().treeData, toParentId);
+    // The move target is always a parent — a leaf (e.g. a linked course) can
+    // never receive children, in any profile.
+    if (!targetNode?.isFolder) return;
+    if (profile.derivedRoles && movedNode && !movedNode.isFolder) {
       // Dragging a course across Levels must still respect the one-course-per-
       // assessment-Level / one-Level-assessment-per-content-Level caps (item 4)
       // that addResource enforces for library-driven adds.
-      if (movedNode && !movedNode.isFolder && targetNode?.isFolder) {
-        const incomingIsAssessmentCourse = !!movedNode.metadata?.['isAssessmentCourse'];
-        if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) return;
-      }
+      const incomingIsAssessmentCourse = !!movedNode.metadata?.['isAssessmentCourse'];
+      if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) return;
     }
     set((state) => {
       const node = bfsFind(state.treeData, nodeId);
@@ -349,9 +350,14 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       return false;
     }
 
+    // Leaf content is terminal in every profile — in an LP specifically, a
+    // course can never nest under a course. Callers may pass a leaf id (e.g.
+    // a selected course), so reject here rather than silently inserting under it.
     const targetNode = bfsFind(get().treeData, nodeId);
-    if (profile.derivedRoles && targetNode?.isFolder
-        && !canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) {
+    if (!targetNode?.isFolder) {
+      return false;
+    }
+    if (profile.derivedRoles && !canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) {
       return false;
     }
 

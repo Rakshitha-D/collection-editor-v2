@@ -21,8 +21,12 @@ export function useLibraryTargetLabel(): string | null {
   if (activeAssessmentSlot === 'post') return lbl.learningPath.libraryAddOutcomeAssessmentCourse;
   if (selectedNodeId && selectedNodeId !== rootId) {
     const level = getNodeById(selectedNodeId);
-    const levelTitle = level?.name?.split(' • ')[0] ?? level?.name ?? '';
-    return lbl.learningPath.libraryAddToLevel.replace('{level}', levelTitle);
+    // A selected course (leaf) is not an add target — courses never receive
+    // children — so fall through to the "open a level" hint instead.
+    if (level?.isFolder) {
+      const levelTitle = level.name?.split(' • ')[0] ?? level.name ?? '';
+      return lbl.learningPath.libraryAddToLevel.replace('{level}', levelTitle);
+    }
   }
   return lbl.learningPath.libraryOpenLevelToAdd;
 }

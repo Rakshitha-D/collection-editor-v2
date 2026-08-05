@@ -527,6 +527,12 @@
     "policyAdaptiveDescriptionPre": "Un niveau peut être ignoré, mais seulement si le score de l'apprenant à l'Évaluation préalable",
     "policyAdaptiveDescriptionPost": " dépasse le seuil de dispense.",
     "policyPriorLearningLabel": "Acquis antérieurs",
-    "policyPriorLearningDescription": "Les sauts peuvent aussi s'appuyer sur des compétences déjà détenues par l'apprenant — un certificat vérifié ou un cours antérieur — pas seulement l'évaluation."
+    "policyPriorLearningDescription": "Les sauts peuvent aussi s'appuyer sur des compétences déjà détenues par l'apprenant — un certificat vérifié ou un cours antérieur — pas seulement l'évaluation.",
+    "selectLevelFirstToast": "Sélectionnez d'abord un niveau",
+    "selectLevelFromOutlineToast": "Ouvrez un niveau dans la structure du parcours pour ajouter des cours — les cours ne peuvent pas être ajoutés au parcours lui-même ni sous un autre cours.",
+    "itemAlreadyInPathToast": "« {name} » fait déjà partie de ce parcours d'apprentissage",
+    "addedToLevelSuccess": "« {name} » ajouté au niveau",
+    "dropOntoLevelError": "Déposez sur un niveau pour ajouter un cours",
+    "dropOntoPathError": "Déposez les cours sur un niveau, pas directement sur le parcours d'apprentissage."
   }
 }
