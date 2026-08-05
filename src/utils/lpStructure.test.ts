@@ -5,6 +5,7 @@ import {
   clearAssessmentCourseCache,
   isAssessmentLevel,
   getLevelRole,
+  getLevelDisplayInfo,
   resolveOpenAssessmentSlot,
   canReorderLevel,
   canAddCourseToLevel,
@@ -125,6 +126,29 @@ describe('getLevelRole', () => {
 
   it('breaks the levelCount === 1 tie in favor of pre', () => {
     expect(getLevelRole(0, 1, true)).toBe('pre');
+  });
+});
+
+describe('getLevelDisplayInfo', () => {
+  it('returns null for an id that is not one of the given levels', () => {
+    expect(getLevelDisplayInfo([level({ id: 'l1' })], 'missing')).toBeNull();
+  });
+
+  it('is pre for the first level when it wraps an assessment course, post otherwise', () => {
+    const pre = level({ id: 'pre', children: [assessmentCourse('a1')] });
+    const content = level({ id: 'l1' });
+    const post = level({ id: 'post', children: [assessmentCourse('a2')] });
+    expect(getLevelDisplayInfo([pre, content, post], 'pre')).toEqual({ role: 'pre', levelNumber: null });
+    expect(getLevelDisplayInfo([pre, content, post], 'post')).toEqual({ role: 'post', levelNumber: null });
+  });
+
+  it('numbers regular Levels 1-based, excluding assessment slots from the count', () => {
+    const pre = level({ id: 'pre', children: [assessmentCourse('a1')] });
+    const l1 = level({ id: 'l1' });
+    const l2 = level({ id: 'l2' });
+    const post = level({ id: 'post', children: [assessmentCourse('a2')] });
+    expect(getLevelDisplayInfo([pre, l1, l2, post], 'l1')).toEqual({ role: 'level', levelNumber: 1 });
+    expect(getLevelDisplayInfo([pre, l1, l2, post], 'l2')).toEqual({ role: 'level', levelNumber: 2 });
   });
 });
 

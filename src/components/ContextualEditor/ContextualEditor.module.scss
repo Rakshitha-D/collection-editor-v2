@@ -193,6 +193,36 @@
   font-size: 21px;
   color: var(--sbx-obsidian);
 }
+
+// Course-detail page header (design: big icon chip + heading + "Course · N
+// contents"), replacing the generic .titleRow for this one leaf-content view.
+.courseDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.courseDetailIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--sbx-primary);
+  color: var(--sbx-white);
+  flex-shrink: 0;
+}
+.courseDetailTitle {
+  margin: 0 0 6px;
+  font-size: 23px;
+  font-weight: 700;
+  color: var(--sbx-obsidian);
+}
+.courseDetailMeta {
+  font-size: 13px;
+  color: var(--sbx-gray-500);
+}
 .formArea { margin-bottom: 24px; }
 .contentListArea { padding-top: 20px; }
 .dropZone { position: absolute; inset: 0; z-index: 5; border-radius: 0; }

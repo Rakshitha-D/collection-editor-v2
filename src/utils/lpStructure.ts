@@ -90,6 +90,25 @@ export function getLevelRole(
 }
 
 /**
+ * Display info for one of root's Level children, keyed by id — same
+ * numbering rule TreeNode uses for its "Level N • {name}" row (assessment
+ * slots excluded from the count), reused by the Course-detail page's
+ * "Back to {label}" button so the two stay consistent.
+ */
+export function getLevelDisplayInfo(
+  levels: INode[],
+  levelId: string,
+): { role: 'pre' | 'post' | 'level'; levelNumber: number | null } | null {
+  const idx = levels.findIndex((l) => l.id === levelId);
+  if (idx === -1) return null;
+  if (isAssessmentLevel(levels[idx])) {
+    return { role: idx === 0 ? 'pre' : 'post', levelNumber: null };
+  }
+  const levelNumber = levels.slice(0, idx + 1).filter((l) => !isAssessmentLevel(l)).length;
+  return { role: 'level', levelNumber };
+}
+
+/**
  * Which pre/post assessment slot (if any) is open to receive a newly-linked
  * assessment course, given root's current Level children. Pre is checked
  * first, so a lone empty path always fills "pre" before "post" — matching

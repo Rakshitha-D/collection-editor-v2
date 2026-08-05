@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { EditorMode, ToolbarAction, INode } from '../../types/editor';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
@@ -15,9 +15,9 @@ import { ContentEditForm } from './ContentEditForm';
 import { TitleAppIcon } from './TitleAppIcon';
 import { CourseDetailsPanel } from '../shared/CourseDetailsPanel';
 import { AssessmentDetailPanel } from './AssessmentDetailPanel';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import { useLabels } from '../../hooks/useLabels';
-import { isAssessmentLevel } from '../../utils/lpStructure';
+import { isAssessmentLevel, getLevelDisplayInfo } from '../../utils/lpStructure';
 import styles from './ContextualEditor.module.scss';
 
 const QUESTIONSET_MIME = 'application/vnd.sunbird.questionset';
@@ -48,6 +48,7 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const [errorTabs, setErrorTabs] = useState<TabId[]>([]);
   const [reorderResourceId, setReorderResourceId] = useState<string | null>(null);
   const [showAssignPage, setShowAssignPage] = useState(false);
+  const [courseContentCount, setCourseContentCount] = useState<number | null>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -59,6 +60,13 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
 
   const selectedNode = selectedNodeId ? findNodeById(treeData, selectedNodeId) : null;
+
+  // Reset the course-detail "Course · N contents" count on selection change
+  // so it doesn't briefly show the previous course's count while the new
+  // one's hierarchy read is still in flight.
+  useEffect(() => {
+    setCourseContentCount(null);
+  }, [selectedNode?.identifier]);
 
   // Derive node flags synchronously from the resolved node. The editor-store
   // flags (isCurrentNodeRoot/isCurrentNodeFolder) are set asynchronously in
@@ -126,8 +134,19 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
 
   // LP profile: a linked Course is never authored/played inline — show the
   // read-only "Course details" (Title, Units, Topics) instead of
-  // ContentPlayer + ContentEditForm (design: "Course details ... Back to path").
+  // ContentPlayer + ContentEditForm (design: "Course details ... Back to {Level}").
   if (isLearningPath && isLeafContent && selectedNode.primaryCategory === 'Course') {
+    const parentLevelInfo = selectedNode.parent
+      ? getLevelDisplayInfo(treeData[0]?.children ?? [], selectedNode.parent)
+      : null;
+    const backToLabel = parentLevelInfo?.role === 'pre' ? lbl.learningPath.priorAssessmentLabel
+      : parentLevelInfo?.role === 'post' ? lbl.learningPath.outcomeAssessmentLabel
+      : parentLevelInfo?.role === 'level'
+        ? lbl.learningPath.levelNumberPrefix.replace('{n}', String(parentLevelInfo.levelNumber))
+        : null;
+    const contentCountLabel = courseContentCount === null ? ''
+      : ` · ${(courseContentCount === 1 ? lbl.learningPath.contentCountLabel : lbl.learningPath.contentCountLabelPlural)
+          .replace('{count}', String(courseContentCount))}`;
     return (
       <div className={styles.container}>
         <button
@@ -135,12 +154,23 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
           className={styles.backToPathButton}
           onClick={() => selectedNode.parent && selectNode(selectedNode.parent)}
         >
-          <ArrowLeft size={14} /> {lbl.learningPath.backToPathButton}
+          <ArrowLeft size={14} />
+          {backToLabel ? lbl.learningPath.backToLevelButton.replace('{label}', backToLabel) : lbl.learningPath.backToPathButton}
         </button>
-        <div className={[styles.titleRow, styles.titleRowLp].join(' ')}>
-          <div className={[styles.nodeTitle, styles.nodeTitleSub].join(' ')}>{selectedNode.name}</div>
+        <div className={styles.courseDetailHeader}>
+          <span className={styles.courseDetailIcon}><BookOpen size={26} /></span>
+          <div>
+            <h2 className={styles.courseDetailTitle}>{selectedNode.name}</h2>
+            <span className={styles.courseDetailMeta}>{selectedNode.primaryCategory}{contentCountLabel}</span>
+          </div>
         </div>
-        <CourseDetailsPanel courseId={selectedNode.identifier} />
+        <CourseDetailsPanel
+          key={selectedNode.identifier}
+          courseId={selectedNode.identifier}
+          variant="full"
+          title={selectedNode.name}
+          onLoaded={({ totalContents }) => setCourseContentCount(totalContents)}
+        />
       </div>
     );
   }
