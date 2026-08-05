@@ -152,10 +152,14 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
         <span className={styles.levelBadge} aria-hidden="true">{levelNumber}</span>
       ) : (
         <span
-          className={`${styles.ctIcon} ${isRoot || isFolder ? styles.folderIcon ?? '' : ctStyle.bgClass}`}
+          className={[
+            styles.ctIcon,
+            isRoot || isFolder ? styles.folderIcon : ctStyle.bgClass,
+            isRoot ? styles.rootIcon : '',
+          ].filter(Boolean).join(' ')}
           aria-hidden="true"
         >
-          <NodeIcon size={12} />
+          <NodeIcon size={isRoot ? 15 : 12} />
         </span>
       )}
 

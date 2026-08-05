@@ -1,7 +1,7 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   padding: 0 8px;
   cursor: pointer;
   border-radius: var(--sbx-r-sm);
@@ -30,7 +30,7 @@
 
   .title {
     color: var(--sbx-primary);
-    font-weight: 600;
+    font-weight: 700;
   }
 }
 
@@ -72,7 +72,7 @@
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  border-radius: var(--sbx-r-xs);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,16 +86,23 @@
   color: white;
 }
 
+// Root row's icon square is larger than a regular folder/leaf chip (design).
+.rootIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
 // Regular Level rows (LP profile) — numbered badge instead of an icon square.
 .levelBadge {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--sbx-gray-200);
   color: var(--sbx-gray-600);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,15 +112,15 @@
   flex: 1;
   min-width: 0;
   font-size: 13px;
-  color: var(--sbx-gray-700);
+  color: var(--sbx-charcoal);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .levelTitle {
-  font-weight: 700;
-  color: var(--sbx-gray-900);
+  font-weight: 600;
+  color: var(--sbx-obsidian);
 }
 
 .renameInput {
