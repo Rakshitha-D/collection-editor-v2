@@ -514,7 +514,8 @@
     "policyStrictLabel": "Estrita",
     "policyStrictDescription": "Todo aprendiz completa todos os níveis, em ordem — independentemente da pontuação da avaliação prévia.",
     "policyAdaptiveLabel": "Adaptativa",
-    "policyAdaptiveDescription": "Um nível pode ser pulado, mas somente quando a pontuação do aprendiz na Avaliação prévia atinge o limite de dispensa.",
+    "policyAdaptiveDescriptionPre": "Um nível pode ser pulado, mas somente quando a pontuação do aprendiz na Avaliação prévia",
+    "policyAdaptiveDescriptionPost": " atinge o limite de dispensa.",
     "policyPriorLearningLabel": "Aprendizagem prévia",
     "policyPriorLearningDescription": "Os avanços também podem se basear em habilidades que o aprendiz já possui — um certificado verificado ou curso anterior — não apenas na avaliação."
   }

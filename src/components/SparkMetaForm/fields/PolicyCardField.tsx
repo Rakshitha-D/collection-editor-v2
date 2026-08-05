@@ -15,15 +15,36 @@ interface PolicyCardFieldProps {
 // Custom 3-card selector for the LP root's `policy` (consumption policy)
 // field — replaces the generic SelectField rendering for this one field code
 // (design: Strict/lock, Adaptive/lightning, Prior learning/shield-check,
-// each with a title + description + radio indicator).
+// each with a title + description + radio indicator). The icon chip color,
+// and Adaptive's title/description color, are fixed per-card in the design
+// (not selection-dependent) — see PolicyCardField.module.scss.
 export const PolicyCardField: React.FC<PolicyCardFieldProps> = ({ name, label, required, disabled }) => {
   const lbl = useLabels();
   const { control } = useFormContext();
 
   const cards = [
-    { value: 'Fixed', Icon: Lock, title: lbl.learningPath.policyStrictLabel, description: lbl.learningPath.policyStrictDescription },
-    { value: 'Diagnostic', Icon: Zap, title: lbl.learningPath.policyAdaptiveLabel, description: lbl.learningPath.policyAdaptiveDescription },
-    { value: 'PriorLearning', Icon: ShieldCheck, title: lbl.learningPath.policyPriorLearningLabel, description: lbl.learningPath.policyPriorLearningDescription },
+    {
+      value: 'Fixed', Icon: Lock, iconVariant: styles.cardIconPrimary,
+      title: lbl.learningPath.policyStrictLabel, titleVariant: '',
+      description: <>{lbl.learningPath.policyStrictDescription}</>, descriptionVariant: '',
+    },
+    {
+      value: 'Diagnostic', Icon: Zap, iconVariant: styles.cardIconPrimary,
+      title: lbl.learningPath.policyAdaptiveLabel, titleVariant: styles.cardTitleInk,
+      description: (
+        <>
+          {lbl.learningPath.policyAdaptiveDescriptionPre}
+          <span className={fieldStyles.required}>*</span>
+          {lbl.learningPath.policyAdaptiveDescriptionPost}
+        </>
+      ),
+      descriptionVariant: styles.cardDescriptionCharcoal,
+    },
+    {
+      value: 'PriorLearning', Icon: ShieldCheck, iconVariant: styles.cardIconHover,
+      title: lbl.learningPath.policyPriorLearningLabel, titleVariant: '',
+      description: <>{lbl.learningPath.policyPriorLearningDescription}</>, descriptionVariant: '',
+    },
   ];
 
   return (
@@ -35,7 +56,7 @@ export const PolicyCardField: React.FC<PolicyCardFieldProps> = ({ name, label, r
         rules={{ required: required ? lbl.selectField.requiredError.replace('{field}', label) : false }}
         render={({ field }) => (
           <div className={styles.cards}>
-            {cards.map(({ value, Icon, title, description }) => {
+            {cards.map(({ value, Icon, iconVariant, title, titleVariant, description, descriptionVariant }) => {
               const isActive = field.value === value;
               return (
                 <button
@@ -45,14 +66,12 @@ export const PolicyCardField: React.FC<PolicyCardFieldProps> = ({ name, label, r
                   className={[styles.card, isActive ? styles.cardActive : ''].join(' ')}
                   onClick={() => field.onChange(value)}
                 >
-                  <div className={styles.cardHeader}>
-                    <span className={[styles.cardIcon, isActive ? styles.cardIconActive : ''].join(' ')}>
-                      <Icon size={16} />
-                    </span>
-                    <span className={[styles.radioDot, isActive ? styles.radioDotActive : ''].join(' ')} />
-                  </div>
-                  <span className={styles.cardTitle}>{title}</span>
-                  <span className={styles.cardDescription}>{description}</span>
+                  <span className={[styles.cardIcon, iconVariant].join(' ')}>
+                    <Icon size={16} />
+                  </span>
+                  <span className={[styles.radioDot, isActive ? styles.radioDotActive : ''].join(' ')} />
+                  <span className={[styles.cardTitle, titleVariant].join(' ')}>{title}</span>
+                  <span className={[styles.cardDescription, descriptionVariant].join(' ')}>{description}</span>
                 </button>
               );
             })}

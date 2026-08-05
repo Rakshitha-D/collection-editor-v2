@@ -514,7 +514,8 @@
     "policyStrictLabel": "صارمة",
     "policyStrictDescription": "يُنهي كل متعلم كل مستوى، بالترتيب — بصرف النظر عن درجة التقييم المسبق.",
     "policyAdaptiveLabel": "تكيفية",
-    "policyAdaptiveDescription": "يمكن تخطي مستوى، ولكن فقط عندما تتجاوز درجة المتعلم في التقييم المسبق حد الإعفاء.",
+    "policyAdaptiveDescriptionPre": "يمكن تخطي مستوى، ولكن فقط عندما تتجاوز درجة المتعلم في التقييم المسبق",
+    "policyAdaptiveDescriptionPost": " حد الإعفاء.",
     "policyPriorLearningLabel": "التعلم المسبق",
     "policyPriorLearningDescription": "يمكن أن يستند التخطي أيضًا إلى مهارات يمتلكها المتعلم بالفعل — شهادة موثقة أو مقرر سابق — لا التقييم وحده."
   }
