@@ -119,7 +119,10 @@ export const CollectionEditor: React.FC<CollectionEditorProps> = (props) => {
     <EditorErrorBoundary onError={props.onError}>
       <QueryClientProvider client={queryClient}>
         <CollectionEditorInner {...props} />
-        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+        <Toaster
+          position="top-right"
+          toastOptions={{ duration: 3000, style: { fontFamily: 'var(--sbx-font)' } }}
+        />
       </QueryClientProvider>
     </EditorErrorBoundary>
   );

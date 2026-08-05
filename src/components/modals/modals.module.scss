@@ -6,6 +6,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  // UnsavedChangesModal portals this to document.body, outside
+  // .sb-split-builder, so font-family must be set explicitly here.
+  font-family: var(--sbx-font);
+
+  button, input, textarea, select {
+    font-family: inherit;
+  }
 }
 
 .modal {

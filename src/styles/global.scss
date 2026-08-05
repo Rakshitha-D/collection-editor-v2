@@ -13,6 +13,13 @@
   color: var(--sbx-gray-900);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+
+  // Form controls don't inherit font-family from ancestors under the
+  // browser's default UA stylesheet, so without this they fall back to
+  // the platform default (Arial/Times) instead of Rubik.
+  input, textarea, select, button {
+    font-family: inherit;
+  }
 }
 
 // Chip
@@ -76,6 +83,9 @@
 }
 
 // Buttons base
+// Explicit font-family (not just inherited) because Button.tsx also renders
+// via these classes from the two document.body-portaled modals
+// (UnsavedChangesModal, LibraryPreviewPanel), outside .sb-split-builder.
 .sbx-btn {
   display: inline-flex;
   align-items: center;
@@ -83,6 +93,7 @@
   height: 36px;
   border-radius: var(--sbx-r-md);
   padding: 0 18px;
+  font-family: var(--sbx-font);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;

@@ -168,6 +168,8 @@
 }
 
 // Expanded modal overlay
+// Portaled to document.body (outside .sb-split-builder), so font-family
+// must be set explicitly here rather than relying on inheritance.
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -177,6 +179,11 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  font-family: var(--sbx-font);
+
+  button, input, textarea, select {
+    font-family: inherit;
+  }
 }
 
 // Learning Path Course preview only — design's warm-tinted overlay.
