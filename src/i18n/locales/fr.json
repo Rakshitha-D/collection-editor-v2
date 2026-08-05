@@ -501,7 +501,7 @@
     "priorAssessmentPurposeLabel": "Établit la base de compétences",
     "outcomeAssessmentExplainerTitle": "Termine le parcours",
     "outcomeAssessmentExplainerBody": "Réussir ce questionnaire certifie l'acquisition de la compétence pour l'ensemble du parcours — son score est celui qui apparaît sur le certificat de l'apprenant.",
-    "outcomeAssessmentPurposeLabel": "Certifie l'acquisition de compétences",
+    "outcomeUnlocksHint": "Se débloque après le dernier niveau",
     "assessmentCourseSectionTitle": "Cours",
     "assessmentCourseSectionDescription": "Un seul cours dont le seul contenu est un questionnaire — aucun autre type de contenu n'a sa place ici.",
     "libraryOpenLevelToAdd": "Ouvrez un niveau pour ajouter",

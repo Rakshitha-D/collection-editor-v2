@@ -501,7 +501,7 @@
     "priorAssessmentPurposeLabel": "Define a linha de base de habilidades",
     "outcomeAssessmentExplainerTitle": "Encerra o percurso",
     "outcomeAssessmentExplainerBody": "Passar neste banco de questões certifica o ganho de habilidade de todo o percurso — sua pontuação é o que aparece no certificado do aprendiz.",
-    "outcomeAssessmentPurposeLabel": "Certifica o ganho de habilidade",
+    "outcomeUnlocksHint": "Desbloqueia após o último nível",
     "assessmentCourseSectionTitle": "Curso",
     "assessmentCourseSectionDescription": "Um único curso cujo único conteúdo é um banco de questões — nenhum outro tipo de conteúdo pertence aqui.",
     "libraryOpenLevelToAdd": "Abra um nível para adicionar",

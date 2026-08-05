@@ -193,7 +193,7 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         )}
         <div
           ref={titleRef}
-          className={styles.nodeTitle}
+          className={[styles.nodeTitle, isCurrentNodeRoot ? '' : styles.nodeTitleSub].filter(Boolean).join(' ')}
           contentEditable={editorMode === 'edit'}
           suppressContentEditableWarning
           onInput={handleTitleChange}

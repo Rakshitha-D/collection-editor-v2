@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Info, Award, Flag, Activity } from 'lucide-react';
+import { ArrowLeft, Info, Award, Flag, Activity, Lock } from 'lucide-react';
 import { useTreeStore } from '../../store/tree.store';
 import { useLabels } from '../../hooks/useLabels';
 import { useAssessmentSlots } from '../../hooks/useAssessmentSlots';
@@ -17,6 +17,10 @@ interface AssessmentDetailPanelProps {
 // activeAssessmentSlot fallback). Shows the linked course (or the "not added
 // yet" placeholder) inside a "Course" card, plus a slot-specific explainer of
 // why it exists (design: "Why this can't be skipped" / "Closes the path").
+//
+// The two pills are asymmetric by design, not a generic hint+purpose pair:
+// Prior shows [required, sets-the-baseline]; Outcome shows
+// [unlocks-after-last-level, confirms-outcome].
 export const AssessmentDetailPanel: React.FC<AssessmentDetailPanelProps> = ({ slot, isEditable }) => {
   const lbl = useLabels();
   const treeData = useTreeStore((s) => s.treeData);
@@ -26,9 +30,6 @@ export const AssessmentDetailPanel: React.FC<AssessmentDetailPanelProps> = ({ sl
   const isFilled = (slot === 'pre' ? pre : post).filled;
 
   const title = slot === 'pre' ? lbl.learningPath.priorAssessmentLabel : lbl.learningPath.outcomeAssessmentLabel;
-  const hint = slot === 'pre' ? lbl.learningPath.priorAssessmentHint : lbl.learningPath.outcomeAssessmentHint;
-  const purposeLabel = slot === 'pre' ? lbl.learningPath.priorAssessmentPurposeLabel : lbl.learningPath.outcomeAssessmentPurposeLabel;
-  const PurposeIcon = slot === 'pre' ? Activity : Award;
   const ExplainerIcon = slot === 'pre' ? Info : Award;
   const explainerTitle = slot === 'pre' ? lbl.learningPath.priorAssessmentExplainerTitle : lbl.learningPath.outcomeAssessmentExplainerTitle;
   const explainerBody = slot === 'pre' ? lbl.learningPath.priorAssessmentExplainerBody : lbl.learningPath.outcomeAssessmentExplainerBody;
@@ -43,17 +44,28 @@ export const AssessmentDetailPanel: React.FC<AssessmentDetailPanelProps> = ({ sl
         <ArrowLeft size={14} /> {lbl.learningPath.backToPathButton}
       </button>
 
-      <div className={styles.titleRow}>
-        <div className={styles.nodeTitle}>{title}</div>
-      </div>
+      <div className={styles.assessmentTitle}>{title}</div>
 
       <div className={styles.slotPills}>
-        <span className={`${styles.slotPill} ${styles.slotPillHint}`}>
-          <Flag size={12} /> {hint}
-        </span>
-        <span className={`${styles.slotPill} ${styles.slotPillPurpose}`}>
-          <PurposeIcon size={12} /> {purposeLabel}
-        </span>
+        {slot === 'pre' ? (
+          <>
+            <span className={`${styles.slotPill} ${styles.slotPillHint}`}>
+              <Flag size={12} /> {lbl.learningPath.priorAssessmentHint}
+            </span>
+            <span className={`${styles.slotPill} ${styles.slotPillPurpose}`}>
+              <Activity size={12} /> {lbl.learningPath.priorAssessmentPurposeLabel}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className={`${styles.slotPill} ${styles.slotPillWarning}`}>
+              <Lock size={12} /> {lbl.learningPath.outcomeUnlocksHint}
+            </span>
+            <span className={`${styles.slotPill} ${styles.slotPillPrimary}`}>
+              <Flag size={12} /> {lbl.learningPath.outcomeAssessmentHint}
+            </span>
+          </>
+        )}
       </div>
 
       <div className={styles.formArea}>

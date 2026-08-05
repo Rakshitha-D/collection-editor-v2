@@ -501,7 +501,7 @@
     "priorAssessmentPurposeLabel": "Sets the skill baseline",
     "outcomeAssessmentExplainerTitle": "Closes the path",
     "outcomeAssessmentExplainerBody": "Passing this question set is what certifies the skill gain for the whole path — its score is what appears on the learner's certificate.",
-    "outcomeAssessmentPurposeLabel": "Certifies the skill gain",
+    "outcomeUnlocksHint": "Unlocks after the last level",
     "assessmentCourseSectionTitle": "Course",
     "assessmentCourseSectionDescription": "A single course whose only content is a question set — no other content types belong here.",
     "libraryOpenLevelToAdd": "Open a level to add",

@@ -501,7 +501,7 @@
     "priorAssessmentPurposeLabel": "يحدد خط أساس المهارة",
     "outcomeAssessmentExplainerTitle": "يُغلق المسار",
     "outcomeAssessmentExplainerBody": "النجاح في بنك الأسئلة هذا هو ما يُصادق على اكتساب المهارة للمسار بأكمله — ودرجته هي ما تظهر في شهادة المتعلم.",
-    "outcomeAssessmentPurposeLabel": "يُصادق على اكتساب المهارة",
+    "outcomeUnlocksHint": "يُفتح بعد المستوى الأخير",
     "assessmentCourseSectionTitle": "المقرر",
     "assessmentCourseSectionDescription": "مقرر واحد يكون محتواه الوحيد بنك أسئلة — لا تنتمي هنا أي أنواع محتوى أخرى.",
     "libraryOpenLevelToAdd": "افتح مستوى للإضافة",

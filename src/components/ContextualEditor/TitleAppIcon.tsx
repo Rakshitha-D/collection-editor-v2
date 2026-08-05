@@ -42,7 +42,7 @@ export const TitleAppIcon: React.FC<TitleAppIconProps> = ({ nodeId, value, edita
           <img src={value} alt={lbl.titleAppIcon.appIconAlt} className={styles.iconImg} />
         ) : (
           <div className={styles.placeholder}>
-            <ImageIcon size={18} />
+            <ImageIcon size={24} />
           </div>
         )}
         {value && editable && (
