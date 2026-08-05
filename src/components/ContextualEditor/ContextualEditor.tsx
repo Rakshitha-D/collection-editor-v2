@@ -137,8 +137,8 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         >
           <ArrowLeft size={14} /> {lbl.learningPath.backToPathButton}
         </button>
-        <div className={styles.titleRow}>
-          <div className={styles.nodeTitle}>{selectedNode.name}</div>
+        <div className={[styles.titleRow, styles.titleRowLp].join(' ')}>
+          <div className={[styles.nodeTitle, styles.nodeTitleSub].join(' ')}>{selectedNode.name}</div>
         </div>
         <CourseDetailsPanel courseId={selectedNode.identifier} />
       </div>
@@ -183,7 +183,7 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
       )}
 
       {/* Title row: app icon (root only) + inline editable title */}
-      <div className={styles.titleRow}>
+      <div className={[styles.titleRow, isLearningPath ? styles.titleRowLp : ''].filter(Boolean).join(' ')}>
         {isCurrentNodeRoot && selectedNodeId && (
           <TitleAppIcon
             nodeId={selectedNodeId}
@@ -193,7 +193,11 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         )}
         <div
           ref={titleRef}
-          className={[styles.nodeTitle, isCurrentNodeRoot ? '' : styles.nodeTitleSub].filter(Boolean).join(' ')}
+          className={[
+            styles.nodeTitle,
+            isLearningPath && isCurrentNodeRoot ? styles.nodeTitleLpRoot : '',
+            isLearningPath && !isCurrentNodeRoot ? styles.nodeTitleSub : '',
+          ].filter(Boolean).join(' ')}
           contentEditable={editorMode === 'edit'}
           suppressContentEditableWarning
           onInput={handleTitleChange}

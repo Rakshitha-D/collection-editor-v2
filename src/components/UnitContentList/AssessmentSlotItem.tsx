@@ -36,7 +36,7 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
     return (
       <button
         type="button"
-        className={styles.addRow}
+        className={[styles.addRow, styles.addRowAssessment].join(' ')}
         disabled={!isEditable}
         onClick={() => setActiveAssessmentSlot(slot)}
       >

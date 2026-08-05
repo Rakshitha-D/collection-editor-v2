@@ -10,7 +10,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 18px;
-  border: 1px solid var(--sbx-gray-200);
+  border: none;
   border-radius: var(--sbx-r-md);
   background: #fff;
   text-align: left;
@@ -19,7 +19,8 @@
   transition: border-color 0.12s, background 0.12s;
 
   &:hover {
-    border-color: var(--sbx-primary);
+    border: none;
+    border-color: none;
   }
 
   &:disabled {
@@ -29,7 +30,7 @@
 }
 
 .cardActive {
-  border: 2px solid var(--sbx-primary);
+  border: none;
   background: color-mix(in srgb, var(--sbx-primary) 6%, white);
 }
 
