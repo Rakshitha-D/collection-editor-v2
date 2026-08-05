@@ -127,7 +127,9 @@ export async function readCourseHierarchy(
     `/action/course/v1/hierarchy/${courseId}`,
     { params: { mode: 'edit' } },
   );
-  const course = response.data?.result?.course as Record<string, unknown> | undefined;
+  // The course/v1/hierarchy endpoint nests the hierarchy under
+  // result.content (not result.course, despite the endpoint's name).
+  const course = response.data?.result?.content as Record<string, unknown> | undefined;
   if (!course || !course['identifier']) {
     const reason =
       (response.data?.params?.errmsg as string) ||
