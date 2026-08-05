@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildLpLibraryFilters } from './useLibrary';
+import { buildLpLibraryFilters, buildSearchFields } from './useLibrary';
+import { DEFAULT_SEARCH_FIELDS } from '../api/content';
 
 describe('buildLpLibraryFilters', () => {
   it('filling the pre/post slot searches Courses with no competency constraint', () => {
@@ -20,5 +21,19 @@ describe('buildLpLibraryFilters', () => {
 
   it('omits the skill filter key when the skill category has not resolved yet', () => {
     expect(buildLpLibraryFilters(null, ['Java'], undefined)).toEqual({ primaryCategory: ['Course'] });
+  });
+});
+
+describe('buildSearchFields', () => {
+  it('appends the resolved skill-category code for the LP profile', () => {
+    expect(buildSearchFields(true, 'skill')).toEqual([...DEFAULT_SEARCH_FIELDS, 'skill']);
+  });
+
+  it('leaves the default fields untouched for the Collection profile', () => {
+    expect(buildSearchFields(false, 'skill')).toBeUndefined();
+  });
+
+  it('leaves the default fields untouched when the skill category has not resolved yet', () => {
+    expect(buildSearchFields(true, undefined)).toBeUndefined();
   });
 });

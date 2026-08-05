@@ -4,7 +4,7 @@ import { useEditorStore } from '../store/editor.store';
 import { useTreeStore } from '../store/tree.store';
 import { useUiStore } from '../store/ui.store';
 import { useSkillCategory } from './useSkillCategory';
-import { compositeSearch } from '../api/content';
+import { compositeSearch, DEFAULT_SEARCH_FIELDS } from '../api/content';
 import { LIBRARY_PRIMARY_CATEGORIES } from '../types/content';
 import type { LibraryFilters } from '../components/LibraryDock/LibraryFilterPanel';
 
@@ -25,6 +25,22 @@ export function buildLpLibraryFilters(
     filters[skillCategoryCode] = selectedSkills;
   }
   return filters;
+}
+
+/**
+ * LP profile search fields: append the resolved skill-category code so each
+ * returned course carries its own skill tags in `metadata` — Skills
+ * covered, useSkillScope, and the publish-time "course has no skill tag"
+ * check all read that field off the linked course node, and it's otherwise
+ * absent from the default search field set (Collection profile leaves the
+ * default fields untouched).
+ */
+export function buildSearchFields(
+  competencyScoped: boolean,
+  skillCategoryCode: string | undefined,
+): string[] | undefined {
+  if (!competencyScoped || !skillCategoryCode) return undefined;
+  return [...DEFAULT_SEARCH_FIELDS, skillCategoryCode];
 }
 
 const PAGE_SIZE = 20;
@@ -120,6 +136,7 @@ export function useLibrary() {
           offset: currentOffset,
           channel: channel || undefined,
           sortBy: sortAZ ? { name: 'asc' } : { lastUpdatedOn: 'desc' },
+          fields: buildSearchFields(editorProfile.competencyScoped, skillCategory?.code),
         });
 
         if (reset) {
