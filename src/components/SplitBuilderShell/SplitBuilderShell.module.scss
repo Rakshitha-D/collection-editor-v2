@@ -83,6 +83,12 @@
   min-width: 0;
 }
 
+// Learning Path only (design) — white center panel, distinct from
+// Collection's light-gray editor background above.
+.editorLp {
+  background: var(--sbx-white);
+}
+
 .dock {
   border-left: 1px solid var(--sbx-gray-200);
   overflow: hidden;

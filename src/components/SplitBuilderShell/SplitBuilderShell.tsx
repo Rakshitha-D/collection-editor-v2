@@ -44,6 +44,7 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
 
   const { addResource, treeData } = useTreeStore();
   const setFormStatus = useEditorStore((s) => s.setFormStatus);
+  const isLearningPath = useEditorStore((s) => s.editorProfile.key === 'learningPath');
   // isFormValid: true while the current node's form hasn't been touched or is valid.
   const [isFormValid, setIsFormValid] = useState(true);
   const selectedNodeId = useTreeStore((s) => s.selectedNodeId);
@@ -202,7 +203,11 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
             </button>
           )}
 
-          <main className={styles.editor} role="main" aria-label={lbl.splitBuilderShell.editorAriaLabel}>
+          <main
+            className={[styles.editor, isLearningPath ? styles.editorLp : ''].filter(Boolean).join(' ')}
+            role="main"
+            aria-label={lbl.splitBuilderShell.editorAriaLabel}
+          >
             <ContextualEditor editorMode={editorMode} onToolbarEvent={handleToolbarEvent} />
           </main>
 
