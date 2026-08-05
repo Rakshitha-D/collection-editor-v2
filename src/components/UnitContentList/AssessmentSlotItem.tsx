@@ -40,10 +40,13 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
         disabled={!isEditable}
         onClick={() => setActiveAssessmentSlot(slot)}
       >
-        <Plus size={14} /> {lbl.learningPath.addAssessmentSlotButton.replace('{label}', label)}
+        <span className={styles.addRowIcon}><Plus size={16} /></span>
+        {lbl.learningPath.addAssessmentSlotButton.replace('{label}', label)}
       </button>
     );
   }
+
+  const badgeText = slot === 'pre' ? lbl.learningPath.skillCheckBadge : lbl.learningPath.outcomeCheckBadge;
 
   return (
     <div
@@ -52,11 +55,12 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
       tabIndex={0}
       onClick={() => info.level && selectNode(info.level.id)}
     >
-      <span className={styles.assessmentItemIcon}><BookOpen size={14} /></span>
+      <span className={styles.assessmentItemIcon}><BookOpen size={16} /></span>
       <div className={styles.assessmentItemInfo}>
         <span className={styles.assessmentItemTitle}>{info.courseName}</span>
-        <span className={styles.assessmentItemMeta}>{label}</span>
+        <span className={styles.assessmentItemMeta}>{label} · {lbl.learningPath.assessmentCourseMeta}</span>
       </div>
+      <span className={styles.assessmentItemBadge}>{badgeText}</span>
       {isEditable && (
         <div className={styles.menuWrap} ref={menuRef}>
           <button

@@ -156,26 +156,26 @@
 .assessmentItemRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--sbx-gray-200);
-  border-radius: var(--sbx-r-md);
+  gap: 14px;
+  padding: 14px 16px;
+  // Design: primary-tinted border/background (ginger + a 6% primary wash),
+  // not a neutral gray card — this row represents a *confirmed* linked
+  // question-set-only course, not a generic content row.
+  border: 1px solid var(--sbx-primary-hover);
+  background: color-mix(in srgb, var(--sbx-primary) 6%, white);
+  border-radius: 12px;
   cursor: pointer;
-
-  &:hover {
-    border-color: var(--sbx-primary);
-  }
 }
 
 .assessmentItemIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--sbx-r-sm);
-  background: var(--sbx-primary-light);
-  color: var(--sbx-primary);
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--sbx-primary);
+  color: white;
   flex-shrink: 0;
 }
 
@@ -189,7 +189,7 @@
 .assessmentItemTitle {
   font-size: 13px;
   font-weight: 500;
-  color: var(--sbx-gray-800);
+  color: var(--sbx-obsidian);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -198,6 +198,29 @@
 .assessmentItemMeta {
   font-size: 11px;
   color: var(--sbx-gray-500);
+}
+
+.addRowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--sbx-gray-100);
+  color: var(--sbx-gray-500);
+  flex-shrink: 0;
+}
+
+.assessmentItemBadge {
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border-radius: var(--sbx-r-pill);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sbx-primary);
+  border: 1px solid var(--sbx-primary);
+  background: color-mix(in srgb, var(--sbx-primary) 12%, white);
 }
 
 .menuWrap {
@@ -258,11 +281,11 @@
 .addRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
-  padding: 10px 16px;
-  border: 1.5px dashed var(--sbx-gray-300);
-  border-radius: var(--sbx-r-md);
+  padding: 16px;
+  border: 1.5px dashed var(--sbx-gray-200);
+  border-radius: 12px;
   background: none;
   cursor: pointer;
   font-size: 13px;

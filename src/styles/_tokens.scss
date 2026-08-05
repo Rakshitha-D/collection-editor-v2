@@ -33,6 +33,10 @@
     var(--sunbird-spark-theme-primary-s, 51.4%)
     96%
   );
+  // Named accent (ginger) — a distinct hue from primary, not a tint/shade of
+  // it, so it can't be derived via the hue-lock mechanism above; fixed like
+  // the other named-palette colours below.
+  --sbx-primary-hover: #CC8545;
   --sbx-ai: #7A5BFF;
 
   // ── Semantic (fallback hex = Sunbird Spark's named palette) ───────────────
