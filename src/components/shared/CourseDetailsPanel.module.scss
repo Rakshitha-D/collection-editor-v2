@@ -9,28 +9,102 @@
   color: var(--sbx-gray-500);
 }
 
-.courseUnitList {
+.unitsLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sbx-gray-500);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.unitList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: 10px;
 }
 
-.courseUnitRow {
+.unitCard {
+  border: 1px solid var(--sbx-gray-100);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.unitHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--sbx-gray-100);
-  border-radius: var(--sbx-r-md);
-  font-size: 13px;
-  color: var(--sbx-gray-700);
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--sbx-gray-400);
+  text-align: left;
 }
 
-.courseUnitTopics {
+.unitIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--sbx-gray-100);
+  color: var(--sbx-gray-500);
+  flex-shrink: 0;
+}
+
+.unitTitle {
+  flex: 1;
+  font-size: 14.5px;
+  color: var(--sbx-obsidian);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unitContents {
+  padding: 0 16px 14px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contentRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.contentIcon {
+  color: var(--sbx-gray-500);
+  flex-shrink: 0;
+}
+
+.contentTitle {
+  font-size: 13.5px;
+  color: var(--sbx-charcoal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contentSkills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
   margin-left: auto;
-  font-size: 11px;
-  color: var(--sbx-gray-400);
+}
+
+.skillPill {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 9px;
+  border-radius: var(--sbx-r-pill);
+  color: var(--sbx-primary);
+  border: 1px solid var(--sbx-primary);
+  background: color-mix(in srgb, var(--sbx-primary) 12%, white);
+  white-space: nowrap;
 }

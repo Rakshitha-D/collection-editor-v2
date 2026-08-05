@@ -491,6 +491,7 @@
     "courseDetailsLoading": "Loading course details…",
     "courseDetailsEmpty": "This course has no units yet.",
     "courseDetailsError": "Could not load course details.",
+    "unitsSectionLabel": "Units",
     "courseUnitTopicsLabel": "{count} topic",
     "courseUnitTopicsLabelPlural": "{count} topics",
     "verifyingAssessmentCourses": "Verifying assessment courses…",

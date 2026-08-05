@@ -1,12 +1,13 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, BookOpen, Plus } from 'lucide-react';
 import type { IContent } from '../../types/content';
 import type { EditorMode, INode } from '../../types/editor';
 import { ContentPlayer } from '../ContentPlayer';
 import { CourseDetailsPanel } from '../shared/CourseDetailsPanel';
 import { useLabels } from '../../hooks/useLabels';
 import { useEditorStore } from '../../store/editor.store';
+import { useLibraryTargetLabel } from '../../hooks/useLibraryTargetLabel';
 import styles from './LibraryPreviewPanel.module.scss';
 
 const QUESTIONSET_MIME = 'application/vnd.sunbird.questionset';
@@ -31,9 +32,13 @@ export const LibraryPreviewPanel: React.FC<LibraryPreviewPanelProps> = ({
   const lbl = useLabels();
   const isEditable = editorMode === 'edit';
   const competencyScoped = useEditorStore(s => s.editorProfile.competencyScoped);
+  const targetLabel = useLibraryTargetLabel();
   if (!content) return null;
 
   const isCourse = competencyScoped && content.primaryCategory === 'Course';
+  const meta = [content.organisation?.[0] ?? content.channel ?? '', content.primaryCategory ?? '']
+    .filter(Boolean)
+    .join(' • ');
 
   // Convert IContent to INode — ContentPlayer fetches full details by identifier
   const node: INode = {
@@ -52,17 +57,26 @@ export const LibraryPreviewPanel: React.FC<LibraryPreviewPanelProps> = ({
 
   return createPortal(
     <div
-      className={styles.modalOverlay}
+      className={[styles.modalOverlay, isCourse ? styles.modalOverlayCourse : ''].filter(Boolean).join(' ')}
       role="dialog"
       aria-modal="true"
       aria-label={lbl.libraryPreviewPanel.contentPreviewAriaLabel}
       onClick={onClose}
     >
-      <div className={styles.modalPanel} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
-          <span className={styles.title} title={content.name}>
-            {content.name}
-          </span>
+      <div
+        className={[styles.modalPanel, isCourse ? styles.modalPanelCourse : ''].filter(Boolean).join(' ')}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={[styles.header, isCourse ? styles.headerCourse : ''].filter(Boolean).join(' ')}>
+          {isCourse && (
+            <span className={styles.courseIcon}><BookOpen size={20} /></span>
+          )}
+          <div className={styles.titleGroup}>
+            <span className={styles.title} title={content.name}>
+              {content.name}
+            </span>
+            {isCourse && meta && <span className={styles.courseMeta}>{meta}</span>}
+          </div>
           <div className={styles.headerActions}>
             <button
               type="button"
@@ -90,14 +104,24 @@ export const LibraryPreviewPanel: React.FC<LibraryPreviewPanelProps> = ({
         </div>
 
         {isEditable && (
-          <div className={styles.footer}>
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={() => onAdd(content)}
-            >
-              {lbl.libraryPreviewPanel.addToUnitButton}
-            </button>
+          <div className={[styles.footer, isCourse ? styles.footerCourse : ''].filter(Boolean).join(' ')}>
+            {isCourse ? (
+              <button
+                type="button"
+                className={styles.addBtnCourse}
+                onClick={() => onAdd(content)}
+              >
+                <Plus size={15} /> {targetLabel ?? lbl.libraryPreviewPanel.addToUnitButton}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={styles.addBtn}
+                onClick={() => onAdd(content)}
+              >
+                {lbl.libraryPreviewPanel.addToUnitButton}
+              </button>
+            )}
           </div>
         )}
       </div>

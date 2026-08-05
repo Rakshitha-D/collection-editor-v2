@@ -4,6 +4,7 @@ import type { EditorMode } from '../../types/editor';
 import type { IContent } from '../../types/content';
 import { CT_FILTERS } from '../../types/content';
 import { useLibrary } from '../../hooks/useLibrary';
+import { useLibraryTargetLabel } from '../../hooks/useLibraryTargetLabel';
 import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
@@ -59,7 +60,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     activeAssessmentSlot,
   } = useLibrary();
 
-  const { addResource, selectedNodeId, treeData, getNodeById } = useTreeStore();
+  const { addResource, selectedNodeId, treeData } = useTreeStore();
   const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
   const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
   const isEditable = editorMode === 'edit';
@@ -67,18 +68,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
   // LP profile: the header shows where an "Add" click will land — "Open a
   // level to add" (root/nothing selected), "Add to {Level}" (a Level is
   // selected), or the slot-specific label while an assessment slot is armed.
-  const rootId = treeData[0]?.id;
-  const libraryTargetLabel = (() => {
-    if (!isLearningPath) return null;
-    if (activeAssessmentSlot === 'pre') return lbl.learningPath.libraryAddPriorAssessmentCourse;
-    if (activeAssessmentSlot === 'post') return lbl.learningPath.libraryAddOutcomeAssessmentCourse;
-    if (selectedNodeId && selectedNodeId !== rootId) {
-      const level = getNodeById(selectedNodeId);
-      const levelTitle = level?.name?.split(' • ')[0] ?? level?.name ?? '';
-      return lbl.learningPath.libraryAddToLevel.replace('{level}', levelTitle);
-    }
-    return lbl.learningPath.libraryOpenLevelToAdd;
-  })();
+  const libraryTargetLabel = useLibraryTargetLabel();
 
   // Panel state
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);

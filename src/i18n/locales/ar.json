@@ -491,6 +491,7 @@
     "courseDetailsLoading": "جارٍ تحميل تفاصيل المقرر…",
     "courseDetailsEmpty": "لا يحتوي هذا المقرر على وحدات بعد.",
     "courseDetailsError": "تعذر تحميل تفاصيل المقرر.",
+    "unitsSectionLabel": "الوحدات",
     "courseUnitTopicsLabel": "{count} موضوع",
     "courseUnitTopicsLabelPlural": "{count} مواضيع",
     "verifyingAssessmentCourses": "جارٍ التحقق من مقررات التقييم…",

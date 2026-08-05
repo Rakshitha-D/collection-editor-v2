@@ -491,6 +491,7 @@
     "courseDetailsLoading": "Chargement des détails du cours…",
     "courseDetailsEmpty": "Ce cours ne contient pas encore d'unités.",
     "courseDetailsError": "Impossible de charger les détails du cours.",
+    "unitsSectionLabel": "Unités",
     "courseUnitTopicsLabel": "{count} sujet",
     "courseUnitTopicsLabelPlural": "{count} sujets",
     "verifyingAssessmentCourses": "Vérification des cours d'évaluation…",

@@ -491,6 +491,7 @@
     "courseDetailsLoading": "Carregando detalhes do curso…",
     "courseDetailsEmpty": "Este curso ainda não tem unidades.",
     "courseDetailsError": "Não foi possível carregar os detalhes do curso.",
+    "unitsSectionLabel": "Unidades",
     "courseUnitTopicsLabel": "{count} tópico",
     "courseUnitTopicsLabelPlural": "{count} tópicos",
     "verifyingAssessmentCourses": "Verificando cursos de avaliação…",
