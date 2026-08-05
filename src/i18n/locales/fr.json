@@ -533,6 +533,8 @@
     "itemAlreadyInPathToast": "« {name} » fait déjà partie de ce parcours d'apprentissage",
     "addedToLevelSuccess": "« {name} » ajouté au niveau",
     "dropOntoLevelError": "Déposez sur un niveau pour ajouter un cours",
-    "dropOntoPathError": "Déposez les cours sur un niveau, pas directement sur le parcours d'apprentissage."
+    "dropOntoPathError": "Déposez les cours sur un niveau, pas directement sur le parcours d'apprentissage.",
+    "priorSlotFilledToast": "L'Évaluation préalable contient déjà un cours — retirez-le avant d'en ajouter un autre.",
+    "outcomeSlotFilledToast": "L'Évaluation finale contient déjà un cours — retirez-le avant d'en ajouter un autre."
   }
 }

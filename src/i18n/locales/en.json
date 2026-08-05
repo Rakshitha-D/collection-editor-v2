@@ -533,6 +533,8 @@
     "itemAlreadyInPathToast": "\"{name}\" is already in this learning path",
     "addedToLevelSuccess": "Added \"{name}\" to level",
     "dropOntoLevelError": "Drop onto a level to add a course",
-    "dropOntoPathError": "Drop courses onto a level, not directly on the learning path."
+    "dropOntoPathError": "Drop courses onto a level, not directly on the learning path.",
+    "priorSlotFilledToast": "The Prior Assessment already has a course — remove it before adding a different one.",
+    "outcomeSlotFilledToast": "The Outcome Assessment already has a course — remove it before adding a different one."
   }
 }

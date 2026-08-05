@@ -20,6 +20,7 @@ import { useEditorStore } from '../../store/editor.store';
 import { useSaveHierarchy } from '../../hooks/useSaveHierarchy';
 import { useToolbarActions } from '../../hooks/useToolbarActions';
 import { useLabels } from '../../hooks/useLabels';
+import { isAssessmentLevel } from '../../utils/lpStructure';
 import toast from 'react-hot-toast';
 import styles from './SplitBuilderShell.module.scss';
 
@@ -99,6 +100,15 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
       const targetNode = useTreeStore.getState().getNodeById(targetNodeId);
       if (!targetNode?.isFolder) {
         toast.error(dropOntoFolderError);
+        return;
+      }
+      // Dropping onto a filled pre/post slot: the store rejects it, but the
+      // author should hear "slot already has a course", not "already added".
+      if (isLearningPath && isAssessmentLevel(targetNode)) {
+        const preLevelId = treeData[0]?.children?.[0]?.id;
+        toast.error(targetNode.id === preLevelId
+          ? lbl.learningPath.priorSlotFilledToast
+          : lbl.learningPath.outcomeSlotFilledToast);
         return;
       }
       const added = addResource(item, targetNodeId);

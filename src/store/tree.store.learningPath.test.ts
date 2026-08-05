@@ -76,6 +76,26 @@ describe('tree.store (Learning Path) — assessment-slot auto-wrap', () => {
     expect(added).toBe(false);
     expect(useTreeStore.getState().treeData[0].children).toHaveLength(1);
   });
+
+  it('rejects filling an explicitly-requested slot that is already filled — never falls back to the other slot', () => {
+    useTreeStore.getState().addResource(course('c1'), 'root', { isAssessmentCourse: true, slot: 'pre' });
+    const added = useTreeStore.getState().addResource(course('c2'), 'root', { isAssessmentCourse: true, slot: 'pre' });
+    expect(added).toBe(false);
+    const root = useTreeStore.getState().treeData[0];
+    expect(root.children).toHaveLength(1); // c2 did NOT leak into the post slot
+    expect(root.children![0].children![0].id).toBe('c1');
+  });
+
+  it('fills the requested post slot even while the pre slot is still open', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    const added = useTreeStore.getState().addResource(course('c1'), 'root', { isAssessmentCourse: true, slot: 'post' });
+    expect(added).toBe(true);
+
+    const root = useTreeStore.getState().treeData[0];
+    expect(root.children).toHaveLength(2);
+    expect(root.children![0].id).toBe(levelId); // content Level untouched at index 0 — pre stays open
+    expect(root.children![1].children![0].id).toBe('c1'); // wrapped at the end (post)
+  });
 });
 
 describe('tree.store (Learning Path) — per-Level course caps (addResource)', () => {

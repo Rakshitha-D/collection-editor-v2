@@ -3,7 +3,7 @@ import type { INode } from '../types/editor';
 import type { IContent } from '../types/content';
 import { useEditorStore } from './editor.store';
 import { useUiStore } from './ui.store';
-import { canAddCourseToLevel, canReorderLevel, resolveOpenAssessmentSlot } from '../utils/lpStructure';
+import { canAddCourseToLevel, canReorderLevel, isAssessmentSlotFilled, resolveOpenAssessmentSlot } from '../utils/lpStructure';
 
 interface TreeState {
   treeData: INode[];
@@ -18,7 +18,7 @@ interface TreeState {
   addNode: (parentId: string, type: 'unit' | 'subunit') => string;
   deleteNode: (id: string) => void;
   reorderChildren: (parentId: string, fromIndex: number, toIndex: number) => void;
-  addResource: (content: IContent, nodeId: string, opts?: { isAssessmentCourse?: boolean }) => boolean;
+  addResource: (content: IContent, nodeId: string, opts?: { isAssessmentCourse?: boolean; slot?: 'pre' | 'post' }) => boolean;
   markDirty: () => void;
   getNodeById: (id: string) => INode | undefined;
   getChildrenOf: (id: string) => INode[];
@@ -324,8 +324,12 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       if (bfsFind(get().treeData, content.identifier)) return false; // duplicate guard
 
       const rootNode = get().treeData[0];
-      const slot = resolveOpenAssessmentSlot(rootNode?.children ?? []);
-      if (!slot) return false; // both pre and post slots are already filled
+      const levels = rootNode?.children ?? [];
+      // Honor the caller's armed slot when given: filling "post" must never
+      // land in an open pre slot, and a filled requested slot is a rejection,
+      // not a fallback to the other slot.
+      const slot = opts?.slot ?? resolveOpenAssessmentSlot(levels);
+      if (!slot || isAssessmentSlotFilled(levels, slot)) return false;
 
       const newLevelId = get().addNode(rootId, 'unit');
       if (!newLevelId) return false;

@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { checkAssessmentCourse } from '../../utils/lpStructure';
+import { checkAssessmentCourse, isAssessmentLevel, isAssessmentSlotFilled } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -84,9 +84,18 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
   // requires reading the course's own hierarchy (Phase 1), done here on
   // selection rather than filtering search results.
   const handleFillAssessmentSlot = useCallback(
-    async (item: IContent) => {
+    async (item: IContent, slot: 'pre' | 'post') => {
       const rootId = treeData[0]?.id;
       if (!rootId || checkingAssessmentCourseId) return;
+      // The slot stays armed while its detail page is open, so an add click
+      // can arrive for an already-filled slot — say so up front instead of
+      // running the question-set check and reporting the wrong problem.
+      if (isAssessmentSlotFilled(treeData[0]?.children ?? [], slot)) {
+        toast.error(slot === 'pre'
+          ? lbl.learningPath.priorSlotFilledToast
+          : lbl.learningPath.outcomeSlotFilledToast);
+        return;
+      }
       setCheckingAssessmentCourseId(item.identifier);
       try {
         const qualifies = await checkAssessmentCourse(item.identifier);
@@ -94,7 +103,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
           return;
         }
-        const added = addResource(item, rootId, { isAssessmentCourse: true });
+        const added = addResource(item, rootId, { isAssessmentCourse: true, slot });
         if (added === false) {
           toast.error(lbl.learningPath.bothSlotsFilledToast);
           return;
@@ -114,7 +123,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
   const handleAdd = useCallback(
     (item: IContent) => {
       if (activeAssessmentSlot) {
-        handleFillAssessmentSlot(item);
+        handleFillAssessmentSlot(item, activeAssessmentSlot);
         return;
       }
       if (!selectedNodeId) {
@@ -125,6 +134,21 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       const rootId = treeData[0]?.id;
       const selectedNode = useTreeStore.getState().getNodeById(selectedNodeId);
+      // A filled pre/post slot is selected as its wrapper Level (arming only
+      // happens while the slot is empty), so an add here must say "slot
+      // already has a course" — not fall through to the duplicate message.
+      if (isLearningPath) {
+        const levelNode = selectedNode?.isFolder
+          ? selectedNode
+          : (selectedNode?.parent ? useTreeStore.getState().getNodeById(selectedNode.parent) : undefined);
+        if (levelNode && isAssessmentLevel(levelNode)) {
+          const preLevelId = treeData[0]?.children?.[0]?.id;
+          toast.error(levelNode.id === preLevelId
+            ? lbl.learningPath.priorSlotFilledToast
+            : lbl.learningPath.outcomeSlotFilledToast);
+          return;
+        }
+      }
       // Root and leaf targets both need a unit/Level picked first — a course
       // can never receive children (LP rule: no course under a course).
       if (selectedNodeId === rootId || !selectedNode?.isFolder) {

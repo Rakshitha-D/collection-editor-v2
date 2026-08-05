@@ -108,6 +108,13 @@ export function getLevelDisplayInfo(
   return { role: 'level', levelNumber };
 }
 
+/** Whether the pre (index 0) / post (last index) assessment slot already
+ *  wraps an assessment course, given root's current Level children. */
+export function isAssessmentSlotFilled(levels: INode[], slot: 'pre' | 'post'): boolean {
+  if (slot === 'pre') return levels.length > 0 && isAssessmentLevel(levels[0]);
+  return levels.length > 1 && isAssessmentLevel(levels[levels.length - 1]);
+}
+
 /**
  * Which pre/post assessment slot (if any) is open to receive a newly-linked
  * assessment course, given root's current Level children. Pre is checked
@@ -116,10 +123,8 @@ export function getLevelDisplayInfo(
  * slots are already wrapping an assessment course.
  */
 export function resolveOpenAssessmentSlot(levels: INode[]): 'pre' | 'post' | null {
-  const preFilled = levels.length > 0 && isAssessmentLevel(levels[0]);
-  if (!preFilled) return 'pre';
-  const postFilled = levels.length > 1 && isAssessmentLevel(levels[levels.length - 1]);
-  if (!postFilled) return 'post';
+  if (!isAssessmentSlotFilled(levels, 'pre')) return 'pre';
+  if (!isAssessmentSlotFilled(levels, 'post')) return 'post';
   return null;
 }
 
