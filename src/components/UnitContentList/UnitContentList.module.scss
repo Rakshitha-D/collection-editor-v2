@@ -57,7 +57,7 @@
   flex-direction: column;
   gap: 8px;
   padding-bottom: 12px;
-  background: white;
+  background: var(--sbx-white);
   padding: 24px;
   border-radius: var(--sbx-r-md);
 }
@@ -146,7 +146,7 @@
   flex-direction: column;
   gap: 8px;
   padding-bottom: 12px;
-  background-color: white;
+  background-color: var(--sbx-white);
   padding: 24px;
   border-radius: var(--sbx-r-md);
 }
@@ -166,7 +166,7 @@
   // not a neutral gray card — this row represents a *confirmed* linked
   // question-set-only course, not a generic content row.
   border: 1px solid var(--sbx-primary-hover);
-  background: color-mix(in srgb, var(--sbx-primary) 6%, white);
+  background: color-mix(in srgb, var(--sbx-primary) 6%, var(--sbx-white));
   border-radius: 12px;
   cursor: pointer;
 }
@@ -179,7 +179,7 @@
   height: 34px;
   border-radius: 9px;
   background: var(--sbx-primary);
-  color: white;
+  color: var(--sbx-white);
   flex-shrink: 0;
 }
 
@@ -224,7 +224,7 @@
   font-weight: 500;
   color: var(--sbx-primary);
   border: 1px solid var(--sbx-primary);
-  background: color-mix(in srgb, var(--sbx-primary) 12%, white);
+  background: color-mix(in srgb, var(--sbx-primary) 12%, var(--sbx-white));
 }
 
 .menuWrap {
@@ -251,7 +251,7 @@
   right: 0;
   top: 100%;
   z-index: 100;
-  background: white;
+  background: var(--sbx-white);
   border: 1px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-3);

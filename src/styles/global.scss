@@ -33,13 +33,13 @@
     // the same height and baseline-aligned.
     border: 1.5px solid var(--sbx-primary);
     background: var(--sbx-primary);
-    color: white;
+    color: var(--sbx-white);
   }
 
   &.outline {
     border: 1.5px solid var(--sbx-gray-300);
     color: var(--sbx-gray-700);
-    background: white;
+    background: var(--sbx-white);
   }
 
   &.outline:hover,
@@ -70,7 +70,7 @@
 
 // Card
 .sbx-card {
-  background: white;
+  background: var(--sbx-white);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-1);
 }
@@ -100,7 +100,7 @@
 .sbx-btn-primary {
   @extend .sbx-btn;
   background: var(--sbx-primary);
-  color: white;
+  color: var(--sbx-white);
 
   &:hover:not(:disabled) {
     background: var(--sbx-primary-dark);
@@ -127,7 +127,7 @@
 
   &:hover:not(:disabled) {
     background: var(--sbx-error);
-    color: white;
+    color: var(--sbx-white);
   }
 }
 

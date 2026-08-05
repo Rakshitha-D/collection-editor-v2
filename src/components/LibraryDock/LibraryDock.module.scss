@@ -101,7 +101,7 @@
   height: 32px;
   border: 1.5px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-btn);
-  background: white;
+  background: var(--sbx-white);
   color: var(--sbx-gray-600);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
@@ -127,7 +127,7 @@
   padding: 0 4px;
   border-radius: 8px;
   background: var(--sbx-primary);
-  color: white;
+  color: var(--sbx-white);
   font-size: 10px;
   font-weight: 700;
   display: flex;
@@ -164,7 +164,7 @@
   z-index: 20;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--sbx-white);
 }
 
 .cardList {

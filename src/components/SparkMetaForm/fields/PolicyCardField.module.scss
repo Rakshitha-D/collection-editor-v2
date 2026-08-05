@@ -12,7 +12,7 @@
   padding: 18px;
   border: none;
   border-radius: var(--sbx-r-md);
-  background: #fff;
+  background: var(--sbx-white);
   text-align: left;
   cursor: pointer;
   position: relative;
@@ -31,7 +31,7 @@
 
 .cardActive {
   border: none;
-  background: color-mix(in srgb, var(--sbx-primary) 6%, white);
+  background: color-mix(in srgb, var(--sbx-primary) 6%, var(--sbx-white));
 }
 
 // Icon chip color is fixed per-card (design), not selection-dependent.
@@ -42,7 +42,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--sbx-r-sm);
-  color: #fff;
+  color: var(--sbx-white);
   margin-bottom: 6px;
 }
 

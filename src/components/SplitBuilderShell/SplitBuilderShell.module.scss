@@ -48,7 +48,7 @@
   border-radius: 0 var(--sbx-r-sm) var(--sbx-r-sm) 0;
   border: 1px solid var(--sbx-gray-200);
   border-left: none;
-  background: white;
+  background: var(--sbx-white);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -66,7 +66,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--sbx-white);
   transition: width 0.2s;
 }
 
@@ -88,7 +88,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--sbx-white);
   transition: width 0.2s;
 }
 
@@ -110,7 +110,7 @@
   border-radius: var(--sbx-r-sm) 0 0 var(--sbx-r-sm);
   border: 1px solid var(--sbx-gray-200);
   border-right: none;
-  background: white;
+  background: var(--sbx-white);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -125,7 +125,7 @@
 
 .dragChip {
   background: var(--sbx-primary);
-  color: white;
+  color: var(--sbx-white);
   border-radius: var(--sbx-r-xl);
   padding: 6px 14px;
   font-size: 13px;

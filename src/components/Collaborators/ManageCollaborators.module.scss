@@ -1,7 +1,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--sbx-white);
   border-radius: var(--sbx-r-lg);
   box-shadow: var(--sbx-shadow-3);
   width: 520px;
@@ -110,7 +110,7 @@
   border: 1.5px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-sm);
   overflow: hidden;
-  background: white;
+  background: var(--sbx-white);
   box-shadow: var(--sbx-shadow-2);
   max-height: 200px;
   overflow-y: auto;
@@ -198,7 +198,7 @@
   padding: 0 6px;
   border-radius: 10px;
   background: var(--sbx-primary);
-  color: white;
+  color: var(--sbx-white);
   font-size: 11px;
   font-weight: 700;
 }

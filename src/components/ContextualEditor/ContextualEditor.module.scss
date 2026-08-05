@@ -58,12 +58,12 @@
 .slotPillPrimary {
   color: var(--sbx-primary);
   border-color: var(--sbx-primary);
-  background: color-mix(in srgb, var(--sbx-primary) 12%, white);
+  background: color-mix(in srgb, var(--sbx-primary) 12%, var(--sbx-white));
 }
 
 .courseCard {
   padding: 24px;
-  background: #fff;
+  background: var(--sbx-white);
   border: 1px solid var(--sbx-gray-100);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-1);
@@ -95,7 +95,7 @@
 .assessmentExplainer {
   padding: 18px 20px;
   border: 1px solid var(--sbx-primary);
-  background: color-mix(in srgb, var(--sbx-primary) 6%, white);
+  background: color-mix(in srgb, var(--sbx-primary) 6%, var(--sbx-white));
   border-radius: var(--sbx-r-md);
   max-width: 920px;
 
@@ -134,7 +134,7 @@
   // ContentEditForm at natural height in the scroll flow
   > *:last-child {
     flex: 0 0 auto;
-    background: #fff;
+    background: var(--sbx-white);
   }
 }
 
@@ -246,7 +246,7 @@
   font-size: 12px;
   border: 1px solid var(--sbx-gray-300, #d9d9d9);
   border-radius: 4px;
-  background: #fff;
+  background: var(--sbx-white);
   cursor: pointer;
   &:hover { border-color: var(--sbx-primary, #1890ff); color: var(--sbx-primary, #1890ff); }
 }
@@ -262,7 +262,7 @@
   padding: 6px 14px;
   border: 1px solid var(--sbx-gray-300, #d9d9d9);
   border-radius: 4px;
-  background: #fff;
+  background: var(--sbx-white);
   cursor: pointer;
   &:hover { border-color: var(--sbx-primary, #1890ff); color: var(--sbx-primary, #1890ff); }
 }

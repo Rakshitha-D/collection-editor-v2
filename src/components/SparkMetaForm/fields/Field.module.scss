@@ -26,7 +26,7 @@
   font-family: var(--sbx-font);
   outline: none;
   transition: border-color 0.15s;
-  background: white;
+  background: var(--sbx-white);
   &:focus { border-color: var(--sbx-primary); }
   &:disabled { background: var(--sbx-gray-50); color: var(--sbx-gray-400); cursor: not-allowed; }
 }
@@ -45,7 +45,7 @@
   padding: 8px 12px;
   border: 1.5px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-sm);
-  background: white;
+  background: var(--sbx-white);
   cursor: pointer;
   font-size: 14px;
   font-family: var(--sbx-font);
@@ -65,7 +65,7 @@
   top: 100%;
   left: 0; right: 0;
   z-index: 200;
-  background: white;
+  background: var(--sbx-white);
   border: 1px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-3);
@@ -92,7 +92,7 @@
   border: 1.5px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-sm);
   min-height: 40px;
-  background: white;
+  background: var(--sbx-white);
 }
 
 .chipInput {
@@ -171,7 +171,7 @@
   flex-shrink: 0;
   padding: 8px 14px;
   background: var(--sbx-primary);
-  color: white;
+  color: var(--sbx-white);
   border: none;
   border-radius: var(--sbx-r-sm);
   font-size: 13px;

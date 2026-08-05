@@ -86,7 +86,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--sbx-white);
   font-size: 10px;
 }
 
@@ -98,7 +98,7 @@
 // Root (Book) and Unit/Sub-Unit (Folder) icons — neutral accent.
 .folderIcon {
   background: var(--sbx-primary, #2563eb);
-  color: white;
+  color: var(--sbx-white);
 }
 
 // Learning Path root row's icon square is larger than a regular
@@ -191,7 +191,7 @@
   right: 0;
   top: 100%;
   z-index: 100;
-  background: white;
+  background: var(--sbx-white);
   border: 1px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-3);
