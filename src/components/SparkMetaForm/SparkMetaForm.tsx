@@ -307,8 +307,14 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
     // LP root's consumption-policy field gets the design's 3-card selector
     // instead of a plain dropdown, regardless of the category definition's
     // declared inputType (select) — same special-casing pattern as dialcodes.
+    // Wrapped to span the full width of its 2-col section grid (design: the
+    // 3 cards sit in one row, never squeezed into a half-width cell).
     if (field.code === 'policy') {
-      return <PolicyCardField {...commonProps} />;
+      return (
+        <div key={field.code} className={styles.fullWidthField}>
+          <PolicyCardField {...commonProps} />
+        </div>
+      );
     }
     switch (field.inputType) {
       case 'textarea':

@@ -12,6 +12,13 @@
   @media (max-width: 700px) { grid-template-columns: 1fr; }
 }
 
+// Fields that must span the full width of their 2-col section/ungrouped
+// grid (e.g. PolicyCardField's 3-card row) rather than being squeezed into
+// a single half-width cell.
+.fullWidthField {
+  grid-column: 1 / -1;
+}
+
 .noFields {
   color: var(--sbx-gray-400);
   font-size: 13px;
