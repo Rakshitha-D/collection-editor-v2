@@ -26,10 +26,11 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
   const children = selectedNodeId ? getChildrenOf(selectedNodeId) : [];
   const isEditable = editorMode === 'edit';
   const selectedNode = selectedNodeId ? getNodeById(selectedNodeId) : undefined;
+  const isLearningPath = editorProfile.competencyScoped;
   // Assessment Levels (pre/post/level-assessment) hold exactly one course
   // whose own skill tags apply — no manual skill picker for them.
-  const isLpLevel = editorProfile.competencyScoped && !isRoot && !isAssessmentLevel(selectedNode);
-  const isLpRoot = editorProfile.competencyScoped && isRoot;
+  const isLpLevel = isLearningPath && !isRoot && !isAssessmentLevel(selectedNode);
+  const isLpRoot = isLearningPath && isRoot;
 
   const { scope, source } = useSkillScope();
   const skillCategory = useSkillCategory();
@@ -110,7 +111,10 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
         />
       )}
 
-      {!isLpRoot && (
+      {/* "Content in this Unit" is a Collection-only concept — the design's
+          Level detail page never had a raw content list; a Level's Courses
+          are managed via the tree and the Skills card above, not here. */}
+      {!isLearningPath && (
         <>
           <div className={styles.header}>
             <span className={styles.heading}>{lbl.unitContentList.heading}</span>
