@@ -21,7 +21,7 @@
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
-  border-radius: var(--sbx-r-xl);
+  border-radius: var(--sbx-r-pill);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -80,11 +80,11 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  border-radius: var(--sbx-r-md);
+  height: 42px;
+  border-radius: var(--sbx-r-btn);
   padding: 0 18px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
   border: none;
   transition: all 0.15s;
@@ -101,6 +101,7 @@
   @extend .sbx-btn;
   background: var(--sbx-primary);
   color: white;
+  box-shadow: var(--sbx-shadow-1);
 
   &:hover:not(:disabled) {
     background: var(--sbx-primary-dark);
@@ -110,8 +111,8 @@
 .sbx-btn-ghost {
   @extend .sbx-btn;
   background: transparent;
-  color: var(--sbx-gray-700);
-  border: 1.5px solid var(--sbx-gray-300);
+  color: var(--sbx-gray-900);
+  border: 1px solid var(--sbx-gray-200);
 
   &:hover:not(:disabled) {
     border-color: var(--sbx-primary);
