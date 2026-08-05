@@ -225,6 +225,9 @@
 }
 .formArea { margin-bottom: 24px; }
 .contentListArea { padding-top: 20px; }
+// Learning Path only — the Skills/Assessments cards below the form sit
+// flush against it (no extra gap), unlike Collection's content list.
+.contentListAreaLp { padding-top: 0; }
 .dropZone { position: absolute; inset: 0; z-index: 5; border-radius: 0; }
 
 // Review comment banner

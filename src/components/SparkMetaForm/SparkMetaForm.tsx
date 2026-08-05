@@ -46,6 +46,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
   const lbl = useLabels();
   const config = useEditorStore(s => s.editorConfig);
   const editorProfile = useEditorStore(s => s.editorProfile);
+  const isLearningPath = editorProfile.key === 'learningPath';
   const rootFormConfig = useEditorStore(s => s.rootFormConfig);
   const unitFormConfig = useEditorStore(s => s.unitFormConfig);
   const categoryMeta = useEditorStore(s => s.categoryMeta);
@@ -348,7 +349,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
 
   return (
     <FormProvider {...form}>
-      <div className={styles.form}>
+      <div className={[styles.form, isLearningPath ? styles.formLp : ''].filter(Boolean).join(' ')}>
         {sectionGroups.map((group, idx) => {
           const display = group.section ? SECTION_DISPLAY[group.section] : undefined;
           if (display) {
@@ -360,7 +361,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
           }
           // Fields with no known section: render flat inside an unstyled wrapper
           return (
-            <div key={idx} className={styles.ungrouped}>
+            <div key={idx} className={[styles.ungrouped, isLearningPath ? styles.ungroupedLp : ''].filter(Boolean).join(' ')}>
               {group.fields.map(renderField)}
             </div>
           );

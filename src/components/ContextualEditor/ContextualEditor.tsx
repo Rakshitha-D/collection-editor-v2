@@ -265,7 +265,7 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
 
       {/* Content list — for folder nodes (both root and non-root units) */}
       {(isCurrentNodeFolder || isCurrentNodeRoot) && activeTab === 'details' && (
-        <div className={styles.contentListArea}>
+        <div className={[styles.contentListArea, isLearningPath ? styles.contentListAreaLp : ''].filter(Boolean).join(' ')}>
           <UnitContentList editorMode={editorMode} isRoot={isCurrentNodeRoot} />
         </div>
       )}
