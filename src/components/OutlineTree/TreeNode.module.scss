@@ -1,7 +1,7 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   padding: 0 8px;
   cursor: pointer;
   border-radius: var(--sbx-r-sm);
@@ -23,6 +23,11 @@
   }
 }
 
+// Learning Path only — design uses a wider row gap.
+.rowLp {
+  gap: 10px;
+}
+
 .selected {
   background: var(--sbx-primary-light);
   border-left: 3px solid var(--sbx-primary);
@@ -30,8 +35,13 @@
 
   .title {
     color: var(--sbx-primary);
-    font-weight: 700;
+    font-weight: 600;
   }
+}
+
+// Learning Path only — design uses a bolder selected-row title.
+.rowLp.selected .title {
+  font-weight: 700;
 }
 
 .dropTarget {
@@ -72,12 +82,17 @@
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--sbx-r-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 10px;
+}
+
+// Learning Path only — design uses a slightly larger icon-square radius.
+.ctIconLp {
+  border-radius: 6px;
 }
 
 // Root (Book) and Unit/Sub-Unit (Folder) icons — neutral accent.
@@ -86,7 +101,8 @@
   color: white;
 }
 
-// Root row's icon square is larger than a regular folder/leaf chip (design).
+// Learning Path root row's icon square is larger than a regular
+// folder/leaf chip (design). Collection's root icon is unaffected.
 .rootIcon {
   width: 30px;
   height: 30px;
@@ -112,10 +128,15 @@
   flex: 1;
   min-width: 0;
   font-size: 13px;
-  color: var(--sbx-charcoal);
+  color: var(--sbx-gray-700);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// Learning Path only — design uses a warmer near-black body text color.
+.titleLp {
+  color: var(--sbx-charcoal);
 }
 
 .levelTitle {

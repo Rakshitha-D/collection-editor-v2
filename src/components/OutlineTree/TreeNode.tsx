@@ -113,6 +113,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
     <div
       className={[
         styles.row,
+        isLearningPath ? styles.rowLp : '',
         isSelected ? styles.selected : '',
         (node.state as unknown as Record<string, boolean>).isOver && isFolder ? styles.dropTarget : '',
       ]
@@ -155,11 +156,12 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
           className={[
             styles.ctIcon,
             isRoot || isFolder ? styles.folderIcon : ctStyle.bgClass,
-            isRoot ? styles.rootIcon : '',
+            isLearningPath ? styles.ctIconLp : '',
+            isRoot && isLearningPath ? styles.rootIcon : '',
           ].filter(Boolean).join(' ')}
           aria-hidden="true"
         >
-          <NodeIcon size={isRoot ? 15 : 12} />
+          <NodeIcon size={isRoot && isLearningPath ? 15 : 12} />
         </span>
       )}
 
@@ -176,7 +178,11 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
         />
       ) : (
         <span
-          className={[styles.title, isRegularLpLevel ? styles.levelTitle : ''].join(' ')}
+          className={[
+            styles.title,
+            isLearningPath ? styles.titleLp : '',
+            isRegularLpLevel ? styles.levelTitle : '',
+          ].filter(Boolean).join(' ')}
           title={node.data.name}
           onDoubleClick={() => isEditable && setIsRenaming(true)}
         >
