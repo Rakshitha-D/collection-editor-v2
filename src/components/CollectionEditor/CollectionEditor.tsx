@@ -71,6 +71,7 @@ function CollectionEditorInner(props: CollectionEditorInnerProps) {
     onError: props.onError,
   });
   const editorMode = useEditorStore((s) => s.editorMode);
+  const editorProfile = useEditorStore((s) => s.editorProfile);
 
   if (isLoading) {
     return (
@@ -90,8 +91,14 @@ function CollectionEditorInner(props: CollectionEditorInnerProps) {
     );
   }
 
+  // sbx-lp-profile scopes global.scss's Learning Path-only style overrides
+  // (buttons, chips, etc.) so they don't bleed into Collection/Course.
   return (
-    <div className={`sb-split-builder ${styles.root}`}>
+    <div className={[
+      'sb-split-builder',
+      styles.root,
+      editorProfile.key === 'learningPath' ? 'sbx-lp-profile' : '',
+    ].filter(Boolean).join(' ')}>
       <SplitBuilderShell
         editorMode={editorMode}
         onToolbarEvent={props.onToolbarEvent}
