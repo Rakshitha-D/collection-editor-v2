@@ -530,6 +530,7 @@
     "policyPriorLearningDescription": "Os avanços também podem se basear em habilidades que o aprendiz já possui — um certificado verificado ou curso anterior — não apenas na avaliação.",
     "selectLevelFirstToast": "Selecione um nível primeiro",
     "selectLevelFromOutlineToast": "Abra um nível na estrutura da trilha para adicionar cursos — cursos não podem ser adicionados à própria trilha nem dentro de outro curso.",
+    "selectCurriculumFirstToast": "Selecione um Currículo para esta trilha antes de adicionar cursos.",
     "itemAlreadyInPathToast": "\"{name}\" já está nesta trilha de aprendizagem",
     "addedToLevelSuccess": "\"{name}\" adicionado ao nível",
     "dropOntoLevelError": "Solte sobre um nível para adicionar um curso",

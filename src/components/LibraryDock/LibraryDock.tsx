@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { getAssessmentCourseInfo, isAssessmentLevel, isAssessmentSlotFilled } from '../../utils/lpStructure';
+import { getAssessmentCourseInfo, hasExplicitCurriculum, isAssessmentLevel, isAssessmentSlotFilled } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -60,7 +60,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     activeAssessmentSlot,
   } = useLibrary();
 
-  const { addResource, selectedNodeId, treeData } = useTreeStore();
+  const { addResource, selectedNodeId, treeData, treeCache } = useTreeStore();
   const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
   const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
   const isEditable = editorMode === 'edit';
@@ -126,6 +126,13 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
 
   const handleAdd = useCallback(
     (item: IContent) => {
+      // Every course carries a skill tag under its OWN framework — with no
+      // Curriculum chosen yet, the path has nothing to check that tag
+      // against, and the course would just get pruned the moment one is set.
+      if (isLearningPath && !hasExplicitCurriculum(treeData[0], treeCache)) {
+        toast.error(lbl.learningPath.selectCurriculumFirstToast);
+        return;
+      }
       if (activeAssessmentSlot) {
         handleFillAssessmentSlot(item, activeAssessmentSlot);
         return;
@@ -173,7 +180,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
     },
-    [activeAssessmentSlot, handleFillAssessmentSlot, selectedNodeId, addResource, treeData, lbl, isLearningPath],
+    [activeAssessmentSlot, handleFillAssessmentSlot, selectedNodeId, addResource, treeData, treeCache, lbl, isLearningPath],
   );
 
   const handleApplyFilters = useCallback(

@@ -530,6 +530,7 @@
     "policyPriorLearningDescription": "Skips can also draw on skills the learner already holds — a verified certificate or prior course — not the assessment alone.",
     "selectLevelFirstToast": "Select a level first",
     "selectLevelFromOutlineToast": "Open a level in the path structure to add courses — courses cannot be added to the path itself or under another course.",
+    "selectCurriculumFirstToast": "Select a Curriculum for this path before adding courses.",
     "itemAlreadyInPathToast": "\"{name}\" is already in this learning path",
     "addedToLevelSuccess": "Added \"{name}\" to level",
     "dropOntoLevelError": "Drop onto a level to add a course",

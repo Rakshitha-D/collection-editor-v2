@@ -11,6 +11,7 @@ import {
   resolveOpenAssessmentSlot,
   canReorderLevel,
   canAddCourseToLevel,
+  hasExplicitCurriculum,
   computeSkillsCovered,
   computePathShape,
   validateLearningPathStructure,
@@ -301,6 +302,27 @@ describe('canAddCourseToLevel', () => {
   it('allows the first course into a brand-new empty Level regardless of flag', () => {
     expect(canAddCourseToLevel(level({ children: [] }), true)).toBe(true);
     expect(canAddCourseToLevel(level({ children: [] }), false)).toBe(true);
+  });
+});
+
+describe('hasExplicitCurriculum', () => {
+  it('is false with no root', () => {
+    expect(hasExplicitCurriculum(undefined, {})).toBe(false);
+  });
+
+  it('is false when neither the root metadata nor treeCache has a framework', () => {
+    const root = level({ id: 'root' });
+    expect(hasExplicitCurriculum(root, {})).toBe(false);
+  });
+
+  it('is true once treeCache has the live-edited framework (before a save round-trips it)', () => {
+    const root = level({ id: 'root' });
+    expect(hasExplicitCurriculum(root, { root: { framework: 'NCF' } })).toBe(true);
+  });
+
+  it('is true once the root metadata has a saved framework', () => {
+    const root = level({ id: 'root', metadata: { framework: 'NCF' } });
+    expect(hasExplicitCurriculum(root, {})).toBe(true);
   });
 });
 

@@ -530,6 +530,7 @@
     "policyPriorLearningDescription": "Les sauts peuvent aussi s'appuyer sur des compétences déjà détenues par l'apprenant — un certificat vérifié ou un cours antérieur — pas seulement l'évaluation.",
     "selectLevelFirstToast": "Sélectionnez d'abord un niveau",
     "selectLevelFromOutlineToast": "Ouvrez un niveau dans la structure du parcours pour ajouter des cours — les cours ne peuvent pas être ajoutés au parcours lui-même ni sous un autre cours.",
+    "selectCurriculumFirstToast": "Sélectionnez un programme (Curriculum) pour ce parcours avant d'ajouter des cours.",
     "itemAlreadyInPathToast": "« {name} » fait déjà partie de ce parcours d'apprentissage",
     "addedToLevelSuccess": "« {name} » ajouté au niveau",
     "dropOntoLevelError": "Déposez sur un niveau pour ajouter un cours",

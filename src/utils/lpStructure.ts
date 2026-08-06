@@ -234,6 +234,25 @@ function toStringArray(value: unknown): string[] {
 }
 
 /**
+ * Whether the LP root has an explicitly-chosen Curriculum (framework) — from
+ * a prior save or the current session's Curriculum field, checked via
+ * treeCache first since a live edit lands there before a save round-trips
+ * it into root.metadata. Deliberately NOT the same as useLibrary's
+ * lpFrameworkId, which also resolves the channel/context default so the
+ * Library has something to filter by before the author has chosen
+ * anything — that fallback must not be mistaken for a real choice, or
+ * courses linked under it get pruned the moment a real Curriculum is set.
+ */
+export function hasExplicitCurriculum(
+  root: INode | undefined,
+  treeCache: Record<string, Record<string, unknown>>,
+): boolean {
+  if (!root) return false;
+  const cached = treeCache[root.id]?.['framework'];
+  return !!(cached ?? root.metadata?.['framework']);
+}
+
+/**
  * "Skills covered" (root summary, Phase 4): the union of skills tagged
  * across the Prior Assessment, each Level's *selected* skills, and the
  * Outcome Assessment — never skills scraped from linked courses' content.
