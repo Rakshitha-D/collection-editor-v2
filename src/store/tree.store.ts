@@ -3,7 +3,8 @@ import type { INode } from '../types/editor';
 import type { IContent } from '../types/content';
 import { useEditorStore } from './editor.store';
 import { useUiStore } from './ui.store';
-import { canAddCourseToLevel, canReorderLevel, isAssessmentSlotFilled, resolveOpenAssessmentSlot } from '../utils/lpStructure';
+import { useI18nStore } from './i18n.store';
+import { canAddCourseToLevel, canReorderLevel, isAssessmentLevel, isAssessmentSlotFilled, resolveOpenAssessmentSlot } from '../utils/lpStructure';
 
 interface TreeState {
   treeData: INode[];
@@ -25,6 +26,9 @@ interface TreeState {
   getBreadcrumb: (id: string) => Array<{ id: string; name: string }>;
   moveNode: (nodeId: string, fromParentId: string, toParentId: string) => void;
   replaceNodeIds: (identifiers: Record<string, string>) => void;
+  /** LP: drop linked courses tagged under a different framework than the
+   *  root's newly-selected curriculum. Returns how many were removed. */
+  pruneCoursesByFramework: (frameworkId: string) => number;
 }
 
 // BFS through treeData to find a node by id
@@ -55,6 +59,9 @@ function getNodeDepth(nodes: INode[], targetId: string, depth = 0): number {
 const METADATA_MIRROR_FIELDS = new Set([
   'name', 'appIcon', 'description', 'keywords', 'trackable',
   'qrCodeProcessId', 'reservedDialcodes',
+  // LP Level skills — must live flat in treeCache so buildSavePayload
+  // persists them as a real `competencies` field, not nested under 'metadata'.
+  'competencies',
 ]);
 
 function deepMergeNode(nodes: INode[], id: string, patch: Record<string, unknown>): INode[] {
@@ -210,6 +217,15 @@ export const useTreeStore = create<TreeState>((set, get) => ({
         [id]: { ...(state.treeCache[id] ?? {}), ...patch },
       },
     }));
+    // Keep activeNodeMeta live for the edited node — controlled inputs (e.g.
+    // the LP SkillPicker) read their value from it, so a stale snapshot would
+    // swallow every edit after the first until the node is re-selected.
+    if (get().selectedNodeId === id) {
+      const node = bfsFind(get().treeData, id);
+      set((state) => ({
+        activeNodeMeta: { ...(node?.metadata ?? {}), ...(state.treeCache[id] ?? {}) },
+      }));
+    }
     // Any node edit (root/unit/leaf form, inline title) must mark the tree
     // dirty so the debounced autosave in useSaveHierarchy actually runs.
     get().markDirty();
@@ -333,6 +349,13 @@ export const useTreeStore = create<TreeState>((set, get) => ({
 
       const newLevelId = get().addNode(rootId, 'unit');
       if (!newLevelId) return false;
+      // Name the wrapper Level after its slot — addNode's "Untitled Level"
+      // default would otherwise surface everywhere the node name renders
+      // (tree rows, breadcrumb, the saved hierarchy).
+      const { learningPath: lpLabels } = useI18nStore.getState().labelConfig;
+      get().updateNode(newLevelId, {
+        name: slot === 'pre' ? lpLabels.priorAssessmentLabel : lpLabels.outcomeAssessmentLabel,
+      });
       if (slot === 'pre') {
         // addNode always appends; pull the fresh Level back to index 0 for the pre slot.
         const lastIndex = (get().treeData[0]?.children?.length ?? 1) - 1;
@@ -404,6 +427,37 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     // would otherwise show "Unsaved" and trigger the back-guard.
     const { editorMode, setIsDirty } = useEditorStore.getState();
     if (editorMode === 'edit') setIsDirty(true);
+  },
+
+  pruneCoursesByFramework: (frameworkId) => {
+    let removed = 0;
+    set((state) => {
+      const root = state.treeData[0];
+      if (!root) return state;
+      const newLevels: INode[] = [];
+      for (const lvl of root.children ?? []) {
+        const wasAssessmentLevel = isAssessmentLevel(lvl);
+        const keptChildren = (lvl.children ?? []).filter((child) => {
+          if (child.isFolder) return true;
+          const fw = child.metadata?.['framework'];
+          const courseFramework = Array.isArray(fw) ? fw[0] : fw;
+          // Courses with no framework metadata are kept — only a KNOWN
+          // mismatch is unrelated to the new curriculum.
+          const matches = !courseFramework || courseFramework === frameworkId;
+          if (!matches) removed++;
+          return matches;
+        });
+        // An emptied assessment slot loses its wrapper Level too, so the
+        // pre/post slot reverts to its dashed "Add …" placeholder instead of
+        // lingering as an empty content Level.
+        if (wasAssessmentLevel && keptChildren.length === 0) continue;
+        newLevels.push(keptChildren.length === (lvl.children ?? []).length ? lvl : { ...lvl, children: keptChildren });
+      }
+      if (removed === 0) return state;
+      return { treeData: [{ ...root, children: newLevels }] };
+    });
+    if (removed > 0) get().markDirty();
+    return removed;
   },
 
   replaceNodeIds: (identifiers) => {

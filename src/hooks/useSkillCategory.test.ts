@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { resolveSkillCategory } from './useSkillCategory';
+import { resolveSkillCategory, resolvePriorCourseFramework } from './useSkillCategory';
+import type { INode } from '../types/editor';
 
 describe('resolveSkillCategory', () => {
   it('resolves USF\'s "skill" category (it has the highest index)', () => {
@@ -39,5 +40,31 @@ describe('resolveSkillCategory', () => {
   it('returns null when there are no categories', () => {
     expect(resolveSkillCategory(undefined)).toBeNull();
     expect(resolveSkillCategory([])).toBeNull();
+  });
+});
+
+describe('resolvePriorCourseFramework', () => {
+  const lpRoot = (priorCourseMeta: Record<string, unknown>): INode => ({
+    id: 'root', identifier: 'root', name: 'LP', isFolder: true,
+    children: [{
+      id: 'lvl-pre', identifier: 'lvl-pre', name: 'Pre', isFolder: true,
+      children: [{
+        id: 'prior', identifier: 'prior', name: 'Prior', isFolder: false, children: [],
+        metadata: { isAssessmentCourse: true, ...priorCourseMeta },
+      }],
+    }],
+  });
+
+  it("returns the linked prior course's own framework — its skill tags live under that taxonomy", () => {
+    expect(resolvePriorCourseFramework(lpRoot({ framework: 'usf' }))).toBe('usf');
+    expect(resolvePriorCourseFramework(lpRoot({ framework: ['usf', 'NCF'] }))).toBe('usf');
+  });
+
+  it('returns undefined when no prior assessment is linked or it has no framework', () => {
+    expect(resolvePriorCourseFramework(undefined)).toBeUndefined();
+    expect(resolvePriorCourseFramework(lpRoot({}))).toBeUndefined();
+    const noAssessment = lpRoot({ framework: 'usf' });
+    delete noAssessment.children![0].children![0].metadata!['isAssessmentCourse'];
+    expect(resolvePriorCourseFramework(noAssessment)).toBeUndefined();
   });
 });

@@ -535,6 +535,7 @@
     "dropOntoLevelError": "Solte sobre um nível para adicionar um curso",
     "dropOntoPathError": "Solte os cursos sobre um nível, não diretamente na trilha de aprendizagem.",
     "priorSlotFilledToast": "A Avaliação prévia já tem um curso — remova-o antes de adicionar outro.",
-    "outcomeSlotFilledToast": "A Avaliação final já tem um curso — remova-o antes de adicionar outro."
+    "outcomeSlotFilledToast": "A Avaliação final já tem um curso — remova-o antes de adicionar outro.",
+    "coursesRemovedFrameworkChangeToast": "{count} curso(s) vinculados a outro currículo foram removidos desta trilha."
   }
 }

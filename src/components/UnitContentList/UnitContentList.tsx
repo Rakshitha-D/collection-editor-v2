@@ -42,7 +42,10 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
 
   const handleSkillsChange = useCallback((skills: string[]) => {
     if (!selectedNodeId) return;
-    updateNode(selectedNodeId, { metadata: { competencies: skills } });
+    // Flat patch — 'competencies' is a METADATA_MIRROR_FIELD, so this lands in
+    // node.metadata AND flat in treeCache, where buildSavePayload persists it.
+    // A nested { metadata: {...} } patch would save a bogus 'metadata' field.
+    updateNode(selectedNodeId, { competencies: skills });
   }, [selectedNodeId, updateNode]);
 
   const sensors = useSensors(

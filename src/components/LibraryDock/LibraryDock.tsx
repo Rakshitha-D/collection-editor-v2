@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { checkAssessmentCourse, isAssessmentLevel, isAssessmentSlotFilled } from '../../utils/lpStructure';
+import { getAssessmentCourseInfo, isAssessmentLevel, isAssessmentSlotFilled } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -98,12 +98,16 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       setCheckingAssessmentCourseId(item.identifier);
       try {
-        const qualifies = await checkAssessmentCourse(item.identifier);
+        const { qualifies, meta } = await getAssessmentCourseInfo(item.identifier);
         if (!qualifies) {
           toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
           return;
         }
-        const added = addResource(item, rootId, { isAssessmentCourse: true, slot });
+        // Merge the course's own full metadata (framework + its skill tags) —
+        // the search item only carries the LP framework's skill field, which
+        // is the wrong one when the course was tagged under another framework.
+        const enriched = { ...item, ...meta } as unknown as IContent;
+        const added = addResource(enriched, rootId, { isAssessmentCourse: true, slot });
         if (added === false) {
           toast.error(lbl.learningPath.bothSlotsFilledToast);
           return;

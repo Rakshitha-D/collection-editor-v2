@@ -148,4 +148,35 @@ describe('buildSavePayload (learningPath profile)', () => {
     expect(hierarchy['do_course1']).toEqual({ name: 'Intro to Python', children: [], root: false });
     expect(hierarchy['temp-level1']).toMatchObject({ children: ['do_course1'] });
   });
+
+  it('persists a Level\'s selected skills as a flat competencies field, stripping nested metadata patches and local flags', () => {
+    const lpTree: INode[] = [
+      {
+        id: 'do_lp', identifier: 'do_lp', name: 'My Path', isFolder: true,
+        metadata: { name: 'My Path' },
+        children: [
+          {
+            id: 'do_level1', identifier: 'do_level1', name: 'Level 1', isFolder: true, parent: 'do_lp',
+            metadata: { name: 'Level 1', competencies: ['Python basics'] },
+            children: [],
+          },
+        ],
+      },
+    ];
+    const lpTreeCache = {
+      'do_level1': {
+        competencies: ['Python basics', 'Data handling'],
+        // legacy nested patch shape + local-only flag — must never reach the API
+        metadata: { competencies: ['stale'] },
+        isAssessmentCourse: true,
+      },
+    };
+
+    const { nodesModified } = buildSavePayload(lpTree, lpTreeCache, 'test-channel', learningPathProfile);
+
+    const levelMeta = (nodesModified['do_level1'] as { metadata: Record<string, unknown> }).metadata;
+    expect(levelMeta.competencies).toEqual(['Python basics', 'Data handling']);
+    expect(levelMeta).not.toHaveProperty('metadata');
+    expect(levelMeta).not.toHaveProperty('isAssessmentCourse');
+  });
 });

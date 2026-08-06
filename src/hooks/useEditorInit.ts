@@ -7,6 +7,7 @@ import { getCategoryDefinition } from '../api/categoryDefinition';
 import { getChannelData } from '../api/channel';
 import { setApiBaseUrl } from '../api/client';
 import { resolveEditorProfile } from '../types/profile';
+import { normalizeLearningPathTree } from '../utils/lpStructure';
 
 interface UseEditorInitOptions {
   config: IEditorConfig;
@@ -80,9 +81,14 @@ export function useEditorInit({ config, onError }: UseEditorInitOptions) {
           // (payload under result.questionset); everything else is a
           // content-collection hierarchy.
           const isQuestionSetRoot = config.config.objectType === 'QuestionSet';
-          const { rootNode } = isQuestionSetRoot
+          let { rootNode } = isQuestionSetRoot
             ? await readQuestionSetHierarchyTree(contentId)
             : await readHierarchy(contentId);
+          // LP invariants (courses are terminal leaves; isAssessmentCourse is
+          // local-only) don't survive the hierarchy read — restore them.
+          if (rootNode && config.config.primaryCategory === 'Learning Path') {
+            rootNode = await normalizeLearningPathTree(rootNode);
+          }
           if (!cancelled) {
             const nodes = rootNode ? [rootNode] : [];
             setTreeData(nodes);

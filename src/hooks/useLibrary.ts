@@ -19,8 +19,13 @@ export function buildLpLibraryFilters(
   activeAssessmentSlot: 'pre' | 'post' | null,
   selectedSkills: string[],
   skillCategoryCode: string | undefined,
+  frameworkId?: string,
 ): Record<string, unknown> {
   const filters: Record<string, unknown> = { primaryCategory: ['Course'] };
+  // Courses must belong to the LP root's selected curriculum (framework) —
+  // a course tagged under another framework carries skills the path's scope
+  // can't read.
+  if (frameworkId) filters['framework'] = [frameworkId];
   if (!activeAssessmentSlot && selectedSkills.length && skillCategoryCode) {
     filters[skillCategoryCode] = selectedSkills;
   }
@@ -40,7 +45,10 @@ export function buildSearchFields(
   skillCategoryCode: string | undefined,
 ): string[] | undefined {
   if (!competencyScoped || !skillCategoryCode) return undefined;
-  return [...DEFAULT_SEARCH_FIELDS, skillCategoryCode];
+  // 'framework' rides along so a linked course knows which taxonomy its
+  // skill tags live under (useSkillCategory resolves via the prior course's
+  // framework, which may differ from the LP's own).
+  return [...DEFAULT_SEARCH_FIELDS, skillCategoryCode, 'framework'];
 }
 
 const PAGE_SIZE = 20;
@@ -93,6 +101,11 @@ export function useLibrary() {
   const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
   const activeNodeMeta = useTreeStore((s) => s.activeNodeMeta);
   const skillCategory = useSkillCategory();
+  const contentFramework = useEditorStore((s) => s.contentFramework);
+  const contextFramework = useEditorStore((s) => s.editorConfig?.context?.framework);
+  // The LP root's selected curriculum — updated live when the Curriculum
+  // field changes (SparkMetaForm applies it via setContentFramework).
+  const lpFrameworkId = (contentFramework ?? contextFramework) as string | undefined;
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const selectedLevelSkills = Array.isArray(activeNodeMeta['competencies'])
@@ -111,7 +124,7 @@ export function useLibrary() {
       try {
         let filters: Record<string, unknown>;
         if (editorProfile.competencyScoped) {
-          const lpFilters = buildLpLibraryFilters(activeAssessmentSlot, selectedLevelSkills, skillCategory?.code);
+          const lpFilters = buildLpLibraryFilters(activeAssessmentSlot, selectedLevelSkills, skillCategory?.code, lpFrameworkId);
           filters = { status: ['Live'], ...lpFilters };
         } else {
           filters = {
@@ -151,13 +164,13 @@ export function useLibrary() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory],
+    [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory, lpFrameworkId],
   );
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel, activeAssessmentSlot, selectedLevelSkills.join('|')]);
+  }, [channel, activeAssessmentSlot, selectedLevelSkills.join('|'), lpFrameworkId]);
 
   const search = useCallback(
     (query: string) => {

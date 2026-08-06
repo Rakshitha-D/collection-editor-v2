@@ -228,6 +228,18 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
         if (changedField === 'framework' && isRoot && typeof value === 'string' && value) {
           const editorState = useEditorStore.getState();
           editorState.setContentFramework(value, editorState.contentTargetFWIds);
+          // LP: courses tagged under another curriculum carry skills the new
+          // scope can't read — drop them (incl. an emptied pre/post slot) and
+          // tell the author what happened.
+          if (isLearningPath) {
+            const removed = useTreeStore.getState().pruneCoursesByFramework(value);
+            if (removed > 0) {
+              toast(
+                lbl.learningPath.coursesRemovedFrameworkChangeToast.replace('{count}', String(removed)),
+                { icon: <Info size={16} />, duration: 5000 },
+              );
+            }
+          }
         }
         // transformFieldPatch omits UI-only keys (allowECM/setPeriod → null) and
         // maps levels→outcomeDeclaration, instances→{label}.

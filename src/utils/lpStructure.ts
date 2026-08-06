@@ -37,21 +37,83 @@ export function isAssessmentCourse(course: HierarchyLeafLike): boolean {
   return hasLeaf && allQuestionSets;
 }
 
+export interface AssessmentCourseInfo {
+  qualifies: boolean;
+  /** The course's full metadata from its own hierarchy read (children stripped).
+   *  Needed because composite-search results only carry the LP framework's
+   *  skill field — a course tagged under a different framework (e.g. USF)
+   *  would otherwise land in the tree without its framework or skill tags. */
+  meta: Record<string, unknown>;
+}
+
 // Per-session cache — the check requires a full course-hierarchy read, so
 // avoid re-fetching for a course already validated (e.g. re-opening the same
 // pre/post slot picker, or the Phase 5 publish-time re-check).
-const assessmentCourseCache = new Map<string, boolean>();
+const assessmentCourseCache = new Map<string, AssessmentCourseInfo>();
+
+export async function getAssessmentCourseInfo(courseId: string): Promise<AssessmentCourseInfo> {
+  const cached = assessmentCourseCache.get(courseId);
+  if (cached) return cached;
+  const course = await readCourseHierarchy(courseId);
+  const { children: _children, ...meta } = (course ?? {}) as Record<string, unknown>;
+  const info: AssessmentCourseInfo = {
+    qualifies: isAssessmentCourse(course as HierarchyLeafLike),
+    meta,
+  };
+  assessmentCourseCache.set(courseId, info);
+  return info;
+}
 
 export async function checkAssessmentCourse(courseId: string): Promise<boolean> {
-  if (assessmentCourseCache.has(courseId)) return assessmentCourseCache.get(courseId)!;
-  const course = await readCourseHierarchy(courseId);
-  const result = isAssessmentCourse(course as HierarchyLeafLike);
-  assessmentCourseCache.set(courseId, result);
-  return result;
+  return (await getAssessmentCourseInfo(courseId)).qualifies;
 }
 
 export function clearAssessmentCourseCache(): void {
   assessmentCourseCache.clear();
+}
+
+/**
+ * Repairs a freshly-loaded LP tree (useEditorInit, after readHierarchy).
+ * The hierarchy read undoes two editor-local invariants:
+ *  - mapToINode marks linked courses (collection mimeType) as folders and
+ *    expands their internal children — in the LP tree courses are terminal
+ *    leaves, so re-flatten them;
+ *  - the isAssessmentCourse flag is local-only (stripped from saves), so
+ *    without it no Level is recognized as a pre/post slot and "Skills
+ *    covered"/slot rules read the path as having no assessments. Recompute
+ *    it from the course's expanded subtree when the read included one, else
+ *    (single-course first/last Levels only) via a checkAssessmentCourse read.
+ */
+export async function normalizeLearningPathTree(root: INode): Promise<INode> {
+  const levels = root.children ?? [];
+  const normalized: INode[] = [];
+  for (let i = 0; i < levels.length; i++) {
+    const level = levels[i];
+    const children = level.children ?? [];
+    const courses: INode[] = [];
+    for (const child of children) {
+      let flagged = !!child.metadata?.['isAssessmentCourse'];
+      if (!flagged) {
+        if ((child.children ?? []).length > 0) {
+          flagged = isAssessmentCourse(child as HierarchyLeafLike);
+        } else if (children.length === 1 && (i === 0 || i === levels.length - 1)) {
+          try {
+            flagged = await checkAssessmentCourse(child.identifier);
+          } catch (e) {
+            console.error('[lpStructure] assessment-course check failed on load:', e);
+          }
+        }
+      }
+      courses.push({
+        ...child,
+        isFolder: false,
+        children: [],
+        metadata: { ...(child.metadata ?? {}), ...(flagged ? { isAssessmentCourse: true } : {}) },
+      });
+    }
+    normalized.push({ ...level, children: courses });
+  }
+  return { ...root, children: normalized };
 }
 
 // ---------------------------------------------------------------------------

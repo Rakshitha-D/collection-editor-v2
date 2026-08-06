@@ -35,6 +35,10 @@ export function buildSavePayload(
     'id', 'isFolder', 'children', 'parent', 'isNew', 'breadcrumb', 'title',
     // relationalMetadata is leaf-content-specific; it does not belong in nodesModified metadata
     'relationalMetadata', 'optional',
+    // a literal 'metadata' key is always an accidental nested patch, never a real field
+    'metadata',
+    // LP-local flag for assessment-slot detection — recomputed on load, never persisted
+    'isAssessmentCourse',
   ]);
 
   // Framework fields that require validated term identifiers.

@@ -57,6 +57,7 @@ interface MockCourse {
   organisation: string[];
   status: string;
   description: string;
+  framework: string;
   [SKILL_CODE]: string[];
   units: MockUnit[];
 }
@@ -104,6 +105,7 @@ function course(over: Partial<MockCourse> & { identifier: string; name: string }
     organisation: ['Sunbird Org'],
     status: 'Live',
     description: '',
+    framework: 'NCF',
     [SKILL_CODE]: [],
     units: [],
     ...over,
@@ -192,6 +194,7 @@ const MOCK_COURSES: MockCourse[] = [
     identifier: 'do_mock_pandas_deep_dive',
     name: 'Pandas Deep Dive',
     description: 'Working with tabular data using pandas.',
+    framework: 'USF',
     [SKILL_CODE]: ['Data handling', 'Python basics'],
     units: [
       unit({
@@ -208,6 +211,7 @@ const MOCK_COURSES: MockCourse[] = [
     identifier: 'do_mock_5aug_course',
     name: '5Aug-Course',
     description: 'A general-purpose course — not question-set-only.',
+    framework: 'USF',
     [SKILL_CODE]: ['General'],
     units: [
       unit({
@@ -221,6 +225,7 @@ const MOCK_COURSES: MockCourse[] = [
     identifier: 'do_mock_healthcare',
     name: 'HealthCare',
     description: 'Foundations of healthcare data and terminology.',
+    framework: 'USF',
     [SKILL_CODE]: ['Healthcare basics'],
     units: [
       unit({
@@ -234,6 +239,7 @@ const MOCK_COURSES: MockCourse[] = [
     identifier: 'do_mock_reading_critically',
     name: 'Reading Data Critically',
     description: 'Spotting bias and misleading charts in data reporting.',
+    framework: 'USF',
     [SKILL_CODE]: ['Critical thinking'],
     units: [
       unit({
@@ -257,6 +263,7 @@ function toSearchResultContent(c: MockCourse): Record<string, unknown> {
     channel: c.channel,
     organisation: c.organisation,
     status: c.status,
+    framework: c.framework,
     [SKILL_CODE]: c[SKILL_CODE],
   };
 }
@@ -272,6 +279,7 @@ function toCourseHierarchy(c: MockCourse): Record<string, unknown> {
     primaryCategory: c.primaryCategory,
     channel: c.channel,
     status: c.status,
+    framework: c.framework,
     children: c.units.map((u) => ({
       identifier: u.identifier,
       name: u.name,
@@ -500,30 +508,48 @@ const LEARNING_PATH_OCD = {
   },
 };
 
-const MOCK_FRAMEWORK = {
-  identifier: 'NCF',
-  name: 'National Curriculum Framework',
-  code: 'NCF',
-  categories: [
-    {
-      identifier: 'cat_board', name: 'Board', code: 'board', index: 1,
-      terms: [{ identifier: 'cbse', name: 'CBSE', code: 'cbse', category: 'board' }],
-    },
-    {
-      identifier: 'cat_medium', name: 'Medium', code: 'medium', index: 2,
-      terms: [{ identifier: 'english', name: 'English', code: 'english', category: 'medium' }],
-    },
-    {
-      identifier: 'cat_skill', name: 'Skill', code: SKILL_CODE, index: 3,
-      terms: [
-        'Python basics', 'Data handling', 'Statistics', 'Data literacy', 'Applied skills',
-        'Critical thinking', 'Healthcare basics', 'General',
-      ].map((name, i) => ({
-        identifier: `skill_${i}`, name, code: name.toLowerCase().replace(/\s+/g, '-'), category: SKILL_CODE,
-      })),
-    },
-  ],
+function makeFramework(identifier: string, name: string, skillTerms: string[]) {
+  return {
+    identifier,
+    name,
+    code: identifier,
+    categories: [
+      {
+        identifier: `${identifier}_board`, name: 'Board', code: 'board', index: 1,
+        terms: [{ identifier: `${identifier}_cbse`, name: 'CBSE', code: 'cbse', category: 'board' }],
+      },
+      {
+        identifier: `${identifier}_medium`, name: 'Medium', code: 'medium', index: 2,
+        terms: [{ identifier: `${identifier}_english`, name: 'English', code: 'english', category: 'medium' }],
+      },
+      {
+        identifier: `${identifier}_skill`, name: 'Skill', code: SKILL_CODE, index: 3,
+        terms: skillTerms.map((name, i) => ({
+          identifier: `${identifier}_skill_${i}`, name, code: name.toLowerCase().replace(/\s+/g, '-'), category: SKILL_CODE,
+        })),
+      },
+    ],
+  };
+}
+
+// Two distinct frameworks so switching the LP root's Curriculum is actually
+// observable: each has its own skill catalog, and half the mock courses
+// belong to each (see MOCK_COURSES' `framework` field) — matching this
+// content set to the wrong framework is exactly the "unrelated course"
+// scenario pruneCoursesByFramework/the Library's framework filter cover.
+const MOCK_FRAMEWORKS: Record<string, ReturnType<typeof makeFramework>> = {
+  NCF: makeFramework('NCF', 'National Curriculum Framework', [
+    'Python basics', 'Data handling', 'Statistics', 'Data literacy', 'Applied skills',
+  ]),
+  USF: makeFramework('USF', 'Universal Skills Framework', [
+    'General', 'Healthcare basics', 'Critical thinking', 'Data handling', 'Python basics',
+  ]),
 };
+
+const CHANNEL_FRAMEWORKS = [
+  { identifier: 'NCF', name: 'National Curriculum Framework', type: 'K-12' },
+  { identifier: 'USF', name: 'Universal Skills Framework', type: 'TPD' },
+];
 
 let tempIdCounter = 0;
 
@@ -551,15 +577,25 @@ function handleRootHierarchy(config: InternalAxiosRequestConfig, contentId: stri
 }
 
 function handleChannel(config: InternalAxiosRequestConfig, channelId: string): AxiosResponse {
-  return ok(config, { result: { channel: { identifier: channelId, name: 'Mock Org', defaultFramework: 'NCF' } } });
+  return ok(config, {
+    result: {
+      channel: {
+        identifier: channelId,
+        name: 'Mock Org',
+        defaultFramework: 'NCF',
+        frameworks: CHANNEL_FRAMEWORKS,
+      },
+    },
+  });
 }
 
 function handleCategoryDefinition(config: InternalAxiosRequestConfig): AxiosResponse {
   return ok(config, { result: { objectCategoryDefinition: LEARNING_PATH_OCD } });
 }
 
-function handleFrameworkRead(config: InternalAxiosRequestConfig): AxiosResponse {
-  return ok(config, { result: { framework: MOCK_FRAMEWORK } });
+function handleFrameworkRead(config: InternalAxiosRequestConfig, frameworkId: string): AxiosResponse {
+  const framework = MOCK_FRAMEWORKS[frameworkId] ?? MOCK_FRAMEWORKS.NCF;
+  return ok(config, { result: { framework } });
 }
 
 function handleCompositeSearch(config: InternalAxiosRequestConfig): AxiosResponse {
@@ -570,9 +606,13 @@ function handleCompositeSearch(config: InternalAxiosRequestConfig): AxiosRespons
   const limit = Number(request.limit ?? 20);
   const offset = Number(request.offset ?? 0);
   const skillFilter = filters[SKILL_CODE] as string[] | undefined;
+  const frameworkFilter = filters['framework'] as string[] | undefined;
 
   let matches = MOCK_COURSES;
   if (query) matches = matches.filter((c) => c.name.toLowerCase().includes(query));
+  if (frameworkFilter?.length) {
+    matches = matches.filter((c) => frameworkFilter.includes(c.framework));
+  }
   if (skillFilter?.length) {
     matches = matches.filter((c) => c[SKILL_CODE].some((s) => skillFilter.includes(s)));
   }
@@ -625,8 +665,8 @@ async function mockAdapter(config: InternalAxiosRequestConfig): Promise<AxiosRes
   if (method === 'post' && /\/action\/object\/category\/definition\/[^/]+\/read/.test(url)) {
     return handleCategoryDefinition(config);
   }
-  if (method === 'get' && /\/api\/framework\/v1\/read\//.test(url)) {
-    return handleFrameworkRead(config);
+  if (method === 'get' && (m = url.match(/\/api\/framework\/v1\/read\/([^/?]+)/))) {
+    return handleFrameworkRead(config, m[1]);
   }
   if (method === 'post' && /\/action\/composite\/v3\/search/.test(url)) {
     return handleCompositeSearch(config);

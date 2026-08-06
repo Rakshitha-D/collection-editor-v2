@@ -1,5 +1,6 @@
 import type { IFrameworkDetails, ITerm } from '../../../types/framework';
 import type { IEditorProfile } from '../../../types/profile';
+import { resolveSkillCategory } from '../../../hooks/useSkillCategory';
 
 // Design labels for the LP root's consumption-policy field — the schema enum
 // (learning_path_ocd.md §1) uses the raw values; friendly labels are an
@@ -149,9 +150,9 @@ export function useFieldPrepare(
   ctx: IPrepareContext = {},
 ): PreparedField[] {
   if (!formConfig?.length) {
-    return adaptFrameworkFields(
+    return adaptToFramework(
       getDefaultFields(nodeMetadata, isRoot, frameworkDetails, ctx),
-      frameworkDetails, nodeMetadata, isRoot,
+      frameworkDetails, nodeMetadata, isRoot, ctx,
     );
   }
 
@@ -221,7 +222,21 @@ export function useFieldPrepare(
     return base;
   });
 
-  return adaptFrameworkFields(prepared, frameworkDetails, nodeMetadata, isRoot);
+  return adaptToFramework(prepared, frameworkDetails, nodeMetadata, isRoot, ctx);
+}
+
+// LP root gets the fully-dynamic Curriculum treatment; everything else keeps
+// the K-12-aware adaptation.
+function adaptToFramework(
+  fields: PreparedField[],
+  fw: IFrameworkDetails,
+  meta: Record<string, unknown>,
+  isRoot: boolean,
+  ctx: IPrepareContext,
+): PreparedField[] {
+  return ctx.profile?.key === 'learningPath'
+    ? adaptLpCurriculumFields(fields, fw, meta, isRoot)
+    : adaptFrameworkFields(fields, fw, meta, isRoot);
 }
 
 // ----- Editability (mirrors Angular ifFieldIsEditable) -----------------------
@@ -653,6 +668,81 @@ function adaptFrameworkFields(
   return [...kept, ...dynamic];
 }
 
+/**
+ * LP root Curriculum section — fully dynamic. Renders the *selected*
+ * framework's categories (in `index` order) as optional multiselects right
+ * after the Curriculum (framework) selector, whatever the framework's shape
+ * (USF: Industry/Domain; NCF: Board/Medium/Grade Level; …). The highest-index
+ * (skill-equivalent) category is deliberately excluded — the LP's skill scope
+ * comes from the prior assessment (useSkillScope), so an editable root skill
+ * field would only contradict it. Static category fields from an OCD whose
+ * codes don't exist in the selected framework are dropped (they'd render as
+ * empty dropdowns).
+ */
+const CURRICULUM_SECTION = 'Organisation Framework Terms';
+
+function adaptLpCurriculumFields(
+  fields: PreparedField[],
+  fw: IFrameworkDetails,
+  meta: Record<string, unknown>,
+  isRoot: boolean,
+): PreparedField[] {
+  if (!isRoot) return fields;
+  const categories = [...(fw.organisationFramework?.categories ?? [])]
+    .sort((a, b) => (a.index ?? Infinity) - (b.index ?? Infinity));
+  if (!categories.length) return fields; // framework read still in flight
+  const skillCode = resolveSkillCategory(categories)?.code;
+  const categoryCodeOf = (f: PreparedField) => f.sourceCategory ?? FIELD_TO_FW_CATEGORY[f.code];
+
+  // Drop fields for categories the selected framework doesn't have (or the
+  // skill category); normalize the survivors into the Curriculum card so a
+  // backend form's arbitrary section names can't scatter them.
+  const kept = fields
+    .filter(f => {
+      const categoryCode = categoryCodeOf(f);
+      if (!categoryCode) return true;
+      return categoryCode !== skillCode && categories.some(c => c.code === categoryCode);
+    })
+    .map(f => (categoryCodeOf(f) ? { ...f, section: CURRICULUM_SECTION } : f));
+
+  // The Curriculum (framework) selector is the anchor of the section — a
+  // backend form config may not declare one (e.g. a Course-shaped default),
+  // so synthesize it ahead of the first category field when missing.
+  let result = kept;
+  let frameworkFieldIndex = result.findIndex(f => f.code === 'framework');
+  if (frameworkFieldIndex === -1) {
+    const frameworkField: PreparedField = {
+      code: 'framework', label: 'Curriculum', inputType: 'select',
+      required: true, editable: true, tab: 'details', section: CURRICULUM_SECTION,
+      options: fw.orgFrameworks, currentValue: cv(meta, 'framework', 'select'),
+    };
+    const firstCategoryIndex = result.findIndex(f => !!categoryCodeOf(f));
+    frameworkFieldIndex = firstCategoryIndex >= 0 ? firstCategoryIndex : result.length;
+    result = [
+      ...result.slice(0, frameworkFieldIndex),
+      frameworkField,
+      ...result.slice(frameworkFieldIndex),
+    ];
+  }
+
+  const existingCodes = new Set(result.map(f => f.code));
+  const dynamic: PreparedField[] = categories
+    .filter(cat => cat.code !== skillCode && !existingCodes.has(cat.code))
+    .map(cat => ({
+      code: cat.code, label: cat.name, inputType: 'multiselect' as const,
+      editable: true, tab: 'details' as const, section: CURRICULUM_SECTION,
+      options: (cat.terms ?? []).map(t => ({ label: t.name, value: t.name })),
+      currentValue: cv(meta, cat.code, 'multiselect'),
+    }));
+  if (!dynamic.length) return result;
+
+  return [
+    ...result.slice(0, frameworkFieldIndex + 1),
+    ...dynamic,
+    ...result.slice(frameworkFieldIndex + 1),
+  ];
+}
+
 function getDefaultFields(
   meta: Record<string, unknown>,
   isRoot: boolean,
@@ -681,11 +771,22 @@ function getDefaultFields(
   // to a Learning Path at all, so render just the consumption-policy field
   // instead of empty/irrelevant required dropdowns.
   if (ctx.profile?.key === 'learningPath') {
-    fields.push({
-      code: 'policy', label: 'Consumption policy', inputType: 'select',
-      required: true, editable: true, tab: 'details', section: 'Consumption policy',
-      options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'Fixed',
-    });
+    fields.push(
+      {
+        // Curriculum selector — the framework whose categories the dynamic
+        // Curriculum section (adaptLpCurriculumFields) renders. Note the skill
+        // *scope* still follows the prior assessment course's own framework
+        // (useSkillCategory precedence), not this selection.
+        code: 'framework', label: 'Curriculum', inputType: 'select',
+        required: true, editable: true, tab: 'details', section: 'Organisation Framework Terms',
+        options: fw.orgFrameworks, currentValue: cv(meta, 'framework', 'select'),
+      },
+      {
+        code: 'policy', label: 'Consumption policy', inputType: 'select',
+        required: true, editable: true, tab: 'details', section: 'Consumption policy',
+        options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'Fixed',
+      },
+    );
     return fields;
   }
 

@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   isAssessmentCourse,
   checkAssessmentCourse,
+  getAssessmentCourseInfo,
   clearAssessmentCourseCache,
+  normalizeLearningPathTree,
   isAssessmentLevel,
   getLevelRole,
   getLevelDisplayInfo,
@@ -84,6 +86,70 @@ describe('checkAssessmentCourse', () => {
     await checkAssessmentCourse('course-2');
     await checkAssessmentCourse('course-2');
     expect(readCourseHierarchy).toHaveBeenCalledTimes(1);
+  });
+
+  it("getAssessmentCourseInfo exposes the course's own metadata (children stripped) for slot linking", async () => {
+    vi.mocked(readCourseHierarchy).mockResolvedValue({
+      identifier: 'course-3', framework: 'usf', skill: ['Python programming'],
+      children: [questionSet('q1')],
+    });
+    const { qualifies, meta } = await getAssessmentCourseInfo('course-3');
+    expect(qualifies).toBe(true);
+    expect(meta).toEqual({ identifier: 'course-3', framework: 'usf', skill: ['Python programming'] });
+  });
+});
+
+describe('normalizeLearningPathTree', () => {
+  beforeEach(() => {
+    clearAssessmentCourseCache();
+    vi.mocked(readCourseHierarchy).mockReset();
+  });
+
+  const loadedCourse = (id: string, children: unknown[]): INode => ({
+    id, identifier: id, name: id, isFolder: true, // mapToINode marks collection-mimeType courses as folders
+    mimeType: 'application/vnd.ekstep.content-collection',
+    children: children as INode[],
+    metadata: {},
+  });
+  const loadedLevel = (id: string, children: INode[]): INode => ({
+    id, identifier: id, name: id, isFolder: true, children,
+    metadata: { primaryCategory: 'Level' },
+  });
+
+  it('re-flattens linked courses to terminal leaves and restores isAssessmentCourse from the expanded subtree', async () => {
+    const root: INode = {
+      id: 'root', identifier: 'root', name: 'LP', isFolder: true,
+      children: [
+        loadedLevel('lvl-pre', [loadedCourse('prior', [questionSet('q1')])]),
+        loadedLevel('lvl-1', [loadedCourse('c1', [videoResource('v1')])]),
+      ],
+    };
+
+    const normalized = await normalizeLearningPathTree(root);
+
+    const prior = normalized.children![0].children![0];
+    expect(prior.isFolder).toBe(false);
+    expect(prior.children).toHaveLength(0);
+    expect(prior.metadata?.isAssessmentCourse).toBe(true);
+
+    const regular = normalized.children![1].children![0];
+    expect(regular.isFolder).toBe(false);
+    expect(regular.children).toHaveLength(0);
+    expect(regular.metadata?.isAssessmentCourse).toBeUndefined();
+    expect(readCourseHierarchy).not.toHaveBeenCalled(); // subtrees were expanded — no network needed
+  });
+
+  it('falls back to a course-hierarchy read for a single-course first/last Level with no expanded subtree', async () => {
+    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [questionSet('q1')] });
+    const root: INode = {
+      id: 'root', identifier: 'root', name: 'LP', isFolder: true,
+      children: [loadedLevel('lvl-pre', [loadedCourse('prior', [])])],
+    };
+
+    const normalized = await normalizeLearningPathTree(root);
+
+    expect(readCourseHierarchy).toHaveBeenCalledWith('prior');
+    expect(normalized.children![0].children![0].metadata?.isAssessmentCourse).toBe(true);
   });
 });
 

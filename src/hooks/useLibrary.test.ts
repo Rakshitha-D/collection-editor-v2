@@ -22,11 +22,23 @@ describe('buildLpLibraryFilters', () => {
   it('omits the skill filter key when the skill category has not resolved yet', () => {
     expect(buildLpLibraryFilters(null, ['Java'], undefined)).toEqual({ primaryCategory: ['Course'] });
   });
+
+  it("constrains every LP search — slot picker included — to the root's selected framework", () => {
+    expect(buildLpLibraryFilters('pre', [], 'skill', 'usf')).toEqual({
+      primaryCategory: ['Course'],
+      framework: ['usf'],
+    });
+    expect(buildLpLibraryFilters(null, ['Java'], 'skill', 'usf')).toEqual({
+      primaryCategory: ['Course'],
+      framework: ['usf'],
+      skill: ['Java'],
+    });
+  });
 });
 
 describe('buildSearchFields', () => {
-  it('appends the resolved skill-category code for the LP profile', () => {
-    expect(buildSearchFields(true, 'skill')).toEqual([...DEFAULT_SEARCH_FIELDS, 'skill']);
+  it('appends the resolved skill-category code and framework for the LP profile', () => {
+    expect(buildSearchFields(true, 'skill')).toEqual([...DEFAULT_SEARCH_FIELDS, 'skill', 'framework']);
   });
 
   it('leaves the default fields untouched for the Collection profile', () => {

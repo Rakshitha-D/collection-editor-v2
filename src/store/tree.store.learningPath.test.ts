@@ -31,6 +31,7 @@ describe('tree.store (Learning Path) — assessment-slot auto-wrap', () => {
     const preLevel = root.children![0];
     expect(preLevel.metadata?.contentType).toBe('Level');
     expect(preLevel.metadata?.primaryCategory).toBe('Level');
+    expect(preLevel.name).toBe('Prior Assessment'); // named after its slot, not "Untitled Level"
     expect(preLevel.children).toHaveLength(1);
     expect(preLevel.children![0].id).toBe('c1');
     expect(preLevel.children![0].metadata?.isAssessmentCourse).toBe(true);
@@ -44,6 +45,7 @@ describe('tree.store (Learning Path) — assessment-slot auto-wrap', () => {
     expect(root.children).toHaveLength(2);
     expect(root.children![0].children![0].id).toBe('c1');
     expect(root.children![1].children![0].id).toBe('c2');
+    expect(root.children![1].name).toBe('Outcome Assessment');
   });
 
   it('rejects a third assessment course targeted at root once both slots are filled', () => {
@@ -206,6 +208,47 @@ describe('tree.store (Learning Path) — per-Level course caps on cross-Level dr
     const mid = useTreeStore.getState().treeData[0].children!.find((c) => c.id === midId)!;
     expect(mid.children!.some((c) => c.id === 'c2')).toBe(true); // still there — move blocked
     expect(mid.children!.find((c) => c.id === 'c1')!.children).toHaveLength(0);
+  });
+});
+
+describe('tree.store (Learning Path) — pruneCoursesByFramework', () => {
+  beforeEach(setupLpTree);
+
+  const fwCourse = (id: string, framework?: string): IContent =>
+    ({ ...course(id), framework } as unknown as IContent);
+
+  it('removes courses tagged under a different framework, keeps matches and untagged ones', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(fwCourse('c-usf', 'usf'), levelId);
+    useTreeStore.getState().addResource(fwCourse('c-ncf', 'NCF'), levelId);
+    useTreeStore.getState().addResource(fwCourse('c-untagged'), levelId);
+
+    const removed = useTreeStore.getState().pruneCoursesByFramework('usf');
+
+    expect(removed).toBe(1);
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.children!.map((c) => c.id).sort()).toEqual(['c-untagged', 'c-usf']);
+  });
+
+  it('drops an emptied assessment slot with its wrapper Level, reopening the slot', () => {
+    useTreeStore.getState().addResource(fwCourse('prior-ncf', 'NCF'), 'root', { isAssessmentCourse: true, slot: 'pre' });
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(fwCourse('c-usf', 'usf'), levelId);
+
+    const removed = useTreeStore.getState().pruneCoursesByFramework('usf');
+
+    expect(removed).toBe(1);
+    const root = useTreeStore.getState().treeData[0];
+    expect(root.children).toHaveLength(1); // the pre wrapper Level is gone entirely
+    expect(root.children![0].id).toBe(levelId);
+  });
+
+  it('is a no-op (returns 0, tree untouched) when every course matches', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(fwCourse('c-usf', 'usf'), levelId);
+    const before = useTreeStore.getState().treeData;
+    expect(useTreeStore.getState().pruneCoursesByFramework('usf')).toBe(0);
+    expect(useTreeStore.getState().treeData).toBe(before);
   });
 });
 
