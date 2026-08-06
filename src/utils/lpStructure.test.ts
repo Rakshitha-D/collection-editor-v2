@@ -12,6 +12,7 @@ import {
   canReorderLevel,
   canAddCourseToLevel,
   hasExplicitCurriculum,
+  getExplicitCurriculum,
   computeSkillsCovered,
   computePathShape,
   validateLearningPathStructure,
@@ -323,6 +324,23 @@ describe('hasExplicitCurriculum', () => {
   it('is true once the root metadata has a saved framework', () => {
     const root = level({ id: 'root', metadata: { framework: 'NCF' } });
     expect(hasExplicitCurriculum(root, {})).toBe(true);
+  });
+});
+
+describe('getExplicitCurriculum', () => {
+  it('is undefined with no root, or with neither treeCache nor root metadata set', () => {
+    expect(getExplicitCurriculum(undefined, {})).toBeUndefined();
+    expect(getExplicitCurriculum(level({ id: 'root' }), {})).toBeUndefined();
+  });
+
+  it('prefers the live treeCache edit over the saved root metadata', () => {
+    const root = level({ id: 'root', metadata: { framework: 'NCF' } });
+    expect(getExplicitCurriculum(root, { root: { framework: 'USF' } })).toBe('USF');
+  });
+
+  it('falls back to the saved root metadata when treeCache has no edit', () => {
+    const root = level({ id: 'root', metadata: { framework: 'NCF' } });
+    expect(getExplicitCurriculum(root, {})).toBe('NCF');
   });
 });
 

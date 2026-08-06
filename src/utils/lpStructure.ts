@@ -234,22 +234,30 @@ function toStringArray(value: unknown): string[] {
 }
 
 /**
- * Whether the LP root has an explicitly-chosen Curriculum (framework) — from
- * a prior save or the current session's Curriculum field, checked via
- * treeCache first since a live edit lands there before a save round-trips
- * it into root.metadata. Deliberately NOT the same as useLibrary's
- * lpFrameworkId, which also resolves the channel/context default so the
- * Library has something to filter by before the author has chosen
- * anything — that fallback must not be mistaken for a real choice, or
- * courses linked under it get pruned the moment a real Curriculum is set.
+ * The LP root's explicitly-chosen Curriculum (framework) — from a prior save
+ * or the current session's Curriculum field, checked via treeCache first
+ * since a live edit lands there before a save round-trips it into
+ * root.metadata. Deliberately NOT the same as the channel/context default
+ * framework (useEditorStore's contentFramework, resolved so *something*
+ * exists to browse/filter by before the author has chosen anything) — that
+ * fallback must never be mistaken for a real choice, or courses linked
+ * under it get pruned the moment a real Curriculum is set, and the Library
+ * would silently scope itself to a framework the author never picked.
  */
+export function getExplicitCurriculum(
+  root: INode | undefined,
+  treeCache: Record<string, Record<string, unknown>>,
+): string | undefined {
+  if (!root) return undefined;
+  const cached = treeCache[root.id]?.['framework'] as string | undefined;
+  return cached ?? (root.metadata?.['framework'] as string | undefined);
+}
+
 export function hasExplicitCurriculum(
   root: INode | undefined,
   treeCache: Record<string, Record<string, unknown>>,
 ): boolean {
-  if (!root) return false;
-  const cached = treeCache[root.id]?.['framework'];
-  return !!(cached ?? root.metadata?.['framework']);
+  return !!getExplicitCurriculum(root, treeCache);
 }
 
 /**

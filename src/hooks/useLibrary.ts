@@ -4,6 +4,7 @@ import { useEditorStore } from '../store/editor.store';
 import { useTreeStore } from '../store/tree.store';
 import { useUiStore } from '../store/ui.store';
 import { useSkillCategory } from './useSkillCategory';
+import { getExplicitCurriculum } from '../utils/lpStructure';
 import { compositeSearch, DEFAULT_SEARCH_FIELDS } from '../api/content';
 import { LIBRARY_PRIMARY_CATEGORIES } from '../types/content';
 import type { LibraryFilters } from '../components/LibraryDock/LibraryFilterPanel';
@@ -100,12 +101,17 @@ export function useLibrary() {
   const editorProfile = useEditorStore((s) => s.editorProfile);
   const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
   const activeNodeMeta = useTreeStore((s) => s.activeNodeMeta);
+  const treeData = useTreeStore((s) => s.treeData);
+  const treeCache = useTreeStore((s) => s.treeCache);
   const skillCategory = useSkillCategory();
-  const contentFramework = useEditorStore((s) => s.contentFramework);
-  const contextFramework = useEditorStore((s) => s.editorConfig?.context?.framework);
-  // The LP root's selected curriculum — updated live when the Curriculum
-  // field changes (SparkMetaForm applies it via setContentFramework).
-  const lpFrameworkId = (contentFramework ?? contextFramework) as string | undefined;
+  // The LP root's EXPLICITLY chosen Curriculum only — never the channel/
+  // context default (contentFramework) that useEditorInit/SparkMetaForm
+  // resolve just so *something* exists to browse before the author has
+  // chosen anything. Until this is set, the Library shows nothing rather
+  // than silently scoping to a framework the author never picked.
+  const lpFrameworkId = editorProfile.competencyScoped
+    ? getExplicitCurriculum(treeData[0], treeCache)
+    : undefined;
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const selectedLevelSkills = Array.isArray(activeNodeMeta['competencies'])
@@ -122,6 +128,13 @@ export function useLibrary() {
     ) => {
       store.setLoading(true);
       try {
+        // LP profile with no Curriculum chosen yet: nothing to scope the
+        // search by, so show nothing rather than every course in the
+        // channel's default framework (see getExplicitCurriculum).
+        if (editorProfile.competencyScoped && !lpFrameworkId) {
+          store.setContent([], 0);
+          return;
+        }
         let filters: Record<string, unknown>;
         if (editorProfile.competencyScoped) {
           const lpFilters = buildLpLibraryFilters(activeAssessmentSlot, selectedLevelSkills, skillCategory?.code, lpFrameworkId);
