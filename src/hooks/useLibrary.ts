@@ -167,6 +167,16 @@ export function useLibrary() {
     [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory, lpFrameworkId],
   );
 
+  // Reset any in-progress search when the resolved framework (Curriculum)
+  // changes — the previous query text doesn't apply to the new framework's
+  // course set, and library.store's filteredContent would otherwise keep
+  // filtering the freshly-fetched, framework-matching results by stale text.
+  useEffect(() => {
+    clearTimeout(searchTimerRef.current);
+    store.setSearch('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lpFrameworkId]);
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
