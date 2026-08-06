@@ -234,7 +234,10 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
                   <FolderPlus size={13} /> {addUnitLabel}
                 </button>
               )}
-              {node.data.parent && isDraft && (
+              {/* Learning Path: a Level's own menu doesn't offer "Add Level" —
+                  Levels are added via the dedicated button below the tree,
+                  not positioned relative to an existing one. */}
+              {node.data.parent && isDraft && !(isLearningPath && isFolder && !isRoot) && (
                 <button
                   role="menuitem"
                   onClick={() => {
