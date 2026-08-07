@@ -398,12 +398,26 @@ const LEARNING_PATH_OCD = {
           ],
         },
         {
+          // Matches learning_path_ocd.md's Curriculum section exactly
+          // (framework + industry + domain, with depends/sourceCategory
+          // wiring) so local dev testing exercises the same cascading
+          // Curriculum → Industry → Domain fields the real OCD declares.
           name: 'Curriculum', description: 'Framework-aligned categorisation.',
           fields: [
             {
               code: 'framework', dataType: 'text', editable: true, inputType: 'framework', label: 'Curriculum',
               name: 'Framework', placeholder: 'Select…', renderingHints: { class: 'sb-g-col-lg-1 required' },
-              required: true, visible: true,
+              required: true, visible: true, depends: ['industry', 'domain'],
+            },
+            {
+              code: 'industry', dataType: 'list', editable: true, inputType: 'multiSelect', label: 'Industry',
+              name: 'Industry', placeholder: 'Select industry', renderingHints: { class: 'sb-g-col-lg-1' },
+              required: false, visible: true, sourceCategory: 'industry', depends: ['domain'],
+            },
+            {
+              code: 'domain', dataType: 'list', editable: true, inputType: 'multiSelect', label: 'Domain',
+              name: 'Domain', placeholder: 'Select domain', renderingHints: { class: 'sb-g-col-lg-1' },
+              required: false, visible: true, sourceCategory: 'domain',
             },
           ],
         },
@@ -521,8 +535,26 @@ function makeFramework(identifier: string, name: string, skillTerms: string[]) {
         identifier: `${identifier}_medium`, name: 'Medium', code: 'medium', index: 2,
         terms: [{ identifier: `${identifier}_english`, name: 'English', code: 'english', category: 'medium' }],
       },
+      // Descriptive-tagging categories for the Curriculum section's
+      // Industry → Domain cascade (learning_path_ocd.md's depends/
+      // sourceCategory wiring) — never the skill-equivalent category.
       {
-        identifier: `${identifier}_skill`, name: 'Skill', code: SKILL_CODE, index: 3,
+        identifier: `${identifier}_industry`, name: 'Industry', code: 'industry', index: 3,
+        terms: [{ identifier: `${identifier}_edtech`, name: 'EdTech', code: 'edtech', category: 'industry' }],
+      },
+      {
+        identifier: `${identifier}_domain`, name: 'Domain', code: 'domain', index: 4,
+        terms: [{ identifier: `${identifier}_k12`, name: 'K-12', code: 'k12', category: 'domain' }],
+      },
+      // NOTE: both mock frameworks hardcode the SAME skill-category code
+      // (SKILL_CODE) for simplicity — a real deployment resolves a
+      // DIFFERENT code per framework (see useSkillCategory.ts), but
+      // exercising that here would require every MOCK_COURSES fixture's
+      // skill tag to also vary per framework. Deliberately out of scope
+      // for this dev-only mock; don't take this file as a template for
+      // "the code is always 'skill'."
+      {
+        identifier: `${identifier}_skill`, name: 'Skill', code: SKILL_CODE, index: 5,
         terms: skillTerms.map((name, i) => ({
           identifier: `${identifier}_skill_${i}`, name, code: name.toLowerCase().replace(/\s+/g, '-'), category: SKILL_CODE,
         })),

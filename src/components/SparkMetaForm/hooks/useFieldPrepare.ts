@@ -428,8 +428,10 @@ function resolveOptions(
 
   // policy: the schema/form range carries raw values (Fixed/Diagnostic/
   // PriorLearning) — always render the design's friendly labels regardless
-  // of what the category definition's `range` declares.
-  if (code === 'policy') return POLICY_OPTIONS;
+  // of what the category definition's `range` declares. LP-gated: a
+  // future/unrelated category could reuse the code 'policy' for something
+  // else and shouldn't get these hardcoded LP-specific options.
+  if (ctx.profile?.key === 'learningPath' && code === 'policy') return POLICY_OPTIONS;
 
   // maxQuestions: range is 1..(child count) — mirrors Angular's _.times(childCount).
   if (code === 'maxQuestions') {

@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { resolveEditorProfile, learningPathProfile } from '../types/profile';
 import type { IEditorConfig } from '../types/editor';
 
-describe('Learning Path config round-trips through the web component\'s config="json" prop', () => {
+// Covers only the JSON round-trip itself — NOT register.ts's actual
+// `config: 'json'` web-component prop wiring (`react-to-webcomponent`
+// parsing an attribute string and passing the result to CollectionEditor).
+// This repo has no jsdom/DOM-render test setup yet (see testing-requirements
+// conventions), so a real custom-element round-trip isn't covered anywhere.
+describe('resolveEditorProfile survives a JSON stringify/parse round-trip (as config="json" would produce)', () => {
   it('still resolves the learningPath profile after a JSON stringify/parse round-trip', () => {
     const lpConfig: IEditorConfig = {
       context: {

@@ -4,7 +4,7 @@ import type { IContent } from '../types/content';
 import { useEditorStore } from './editor.store';
 import { useUiStore } from './ui.store';
 import { useI18nStore } from './i18n.store';
-import { canAddCourseToLevel, canReorderLevel, isAssessmentLevel, isAssessmentSlotFilled, resolveOpenAssessmentSlot } from '../utils/lpStructure';
+import { canAddCourseToLevel, canReorderLevel, isAssessmentLevel, isAssessmentSlotFilled, isPrePostSlot, resolveOpenAssessmentSlot } from '../utils/lpStructure';
 
 interface TreeState {
   treeData: INode[];
@@ -320,7 +320,8 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       // assessment-Level / one-Level-assessment-per-content-Level caps (item 4)
       // that addResource enforces for library-driven adds.
       const incomingIsAssessmentCourse = !!movedNode.metadata?.['isAssessmentCourse'];
-      if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) return;
+      const rootLevels = get().treeData[0]?.children ?? [];
+      if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse, isPrePostSlot(rootLevels, targetNode))) return;
     }
     set((state) => {
       const node = bfsFind(state.treeData, nodeId);
@@ -392,8 +393,11 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     if (!targetNode?.isFolder) {
       return false;
     }
-    if (profile.derivedRoles && !canAddCourseToLevel(targetNode, incomingIsAssessmentCourse)) {
-      return false;
+    if (profile.derivedRoles) {
+      const rootLevels = get().treeData[0]?.children ?? [];
+      if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse, isPrePostSlot(rootLevels, targetNode))) {
+        return false;
+      }
     }
 
     // Enforce maxContentsLimit (default 1200) and maxQuestionsLimit (default 500)

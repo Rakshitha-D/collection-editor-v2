@@ -153,6 +153,18 @@ describe('tree.store (Learning Path) — per-Level course caps (addResource)', (
     expect(useTreeStore.getState().addResource(course('c2'), preLevelId)).toBe(false);
   });
 
+  it('still allows a regular course on a middle Level whose only current course is its Level assessment', () => {
+    // Three Levels so the target is genuinely in the middle — same shape as
+    // a pre/post slot (exactly one assessment-flagged child), but position
+    // must be what decides "is this actually a slot," not shape alone.
+    useTreeStore.getState().addNode('root', 'unit');
+    const midLevelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addNode('root', 'unit');
+
+    expect(useTreeStore.getState().addResource(course('a1'), midLevelId, { isAssessmentCourse: true })).toBe(true);
+    expect(useTreeStore.getState().addResource(course('c1'), midLevelId)).toBe(true);
+  });
+
   it('rejects adding a course under a course — courses are terminal leaves', () => {
     const levelId = useTreeStore.getState().addNode('root', 'unit');
     useTreeStore.getState().addResource(course('c1'), levelId);

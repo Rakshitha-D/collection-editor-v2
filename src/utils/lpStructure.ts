@@ -163,10 +163,11 @@ export function getLevelDisplayInfo(
 ): { role: 'pre' | 'post' | 'level'; levelNumber: number | null } | null {
   const idx = levels.findIndex((l) => l.id === levelId);
   if (idx === -1) return null;
-  if (isAssessmentLevel(levels[idx])) {
+  if (isPrePostSlotAtIndex(levels, idx)) {
     return { role: idx === 0 ? 'pre' : 'post', levelNumber: null };
   }
-  const levelNumber = levels.slice(0, idx + 1).filter((l) => !isAssessmentLevel(l)).length;
+  const levelNumber = levels.slice(0, idx + 1)
+    .filter((l, i) => !isPrePostSlotAtIndex(levels, i)).length;
   return { role: 'level', levelNumber };
 }
 
@@ -175,6 +176,28 @@ export function getLevelDisplayInfo(
 export function isAssessmentSlotFilled(levels: INode[], slot: 'pre' | 'post'): boolean {
   if (slot === 'pre') return levels.length > 0 && isAssessmentLevel(levels[0]);
   return levels.length > 1 && isAssessmentLevel(levels[levels.length - 1]);
+}
+
+/**
+ * Whether the Level AT this index is actually the pre/post assessment slot
+ * — position AND shape, unlike bare `isAssessmentLevel`. A content Level
+ * whose only current course happens to be its (at-most-one-allowed) Level
+ * assessment is shape-identical to a pre/post slot (isAssessmentLevel is
+ * position-agnostic by design — see its own doc), but per getLevelRole it
+ * is NOT a slot unless it's also at index 0 or the last index. levelCount===1
+ * ties to index 0 (pre), matching getLevelRole's own tie-break.
+ */
+function isPrePostSlotAtIndex(levels: INode[], idx: number): boolean {
+  return (idx === 0 || idx === levels.length - 1) && isAssessmentLevel(levels[idx]);
+}
+
+/** Whether `level` (a direct child of root) is genuinely the pre/post
+ *  assessment slot — position AND shape, unlike bare `isAssessmentLevel`.
+ *  For callers (outside this module) that hold the level object rather
+ *  than its index. */
+export function isPrePostSlot(levels: INode[], level: INode | undefined): boolean {
+  const idx = level ? levels.findIndex((l) => l.id === level.id) : -1;
+  return idx !== -1 && isPrePostSlotAtIndex(levels, idx);
 }
 
 /**
@@ -199,7 +222,7 @@ export function resolveOpenAssessmentSlot(levels: INode[]): 'pre' | 'post' | nul
  * rather than hand-deriving index-shift arithmetic.
  */
 export function canReorderLevel(levels: INode[], fromIndex: number, toIndex: number): boolean {
-  if (fromIndex < 0 || fromIndex >= levels.length) return true;
+  if (fromIndex < 0 || fromIndex >= levels.length) return false; // fail closed — nothing to move
   const preLevel = isAssessmentLevel(levels[0]) ? levels[0] : null;
   const postLevel = levels.length > 1 && isAssessmentLevel(levels[levels.length - 1])
     ? levels[levels.length - 1]
@@ -216,13 +239,21 @@ export function canReorderLevel(levels: INode[], fromIndex: number, toIndex: num
 }
 
 /**
- * Guards adding a course into a Level (doc rules, Phase 2 item 4):
- * an assessment Level (pre/post) holds exactly one course, ever; a content
- * Level allows any number of regular courses plus at most one Level
- * assessment (a course flagged isAssessmentCourse).
+ * Guards adding a course into a Level (doc rules, Phase 2 item 4): a
+ * pre/post assessment slot holds exactly one course, ever; a content Level
+ * allows any number of regular courses plus at most one Level assessment (a
+ * course flagged isAssessmentCourse). `isTargetPrePostSlot` must be computed
+ * via `isPrePostSlot` (position-aware) — bare shape (`isAssessmentLevel`)
+ * alone would also match a content Level whose only current course happens
+ * to be its Level assessment, wrongly blocking further regular courses on
+ * an otherwise-open Level.
  */
-export function canAddCourseToLevel(level: INode | undefined, incomingIsAssessmentCourse: boolean): boolean {
-  if (isAssessmentLevel(level)) return false; // already full — assessment Levels hold exactly one course
+export function canAddCourseToLevel(
+  level: INode | undefined,
+  incomingIsAssessmentCourse: boolean,
+  isTargetPrePostSlot: boolean,
+): boolean {
+  if (isTargetPrePostSlot) return false; // already full — pre/post slots hold exactly one course, ever
   if (!incomingIsAssessmentCourse) return true; // regular courses are unrestricted on content Levels
   const children = level?.children ?? [];
   return !children.some((c) => !!c.metadata?.['isAssessmentCourse']);
@@ -278,23 +309,24 @@ export function computePathShape(root: INode | undefined): { levelCount: number;
   const levels = root?.children ?? [];
   let levelCount = 0;
   let courseCount = 0;
-  for (const lvl of levels) {
-    if (!isAssessmentLevel(lvl)) levelCount++;
+  levels.forEach((lvl, idx) => {
+    if (!isPrePostSlotAtIndex(levels, idx)) levelCount++;
     courseCount += (lvl.children ?? []).length;
-  }
+  });
   return { levelCount, courseCount };
 }
 
 export function computeSkillsCovered(root: INode | undefined, skillCategoryCode: string | undefined): string[] {
   if (!root || !skillCategoryCode) return [];
   const covered = new Set<string>();
-  for (const lvl of root.children ?? []) {
-    if (isAssessmentLevel(lvl)) {
+  const levels = root.children ?? [];
+  levels.forEach((lvl, idx) => {
+    if (isPrePostSlotAtIndex(levels, idx)) {
       toStringArray(lvl.children![0].metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
     } else {
       toStringArray(lvl.metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
     }
-  }
+  });
   return Array.from(covered);
 }
 
@@ -308,7 +340,11 @@ export interface LpValidationIssue {
   nodeId?: string;
 }
 
-const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic', 'PriorLearning']);
+// Exported so every "does this policy require a Prior Assessment" check —
+// the publish gate here AND the delete-confirmation guard in
+// useAssessmentSlots.ts — shares one definition rather than two policy
+// lists that can drift out of sync.
+export const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic', 'PriorLearning']);
 
 /**
  * Every synchronous (no network) LP publish rule: consumption policy set;

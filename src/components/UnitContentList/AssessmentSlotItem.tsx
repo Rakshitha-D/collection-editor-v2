@@ -10,9 +10,10 @@ interface AssessmentSlotItemProps {
   isEditable: boolean;
 }
 
-// A row in the root panel's "Prior & outcome assessments" card — the same
-// data useAssessmentSlots feeds to OutlineTree's pinned tree rows, presented
-// as a filled item-row (course + menu) or a dashed "Add X" placeholder.
+// A row in the root panel's "Prior & outcome assessments" card (the sole
+// add/fill/view/remove surface for these slots — OutlineTree's own pinned
+// rows were removed as a duplicate, see f04ed7b), presented as a filled
+// item-row (course + menu) or a dashed "Add X" placeholder.
 export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, isEditable }) => {
   const lbl = useLabels();
   const { pre, post, setActiveAssessmentSlot, deleteSlot } = useAssessmentSlots();
@@ -47,13 +48,20 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
   }
 
   const badgeText = slot === 'pre' ? lbl.learningPath.skillCheckBadge : lbl.learningPath.outcomeCheckBadge;
+  const openCourse = () => info.level && selectNode(info.level.id);
 
   return (
     <div
       className={styles.assessmentItemRow}
       role="button"
       tabIndex={0}
-      onClick={() => info.level && selectNode(info.level.id)}
+      onClick={openCourse}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openCourse();
+        }
+      }}
     >
       <span className={styles.assessmentItemIcon}><BookOpen size={16} /></span>
       <div className={styles.assessmentItemInfo}>

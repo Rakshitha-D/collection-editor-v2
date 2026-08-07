@@ -1,7 +1,7 @@
 import { useTreeStore } from '../store/tree.store';
 import { useUiStore } from '../store/ui.store';
 import { useLabels } from './useLabels';
-import { isAssessmentLevel } from '../utils/lpStructure';
+import { isAssessmentLevel, REQUIRES_PRIOR_POLICIES } from '../utils/lpStructure';
 import type { INode } from '../types/editor';
 
 export interface AssessmentSlotInfo {
@@ -21,9 +21,10 @@ export interface UseAssessmentSlotsResult {
 }
 
 // Shared derivation for the Prior/Outcome assessment slots — consumed by
-// OutlineTree's pinned tree rows and the root panel's "Prior & outcome
-// assessments" card, so both surfaces agree on what's filled and what a
-// "fill this slot" click arms.
+// the root panel's "Prior & outcome assessments" card (AssessmentSlotItem)
+// and OutlineTree's own delete-confirmation guard for the pre-assessment
+// Level, so both surfaces agree on what's filled and what policy requires
+// confirming a delete.
 export function useAssessmentSlots(): UseAssessmentSlotsResult {
   const lbl = useLabels();
   const treeData = useTreeStore((s) => s.treeData);
@@ -43,7 +44,7 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
     if (!level) return;
     const root = treeData[0];
     const policy = root ? (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined : undefined;
-    if (slot === 'pre' && policy === 'Diagnostic' && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
+    if (slot === 'pre' && policy && REQUIRES_PRIOR_POLICIES.has(policy) && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
       return;
     }
     deleteNode(level.id);

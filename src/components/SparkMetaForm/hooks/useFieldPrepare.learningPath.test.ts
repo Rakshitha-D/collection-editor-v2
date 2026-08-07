@@ -36,8 +36,22 @@ describe('policy field from an API category-definition form', () => {
       code: 'policy', label: 'Consumption policy', inputType: 'select',
       range: ['Fixed', 'Diagnostic', 'PriorLearning'],
     }];
-    const f = find(useFieldPrepare(cfg, {}, fw, true, {}), 'policy');
+    const f = find(useFieldPrepare(cfg, {}, fw, true, { profile: learningPathProfile }), 'policy');
     expect(f.options).toEqual(POLICY_OPTIONS);
+  });
+
+  it('leaves a policy-coded field\'s options untouched outside the LP profile — a future/unrelated category could reuse the code', () => {
+    const cfg = [{
+      code: 'policy', label: 'Consumption policy', inputType: 'select',
+      range: ['Fixed', 'Diagnostic', 'PriorLearning'],
+    }];
+    const f = find(useFieldPrepare(cfg, {}, fw, true, {}), 'policy');
+    expect(f.options).not.toEqual(POLICY_OPTIONS);
+    expect(f.options).toEqual([
+      { label: 'Fixed', value: 'Fixed' },
+      { label: 'Diagnostic', value: 'Diagnostic' },
+      { label: 'PriorLearning', value: 'PriorLearning' },
+    ]);
   });
 
   it('drops any target* framework field for the LP profile, defensively (targetFWType: [])', () => {

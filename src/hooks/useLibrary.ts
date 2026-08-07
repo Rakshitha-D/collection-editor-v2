@@ -229,14 +229,25 @@ export function useLibrary() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lpFrameworkId]);
 
+  // Initial/channel-driven load — applies to every profile.
   useEffect(() => {
     load();
-    // selectedNodeId (not just selectedLevelSkills) matters here: moving
-    // from a skills-empty Level to the root/another node can change
-    // emptyReason without changing selectedLevelSkills itself (e.g. both
-    // read as []), and the search must still refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel, activeAssessmentSlot, selectedLevelSkills.join('|'), lpFrameworkId, selectedNodeId]);
+  }, [channel]);
+
+  // LP-only: re-run on anything that changes what the search should be
+  // scoped to (assessment slot armed, a Level's selected skills, the root's
+  // Curriculum, or which node is selected — moving from a skills-empty Level
+  // to the root/another node can change emptyReason without changing
+  // selectedLevelSkills itself, e.g. both read as []). Gated by
+  // competencyScoped so Collection's user-driven search/filter/sort state
+  // (set via the search/setFilter/etc. callbacks below) is never silently
+  // reset just because the author clicked a different tree node.
+  useEffect(() => {
+    if (!editorProfile.competencyScoped) return;
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorProfile.competencyScoped, activeAssessmentSlot, selectedLevelSkills.join('|'), lpFrameworkId, selectedNodeId]);
 
   const search = useCallback(
     (query: string) => {

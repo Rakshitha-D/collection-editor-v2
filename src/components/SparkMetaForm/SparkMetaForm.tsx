@@ -322,7 +322,10 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
     // declared inputType (select) — same special-casing pattern as dialcodes.
     // Wrapped to span the full width of its 2-col section grid (design: the
     // 3 cards sit in one row, never squeezed into a half-width cell).
-    if (field.code === 'policy') {
+    // Gated to LP specifically — a future/unrelated category schema could
+    // reuse the code 'policy' for something else entirely (e.g. a licensing
+    // policy) and shouldn't get LP's hardcoded 3-card options.
+    if (isLearningPath && field.code === 'policy') {
       return (
         <div key={field.code} className={styles.fullWidthField}>
           <PolicyCardField {...commonProps} />

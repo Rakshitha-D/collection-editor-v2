@@ -11,6 +11,7 @@ import {
   resolveOpenAssessmentSlot,
   canReorderLevel,
   canAddCourseToLevel,
+  isPrePostSlot,
   hasExplicitCurriculum,
   getExplicitCurriculum,
   computeSkillsCovered,
@@ -218,6 +219,17 @@ describe('getLevelDisplayInfo', () => {
     expect(getLevelDisplayInfo([pre, l1, l2, post], 'l1')).toEqual({ role: 'level', levelNumber: 1 });
     expect(getLevelDisplayInfo([pre, l1, l2, post], 'l2')).toEqual({ role: 'level', levelNumber: 2 });
   });
+
+  it('a middle Level whose only course is its Level assessment is still role "level", numbered — not misread as the post slot', () => {
+    // Same shape as a pre/post slot (isAssessmentLevel is position-agnostic
+    // by design), but it's neither first nor last, so it must stay a regular,
+    // numbered content Level.
+    const l1 = level({ id: 'l1' });
+    const l2 = level({ id: 'l2', children: [assessmentCourse('a1')] });
+    const l3 = level({ id: 'l3' });
+    expect(getLevelDisplayInfo([l1, l2, l3], 'l2')).toEqual({ role: 'level', levelNumber: 2 });
+    expect(getLevelDisplayInfo([l1, l2, l3], 'l3')).toEqual({ role: 'level', levelNumber: 3 });
+  });
 });
 
 describe('resolveOpenAssessmentSlot', () => {
@@ -276,33 +288,69 @@ describe('canReorderLevel', () => {
     const contentOnly = [level({ id: 'c1' }), level({ id: 'c2' }), level({ id: 'c3' })];
     expect(canReorderLevel(contentOnly, 0, 2)).toBe(true);
   });
+
+  it('fails closed for an out-of-range fromIndex — there is nothing there to move', () => {
+    expect(canReorderLevel(levels, -1, 1)).toBe(false);
+    expect(canReorderLevel(levels, levels.length, 1)).toBe(false);
+  });
 });
 
 describe('canAddCourseToLevel', () => {
-  it('rejects any addition once a Level is already an assessment Level (holds exactly one course)', () => {
+  it('rejects any addition to a genuine pre/post slot (holds exactly one course, ever)', () => {
     const preLevel = level({ children: [assessmentCourse('a1')] });
-    expect(canAddCourseToLevel(preLevel, false)).toBe(false);
-    expect(canAddCourseToLevel(preLevel, true)).toBe(false);
+    expect(canAddCourseToLevel(preLevel, false, true)).toBe(false);
+    expect(canAddCourseToLevel(preLevel, true, true)).toBe(false);
   });
 
   it('allows unlimited regular courses on a content Level', () => {
     const contentLevel = level({ children: [course('c1'), course('c2')] });
-    expect(canAddCourseToLevel(contentLevel, false)).toBe(true);
+    expect(canAddCourseToLevel(contentLevel, false, false)).toBe(true);
   });
 
   it('allows exactly one Level-assessment course on a content Level', () => {
     const contentLevel = level({ children: [course('c1')] });
-    expect(canAddCourseToLevel(contentLevel, true)).toBe(true);
+    expect(canAddCourseToLevel(contentLevel, true, false)).toBe(true);
   });
 
   it('rejects a second Level-assessment course on the same content Level', () => {
     const contentLevel = level({ children: [course('c1'), assessmentCourse('a1')] });
-    expect(canAddCourseToLevel(contentLevel, true)).toBe(false);
+    expect(canAddCourseToLevel(contentLevel, true, false)).toBe(false);
   });
 
   it('allows the first course into a brand-new empty Level regardless of flag', () => {
-    expect(canAddCourseToLevel(level({ children: [] }), true)).toBe(true);
-    expect(canAddCourseToLevel(level({ children: [] }), false)).toBe(true);
+    expect(canAddCourseToLevel(level({ children: [] }), true, false)).toBe(true);
+    expect(canAddCourseToLevel(level({ children: [] }), false, false)).toBe(true);
+  });
+
+  it('still allows regular courses on a middle Level whose only current course is its Level assessment — shape alone is not a pre/post slot', () => {
+    // Same shape as a pre/post slot (exactly one assessment-flagged child),
+    // but isTargetPrePostSlot=false because it's a middle content Level, not
+    // index 0/last — this is exactly the scenario isPrePostSlot must catch.
+    const middleLevelAssessmentOnly = level({ children: [assessmentCourse('a1')] });
+    expect(canAddCourseToLevel(middleLevelAssessmentOnly, false, false)).toBe(true);
+    expect(canAddCourseToLevel(middleLevelAssessmentOnly, true, false)).toBe(false); // still caps at one Level assessment
+  });
+});
+
+describe('isPrePostSlot', () => {
+  it('is false with no matching level, or a level not in the list', () => {
+    expect(isPrePostSlot([], undefined)).toBe(false);
+    expect(isPrePostSlot([level({ id: 'a' })], level({ id: 'z' }))).toBe(false);
+  });
+
+  it('is true only for an assessment-shaped Level at index 0 or the last index', () => {
+    const pre = level({ id: 'pre', children: [assessmentCourse('a1')] });
+    const mid = level({ id: 'mid', children: [assessmentCourse('a2')] });
+    const post = level({ id: 'post', children: [assessmentCourse('a3')] });
+    const levels = [pre, mid, post];
+    expect(isPrePostSlot(levels, pre)).toBe(true);
+    expect(isPrePostSlot(levels, post)).toBe(true);
+    expect(isPrePostSlot(levels, mid)).toBe(false); // same shape, wrong position
+  });
+
+  it('is false for a Level at slot position that is not assessment-shaped', () => {
+    const regular = level({ id: 'lvl1', children: [course('c1')] });
+    expect(isPrePostSlot([regular], regular)).toBe(false);
   });
 });
 
@@ -374,6 +422,21 @@ describe('computeSkillsCovered', () => {
     expect(computeSkillsCovered(undefined, 'skill')).toEqual([]);
     expect(computeSkillsCovered(level({ children: [] }), undefined)).toEqual([]);
   });
+
+  it('reads a middle Level\'s OWN selected skills, not its Level-assessment course\'s tags, even though the shape matches a pre/post slot', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'l1' }),
+        level({
+          id: 'l2', metadata: { skill: ['Java'] },
+          children: [assessmentCourseWithSkills('a1', ['Should not leak'])],
+        }),
+        level({ id: 'l3' }),
+      ],
+    });
+    expect(computeSkillsCovered(root, 'skill')).toEqual(['Java']);
+  });
 });
 
 describe('computePathShape', () => {
@@ -393,6 +456,18 @@ describe('computePathShape', () => {
   it('returns zeros for a rootless or empty path', () => {
     expect(computePathShape(undefined)).toEqual({ levelCount: 0, courseCount: 0 });
     expect(computePathShape(level({ children: [] }))).toEqual({ levelCount: 0, courseCount: 0 });
+  });
+
+  it('counts a middle Level whose only course is its Level assessment — shape alone must not exclude it', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'l1' }),
+        level({ id: 'l2', children: [assessmentCourse('a1')] }),
+        level({ id: 'l3' }),
+      ],
+    });
+    expect(computePathShape(root)).toEqual({ levelCount: 3, courseCount: 1 });
   });
 });
 

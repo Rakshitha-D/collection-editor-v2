@@ -85,7 +85,10 @@ export const PublishChecklist: React.FC<PublishChecklistProps> = ({
   const lbl = useLabels();
   const objectType =
     useEditorStore((s) => s.editorConfig?.config?.objectType) || 'Content';
-  const isLearningPath = useEditorStore((s) => s.editorProfile.derivedRoles);
+  // `derivedRoles` means something narrower ("structural roles derived from
+  // unit index") — `key === 'learningPath'` is the actual LP-identity check
+  // used everywhere else this profile is gated.
+  const isLearningPath = useEditorStore((s) => s.editorProfile.key === 'learningPath');
 
   // Manual confirmation items defined by the category definition (forms.publishchecklist).
   const checklistItems = useEditorStore((s) => s.publishChecklist) ?? [];

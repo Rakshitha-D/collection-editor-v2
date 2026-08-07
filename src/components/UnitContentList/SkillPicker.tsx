@@ -116,8 +116,9 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
                 filtered.map((skill) => {
                   const isSelected = selected.includes(skill);
                   return (
-                    <div
+                    <button
                       key={skill}
+                      type="button"
                       role="option"
                       aria-selected={isSelected}
                       className={styles.skillOption}
@@ -127,7 +128,7 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
                         {isSelected && <Check size={12} />}
                       </span>
                       {skill}
-                    </div>
+                    </button>
                   );
                 })
               )}
