@@ -44,9 +44,15 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
     if (!level) return;
     const root = treeData[0];
     const policy = root ? (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined : undefined;
-    if (slot === 'pre' && policy && REQUIRES_PRIOR_POLICIES.has(policy) && !window.confirm(lbl.learningPath.deletePriorAssessmentConfirm)) {
-      return;
-    }
+    // Every slot deletion confirms first, matching the window.confirm pattern
+    // used for all other content removal (UnitContentList's handleRemove) —
+    // the pre-slot under an Adaptive/Prior-learning policy gets the stronger,
+    // consequence-specific wording since it also drives the path's skips.
+    const requiresStrongConfirm = slot === 'pre' && !!policy && REQUIRES_PRIOR_POLICIES.has(policy);
+    const message = requiresStrongConfirm
+      ? lbl.learningPath.deletePriorAssessmentConfirm
+      : lbl.learningPath.deleteAssessmentSlotConfirm;
+    if (!window.confirm(message)) return;
     deleteNode(level.id);
   };
 

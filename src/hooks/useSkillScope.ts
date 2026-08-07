@@ -26,7 +26,8 @@ export function resolveSkillScope(
   const preLevel = rootNode?.children?.[0];
   if (!isAssessmentLevel(preLevel)) return manual;
 
-  const priorCourse = preLevel!.children![0];
+  const priorCourse = preLevel?.children?.[0];
+  if (!priorCourse) return manual;
   const cached = treeCache[priorCourse.id]?.[skillCategory.code] as string[] | undefined;
   const raw = (cached ?? priorCourse.metadata?.[skillCategory.code]) as string[] | string | undefined;
   const scope = Array.isArray(raw) ? raw : raw ? [raw] : [];

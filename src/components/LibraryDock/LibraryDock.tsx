@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { getAssessmentCourseInfo, hasExplicitCurriculum, isAssessmentLevel, isAssessmentSlotFilled } from '../../utils/lpStructure';
+import { getAssessmentCourseInfo, hasExplicitCurriculum, isAssessmentSlotFilled, isPrePostSlot } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -150,11 +150,15 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       // happens while the slot is empty), so an add here must say "slot
       // already has a course" — not fall through to the duplicate message.
       if (isLearningPath) {
+        const rootLevels = treeData[0]?.children ?? [];
         const levelNode = selectedNode?.isFolder
           ? selectedNode
           : (selectedNode?.parent ? useTreeStore.getState().getNodeById(selectedNode.parent) : undefined);
-        if (levelNode && isAssessmentLevel(levelNode)) {
-          const preLevelId = treeData[0]?.children?.[0]?.id;
+        // Position-aware: a content Level whose only course happens to be a
+        // Level assessment is shape-identical to a pre/post slot but must
+        // not report the wrong "slot already filled" error here.
+        if (levelNode && isPrePostSlot(rootLevels, levelNode)) {
+          const preLevelId = rootLevels[0]?.id;
           toast.error(levelNode.id === preLevelId
             ? lbl.learningPath.priorSlotFilledToast
             : lbl.learningPath.outcomeSlotFilledToast);

@@ -107,6 +107,21 @@ function insertIntoParent(nodes: INode[], parentId: string, newNode: INode): INo
   });
 }
 
+// Insert a new node into parent's children at a specific index
+function insertIntoParentAt(nodes: INode[], parentId: string, newNode: INode, index: number): INode[] {
+  return nodes.map((node) => {
+    if (node.id === parentId) {
+      const children = [...(node.children ?? [])];
+      children.splice(index, 0, newNode);
+      return { ...node, children };
+    }
+    if (node.children && node.children.length > 0) {
+      return { ...node, children: insertIntoParentAt(node.children, parentId, newNode, index) };
+    }
+    return node;
+  });
+}
+
 // Recursively filter out a node
 function removeNode(nodes: INode[], id: string): INode[] {
   return nodes
@@ -270,8 +285,16 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       },
     };
 
+    // LP: the Outcome Assessment Level must stay pinned at the last index
+    // (canReorderLevel/isAssessmentSlotFilled rely on it) — a plain append
+    // would otherwise land a new content Level after it.
+    const siblings = bfsFind(state.treeData, parentId)?.children ?? [];
+    const insertBeforePost = profile.derivedRoles && isAssessmentSlotFilled(siblings, 'post');
+
     set((state) => ({
-      treeData: insertIntoParent(state.treeData, parentId, newNode),
+      treeData: insertBeforePost
+        ? insertIntoParentAt(state.treeData, parentId, newNode, siblings.length - 1)
+        : insertIntoParent(state.treeData, parentId, newNode),
       treeCache: {
         ...state.treeCache,
         [newId]: { ...newNode.metadata, isNew: true },
@@ -315,6 +338,12 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     // The move target is always a parent — a leaf (e.g. a linked course) can
     // never receive children, in any profile.
     if (!targetNode?.isFolder) return;
+    // LP: Levels are root's only direct children (flat root -> Level ->
+    // course model) — dragging a whole Level into another Level would nest
+    // folders and break every position-aware rule (canAddCourseToLevel,
+    // isAssessmentLevel) that assumes that flatness.
+    const rootId = get().treeData[0]?.id;
+    if (profile.derivedRoles && movedNode?.isFolder && toParentId !== rootId) return;
     if (profile.derivedRoles && movedNode && !movedNode.isFolder) {
       // Dragging a course across Levels must still respect the one-course-per-
       // assessment-Level / one-Level-assessment-per-content-Level caps (item 4)
@@ -452,10 +481,12 @@ export const useTreeStore = create<TreeState>((set, get) => ({
         const keptChildren = (lvl.children ?? []).filter((child) => {
           if (child.isFolder) return true;
           const fw = child.metadata?.['framework'];
-          const courseFramework = Array.isArray(fw) ? fw[0] : fw;
           // Courses with no framework metadata are kept — only a KNOWN
-          // mismatch is unrelated to the new curriculum.
-          const matches = !courseFramework || courseFramework === frameworkId;
+          // mismatch is unrelated to the new curriculum. A multi-value
+          // framework array must be checked by membership, not just its
+          // first element, or a course tagged under several frameworks
+          // (one of which matches) gets wrongly dropped.
+          const matches = !fw || (Array.isArray(fw) ? fw.includes(frameworkId) : fw === frameworkId);
           if (!matches) removed++;
           return matches;
         });

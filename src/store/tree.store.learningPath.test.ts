@@ -294,6 +294,68 @@ describe('tree.store (Learning Path) — pruneCoursesByFramework', () => {
     expect(useTreeStore.getState().pruneCoursesByFramework('usf')).toBe(0);
     expect(useTreeStore.getState().treeData).toBe(before);
   });
+
+  it('keeps a multi-value framework array when ANY entry matches, not just the first', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(fwCourse('c-multi', undefined), levelId);
+    // Tag it with a multi-value framework array whose match ('usf') is NOT first.
+    useTreeStore.getState().updateNode('c-multi', { metadata: { framework: ['NCF', 'usf'] } });
+
+    const removed = useTreeStore.getState().pruneCoursesByFramework('usf');
+
+    expect(removed).toBe(0);
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.children!.some((c) => c.id === 'c-multi')).toBe(true);
+  });
+});
+
+describe('tree.store (Learning Path) — pinned post slot stays last (addNode)', () => {
+  beforeEach(setupLpTree);
+
+  it('inserts a new Level before an already-filled Outcome Assessment slot, not after it', () => {
+    useTreeStore.getState().addNode('root', 'unit'); // first content Level
+    useTreeStore.getState().addResource(course('c1'), 'root', { isAssessmentCourse: true, slot: 'post' });
+
+    const newLevelId = useTreeStore.getState().addNode('root', 'unit');
+
+    const ids = useTreeStore.getState().treeData[0].children!.map((c) => c.id);
+    expect(ids[ids.length - 1]).not.toBe(newLevelId); // post slot still last
+    expect(useTreeStore.getState().treeData[0].children![ids.length - 1].children![0]?.id).toBe('c1');
+    expect(ids).toContain(newLevelId);
+  });
+
+  it('still appends normally when neither slot is filled', () => {
+    const first = useTreeStore.getState().addNode('root', 'unit');
+    const second = useTreeStore.getState().addNode('root', 'unit');
+
+    const ids = useTreeStore.getState().treeData[0].children!.map((c) => c.id);
+    expect(ids).toEqual([first, second]);
+  });
+});
+
+describe('tree.store (Learning Path) — moving a whole Level is guarded (moveNode)', () => {
+  beforeEach(setupLpTree);
+
+  it('blocks dragging a Level into another Level (folder-into-folder nesting)', () => {
+    const levelA = useTreeStore.getState().addNode('root', 'unit');
+    const levelB = useTreeStore.getState().addNode('root', 'unit');
+
+    useTreeStore.getState().moveNode(levelB, 'root', levelA);
+
+    const root = useTreeStore.getState().treeData[0];
+    expect(root.children!.some((c) => c.id === levelB)).toBe(true); // still a direct child of root
+    const a = root.children!.find((c) => c.id === levelA)!;
+    expect(a.children!.some((c) => c.id === levelB)).toBe(false); // not nested under levelA
+  });
+
+  it('still allows moving a Level back to root (a no-op reposition, not nesting)', () => {
+    const levelA = useTreeStore.getState().addNode('root', 'unit');
+
+    useTreeStore.getState().moveNode(levelA, 'root', 'root');
+
+    const root = useTreeStore.getState().treeData[0];
+    expect(root.children!.some((c) => c.id === levelA)).toBe(true);
+  });
 });
 
 describe('tree.store — collection profile is unaffected by the LP guards', () => {

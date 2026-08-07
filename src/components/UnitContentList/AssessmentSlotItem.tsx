@@ -65,7 +65,7 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
     >
       <span className={styles.assessmentItemIcon}><BookOpen size={16} /></span>
       <div className={styles.assessmentItemInfo}>
-        <span className={styles.assessmentItemTitle}>{info.courseName}</span>
+        <span className={styles.assessmentItemTitle}>{info.courseName || lbl.learningPath.courseNameUnavailable}</span>
         <span className={styles.assessmentItemMeta}>{label} · {lbl.learningPath.assessmentCourseMeta}</span>
       </div>
       <span className={styles.assessmentItemBadge}>{badgeText}</span>

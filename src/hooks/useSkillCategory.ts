@@ -35,7 +35,7 @@ export function resolveSkillCategory(categories: ICategory[] | undefined): ISkil
 export function resolvePriorCourseFramework(rootNode: INode | undefined): string | undefined {
   const preLevel = rootNode?.children?.[0];
   if (!isAssessmentLevel(preLevel)) return undefined;
-  const fw = preLevel!.children![0].metadata?.['framework'];
+  const fw = preLevel?.children?.[0]?.metadata?.['framework'];
   return Array.isArray(fw) ? (fw[0] as string | undefined) : (fw as string | undefined);
 }
 

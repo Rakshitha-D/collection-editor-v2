@@ -188,7 +188,8 @@ export function isAssessmentSlotFilled(levels: INode[], slot: 'pre' | 'post'): b
  * ties to index 0 (pre), matching getLevelRole's own tie-break.
  */
 function isPrePostSlotAtIndex(levels: INode[], idx: number): boolean {
-  return (idx === 0 || idx === levels.length - 1) && isAssessmentLevel(levels[idx]);
+  const role = getLevelRole(idx, levels.length, isAssessmentLevel(levels[idx]));
+  return role === 'pre' || role === 'post';
 }
 
 /** Whether `level` (a direct child of root) is genuinely the pre/post

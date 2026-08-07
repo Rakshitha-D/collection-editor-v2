@@ -1,3 +1,5 @@
+import type { IConfig } from './editor';
+
 // Editor profile abstraction — resolves per-instance behavior (unit category,
 // depth, linked-leaf rules, feature gating) from config.config.primaryCategory
 // so components read `editorProfile` instead of branching on primaryCategory.
@@ -54,6 +56,6 @@ export const learningPathProfile: IEditorProfile = {
   features: { csvUpload: false, dialcodes: false, pageNumbers: false, bulkUpload: false, collaborators: false },
 };
 
-export function resolveEditorProfile(config: { config: { primaryCategory?: string } }): IEditorProfile {
+export function resolveEditorProfile(config: { config: Pick<IConfig, 'primaryCategory'> }): IEditorProfile {
   return config.config.primaryCategory === 'Learning Path' ? learningPathProfile : collectionProfile;
 }

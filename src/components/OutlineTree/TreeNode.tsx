@@ -222,10 +222,12 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
                   <FolderPlus size={13} /> {addUnitLabel}
                 </button>
               )}
-              {/* Learning Path: a Level's own menu doesn't offer "Add Level" —
-                  Levels are added via the dedicated button below the tree,
-                  not positioned relative to an existing one. */}
-              {node.data.parent && isDraft && !(isLearningPath && isFolder && !isRoot) && (
+              {/* Learning Path: no row offers "Add Sibling" — Levels are
+                  added via the dedicated button below the tree (not
+                  positioned relative to an existing one), and a course's own
+                  sibling would insert a Level-shaped node into its parent
+                  Level's children, nesting a folder inside a Level. */}
+              {node.data.parent && isDraft && !isLearningPath && (
                 <button
                   role="menuitem"
                   onClick={() => {
