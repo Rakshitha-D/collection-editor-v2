@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildLpLibraryFilters, buildSearchFields } from './useLibrary';
+import { buildLpLibraryFilters, buildSearchFields, computeLibraryEmptyReason } from './useLibrary';
 import { DEFAULT_SEARCH_FIELDS } from '../api/content';
 
 describe('buildLpLibraryFilters', () => {
@@ -47,5 +47,34 @@ describe('buildSearchFields', () => {
 
   it('leaves the default fields untouched when the skill category has not resolved yet', () => {
     expect(buildSearchFields(true, undefined)).toBeUndefined();
+  });
+});
+
+describe('computeLibraryEmptyReason', () => {
+  it('is null for the Collection profile, regardless of the other inputs', () => {
+    expect(computeLibraryEmptyReason(false, undefined, false, null, [])).toBeNull();
+    expect(computeLibraryEmptyReason(false, 'NCF', true, null, [])).toBeNull();
+  });
+
+  it('is noCurriculum when the LP root has no explicit Curriculum yet', () => {
+    expect(computeLibraryEmptyReason(true, undefined, false, null, [])).toBe('noCurriculum');
+    expect(computeLibraryEmptyReason(true, undefined, true, null, [])).toBe('noCurriculum');
+  });
+
+  it('is noSkills only on a content Level with a Curriculum set but no skills selected', () => {
+    expect(computeLibraryEmptyReason(true, 'NCF', true, null, [])).toBe('noSkills');
+  });
+
+  it('is null on a content Level once skills are selected', () => {
+    expect(computeLibraryEmptyReason(true, 'NCF', true, null, ['Java'])).toBeNull();
+  });
+
+  it('is null outside a content Level (root, or an assessment Level) even with no skills selected', () => {
+    expect(computeLibraryEmptyReason(true, 'NCF', false, null, [])).toBeNull();
+  });
+
+  it('is null while filling the Prior/Outcome Assessment slot, regardless of skills selected', () => {
+    expect(computeLibraryEmptyReason(true, 'NCF', true, 'pre', [])).toBeNull();
+    expect(computeLibraryEmptyReason(true, 'NCF', true, 'post', [])).toBeNull();
   });
 });

@@ -58,6 +58,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     toggleSort,
     loadMore,
     activeAssessmentSlot,
+    emptyReason,
   } = useLibrary();
 
   const { addResource, selectedNodeId, treeData, treeCache } = useTreeStore();
@@ -333,8 +334,22 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           ) : (
             <div className={styles.emptyState}>
               <Search size={24} />
-              <p>{lbl.libraryDock.noContentFound}</p>
-              <span>{lbl.libraryDock.tryDifferentSearch}</span>
+              {emptyReason === 'noCurriculum' ? (
+                <>
+                  <p>{lbl.learningPath.noCurriculumEmptyTitle}</p>
+                  <span>{lbl.learningPath.noCurriculumEmptyHint}</span>
+                </>
+              ) : emptyReason === 'noSkills' ? (
+                <>
+                  <p>{lbl.learningPath.noSkillsEmptyTitle}</p>
+                  <span>{lbl.learningPath.noSkillsEmptyHint}</span>
+                </>
+              ) : (
+                <>
+                  <p>{lbl.libraryDock.noContentFound}</p>
+                  <span>{lbl.libraryDock.tryDifferentSearch}</span>
+                </>
+              )}
             </div>
           )}
         </div>

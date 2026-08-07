@@ -4,7 +4,7 @@ import { useEditorStore } from '../store/editor.store';
 import { useTreeStore } from '../store/tree.store';
 import { useUiStore } from '../store/ui.store';
 import { useSkillCategory } from './useSkillCategory';
-import { getExplicitCurriculum } from '../utils/lpStructure';
+import { getExplicitCurriculum, isAssessmentLevel } from '../utils/lpStructure';
 import { compositeSearch, DEFAULT_SEARCH_FIELDS } from '../api/content';
 import { LIBRARY_PRIMARY_CATEGORIES } from '../types/content';
 import type { LibraryFilters } from '../components/LibraryDock/LibraryFilterPanel';
@@ -50,6 +50,29 @@ export function buildSearchFields(
   // skill tags live under (useSkillCategory resolves via the prior course's
   // framework, which may differ from the LP's own).
   return [...DEFAULT_SEARCH_FIELDS, skillCategoryCode, 'framework'];
+}
+
+/**
+ * Why the Library is (or would be) empty for the LP profile, so the dock can
+ * show a guiding message instead of the generic "no results" empty state —
+ * mandatory per learning_path_plan.md §3 item 3: with no Curriculum chosen
+ * there's no framework to scope search by, and with no skills selected on a
+ * content Level there's nothing to filter by, so browsing must show nothing
+ * rather than every course. Doesn't apply to Collection, root, an assessment
+ * Level, or while filling the Prior/Outcome Assessment slot (that course
+ * *defines* the skill scope, so it can't be filtered by it).
+ */
+export function computeLibraryEmptyReason(
+  competencyScoped: boolean,
+  frameworkId: string | undefined,
+  isLpLevel: boolean,
+  activeAssessmentSlot: 'pre' | 'post' | null,
+  selectedSkills: string[],
+): 'noCurriculum' | 'noSkills' | null {
+  if (!competencyScoped) return null;
+  if (!frameworkId) return 'noCurriculum';
+  if (isLpLevel && !activeAssessmentSlot && selectedSkills.length === 0) return 'noSkills';
+  return null;
 }
 
 const PAGE_SIZE = 20;
@@ -103,6 +126,8 @@ export function useLibrary() {
   const activeNodeMeta = useTreeStore((s) => s.activeNodeMeta);
   const treeData = useTreeStore((s) => s.treeData);
   const treeCache = useTreeStore((s) => s.treeCache);
+  const selectedNodeId = useTreeStore((s) => s.selectedNodeId);
+  const getNodeById = useTreeStore((s) => s.getNodeById);
   const skillCategory = useSkillCategory();
   // The LP root's EXPLICITLY chosen Curriculum only — never the channel/
   // context default (contentFramework) that useEditorInit/SparkMetaForm
@@ -118,6 +143,17 @@ export function useLibrary() {
     ? activeNodeMeta['competencies'] as string[]
     : EMPTY_SKILLS;
 
+  // A regular content Level (not root, not a pre/post/level-assessment slot
+  // — those hold exactly one course and have no skill picker of their own).
+  // Only this context requires skills to be picked before browsing.
+  const selectedNode = selectedNodeId ? getNodeById(selectedNodeId) : undefined;
+  const isLpLevel = editorProfile.competencyScoped
+    && !!selectedNode?.isFolder && !!selectedNode.parent && !isAssessmentLevel(selectedNode);
+
+  const emptyReason = computeLibraryEmptyReason(
+    editorProfile.competencyScoped, lpFrameworkId, isLpLevel, activeAssessmentSlot, selectedLevelSkills,
+  );
+
   const load = useCallback(
     async (
       query = '',
@@ -128,10 +164,11 @@ export function useLibrary() {
     ) => {
       store.setLoading(true);
       try {
-        // LP profile with no Curriculum chosen yet: nothing to scope the
-        // search by, so show nothing rather than every course in the
-        // channel's default framework (see getExplicitCurriculum).
-        if (editorProfile.competencyScoped && !lpFrameworkId) {
+        // No Curriculum chosen yet, or (viewing a content Level) no skills
+        // selected on it yet: nothing to scope the search by, so show
+        // nothing rather than every course in the framework (see
+        // emptyReason above for why each case applies).
+        if (emptyReason) {
           store.setContent([], 0);
           return;
         }
@@ -177,7 +214,7 @@ export function useLibrary() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory, lpFrameworkId],
+    [allowedCategories, channel, editorProfile, activeAssessmentSlot, selectedLevelSkills, skillCategory, lpFrameworkId, emptyReason],
   );
 
   // Reset any in-progress search when the resolved framework (Curriculum)
@@ -192,8 +229,12 @@ export function useLibrary() {
 
   useEffect(() => {
     load();
+    // selectedNodeId (not just selectedLevelSkills) matters here: moving
+    // from a skills-empty Level to the root/another node can change
+    // emptyReason without changing selectedLevelSkills itself (e.g. both
+    // read as []), and the search must still refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel, activeAssessmentSlot, selectedLevelSkills.join('|'), lpFrameworkId]);
+  }, [channel, activeAssessmentSlot, selectedLevelSkills.join('|'), lpFrameworkId, selectedNodeId]);
 
   const search = useCallback(
     (query: string) => {
@@ -258,5 +299,8 @@ export function useLibrary() {
     // LP profile only — drives the dock's "filling the Prior/Outcome
     // Assessment slot" banner.
     activeAssessmentSlot,
+    // LP profile only — why content is (or would be) empty, so the dock can
+    // show a guiding message instead of the generic "no results" state.
+    emptyReason,
   };
 }
