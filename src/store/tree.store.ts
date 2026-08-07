@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import type { INode } from '../types/editor';
 import type { IContent } from '../types/content';
 import { useEditorStore } from './editor.store';
+import { useUiStore } from './ui.store';
+import { useI18nStore } from './i18n.store';
+import { canAddCourseToLevel, canReorderLevel, isAssessmentLevel, isAssessmentSlotFilled, isPrePostSlot, resolveOpenAssessmentSlot } from '../utils/lpStructure';
 
 interface TreeState {
   treeData: INode[];
@@ -12,17 +15,20 @@ interface TreeState {
   // actions
   setTreeData: (nodes: INode[]) => void;
   selectNode: (id: string) => void;
-  updateNode: (id: string, patch: Record<string, unknown>) => void;
+  updateNode: (id: string, patch: Record<string, unknown>, extraMirrorKeys?: string[]) => void;
   addNode: (parentId: string, type: 'unit' | 'subunit') => string;
   deleteNode: (id: string) => void;
   reorderChildren: (parentId: string, fromIndex: number, toIndex: number) => void;
-  addResource: (content: IContent, nodeId: string) => boolean;
+  addResource: (content: IContent, nodeId: string, opts?: { isAssessmentCourse?: boolean; slot?: 'pre' | 'post' }) => boolean;
   markDirty: () => void;
   getNodeById: (id: string) => INode | undefined;
   getChildrenOf: (id: string) => INode[];
   getBreadcrumb: (id: string) => Array<{ id: string; name: string }>;
   moveNode: (nodeId: string, fromParentId: string, toParentId: string) => void;
   replaceNodeIds: (identifiers: Record<string, string>) => void;
+  /** LP: drop linked courses tagged under a different framework than the
+   *  root's newly-selected curriculum. Returns how many were removed. */
+  pruneCoursesByFramework: (frameworkId: string) => number;
 }
 
 // BFS through treeData to find a node by id
@@ -55,13 +61,24 @@ const METADATA_MIRROR_FIELDS = new Set([
   'qrCodeProcessId', 'reservedDialcodes',
 ]);
 
-function deepMergeNode(nodes: INode[], id: string, patch: Record<string, unknown>): INode[] {
+// extraMirrorKeys: for patch keys whose NAME is only known at call time (e.g.
+// a Level's skill selection, stored under the resolved skill-category code —
+// 'skill' for USF, a different code for another framework — never the
+// reserved Sunbird `competencies` field, whose platform schema expects
+// competency-ontology objects, not plain framework-term strings). Callers
+// pass the dynamic key(s) explicitly rather than growing the static set above.
+function deepMergeNode(
+  nodes: INode[], id: string, patch: Record<string, unknown>, extraMirrorKeys?: string[],
+): INode[] {
   return nodes.map((node) => {
     if (node.id === id) {
       const explicitMetaPatch = (patch['metadata'] as Record<string, unknown>) ?? {};
       // Mirror top-level patch fields into metadata so cleanMetadata sees the latest values
+      const mirrorFields = extraMirrorKeys?.length
+        ? new Set([...METADATA_MIRROR_FIELDS, ...extraMirrorKeys])
+        : METADATA_MIRROR_FIELDS;
       const mirroredFields: Record<string, unknown> = {};
-      for (const key of METADATA_MIRROR_FIELDS) {
+      for (const key of mirrorFields) {
         if (key in patch) mirroredFields[key] = patch[key];
       }
       return {
@@ -71,7 +88,7 @@ function deepMergeNode(nodes: INode[], id: string, patch: Record<string, unknown
       };
     }
     if (node.children && node.children.length > 0) {
-      return { ...node, children: deepMergeNode(node.children, id, patch) };
+      return { ...node, children: deepMergeNode(node.children, id, patch, extraMirrorKeys) };
     }
     return node;
   });
@@ -85,6 +102,21 @@ function insertIntoParent(nodes: INode[], parentId: string, newNode: INode): INo
     }
     if (node.children && node.children.length > 0) {
       return { ...node, children: insertIntoParent(node.children, parentId, newNode) };
+    }
+    return node;
+  });
+}
+
+// Insert a new node into parent's children at a specific index
+function insertIntoParentAt(nodes: INode[], parentId: string, newNode: INode, index: number): INode[] {
+  return nodes.map((node) => {
+    if (node.id === parentId) {
+      const children = [...(node.children ?? [])];
+      children.splice(index, 0, newNode);
+      return { ...node, children };
+    }
+    if (node.children && node.children.length > 0) {
+      return { ...node, children: insertIntoParentAt(node.children, parentId, newNode, index) };
     }
     return node;
   });
@@ -192,17 +224,31 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       isQuml: false,
     });
 
+    // Any explicit navigation cancels a pending "filling the Prior/Outcome
+    // Assessment slot" virtual view (LP profile) — otherwise there'd be no
+    // way to back out of it short of actually adding a course.
+    useUiStore.getState().setActiveAssessmentSlot(null);
+
     set({ selectedNodeId: id, breadcrumb, activeNodeMeta });
   },
 
-  updateNode: (id, patch) => {
+  updateNode: (id, patch, extraMirrorKeys) => {
     set((state) => ({
-      treeData: deepMergeNode(state.treeData, id, patch),
+      treeData: deepMergeNode(state.treeData, id, patch, extraMirrorKeys),
       treeCache: {
         ...state.treeCache,
         [id]: { ...(state.treeCache[id] ?? {}), ...patch },
       },
     }));
+    // Keep activeNodeMeta live for the edited node — controlled inputs (e.g.
+    // the LP SkillPicker) read their value from it, so a stale snapshot would
+    // swallow every edit after the first until the node is re-selected.
+    if (get().selectedNodeId === id) {
+      const node = bfsFind(get().treeData, id);
+      set((state) => ({
+        activeNodeMeta: { ...(node?.metadata ?? {}), ...(state.treeCache[id] ?? {}) },
+      }));
+    }
     // Any node edit (root/unit/leaf form, inline title) must mark the tree
     // dirty so the debounced autosave in useSaveHierarchy actually runs.
     get().markDirty();
@@ -210,7 +256,8 @@ export const useTreeStore = create<TreeState>((set, get) => ({
 
   addNode: (parentId, _type) => {
     const state = get();
-    const maxDepth = useEditorStore.getState().editorConfig?.config?.maxDepth ?? 4;
+    const profile = useEditorStore.getState().editorProfile;
+    const maxDepth = useEditorStore.getState().editorConfig?.config?.maxDepth ?? profile.maxDepth;
     const parentDepth = getNodeDepth(state.treeData, parentId);
 
     // parentDepth is the depth of the parent; child would be at parentDepth + 1.
@@ -224,20 +271,30 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     const newNode: INode = {
       id: newId,
       identifier: newId,
-      name: 'Untitled Unit',
+      name: profile.defaultUnitName,
       isFolder: true,
       children: [],
       parent: parentId,
       metadata: {
         mimeType: 'application/vnd.ekstep.content-collection',
         code: newId,
-        name: 'Untitled Unit',
+        name: profile.defaultUnitName,
+        contentType: profile.unitContentType,
+        primaryCategory: profile.unitPrimaryCategory,
         visibility: 'Parent',
       },
     };
 
+    // LP: the Outcome Assessment Level must stay pinned at the last index
+    // (canReorderLevel/isAssessmentSlotFilled rely on it) — a plain append
+    // would otherwise land a new content Level after it.
+    const siblings = bfsFind(state.treeData, parentId)?.children ?? [];
+    const insertBeforePost = profile.derivedRoles && isAssessmentSlotFilled(siblings, 'post');
+
     set((state) => ({
-      treeData: insertIntoParent(state.treeData, parentId, newNode),
+      treeData: insertBeforePost
+        ? insertIntoParentAt(state.treeData, parentId, newNode, siblings.length - 1)
+        : insertIntoParent(state.treeData, parentId, newNode),
       treeCache: {
         ...state.treeCache,
         [newId]: { ...newNode.metadata, isNew: true },
@@ -261,12 +318,40 @@ export const useTreeStore = create<TreeState>((set, get) => ({
   },
 
   reorderChildren: (parentId, fromIndex, toIndex) => {
+    const profile = useEditorStore.getState().editorProfile;
+    const rootId = get().treeData[0]?.id;
+    // LP profile: the pre/post assessment Levels are pinned at index 0 / last
+    // (doc model) — reordering is only free for the content Levels between them.
+    if (profile.derivedRoles && parentId === rootId) {
+      const parent = bfsFind(get().treeData, parentId);
+      if (parent?.children && !canReorderLevel(parent.children, fromIndex, toIndex)) return;
+    }
     set((state) => ({
       treeData: reorderInParent(state.treeData, parentId, fromIndex, toIndex),
     }));
   },
 
   moveNode: (nodeId, _fromParentId, toParentId) => {
+    const profile = useEditorStore.getState().editorProfile;
+    const movedNode = bfsFind(get().treeData, nodeId);
+    const targetNode = bfsFind(get().treeData, toParentId);
+    // The move target is always a parent — a leaf (e.g. a linked course) can
+    // never receive children, in any profile.
+    if (!targetNode?.isFolder) return;
+    // LP: Levels are root's only direct children (flat root -> Level ->
+    // course model) — dragging a whole Level into another Level would nest
+    // folders and break every position-aware rule (canAddCourseToLevel,
+    // isAssessmentLevel) that assumes that flatness.
+    const rootId = get().treeData[0]?.id;
+    if (profile.derivedRoles && movedNode?.isFolder && toParentId !== rootId) return;
+    if (profile.derivedRoles && movedNode && !movedNode.isFolder) {
+      // Dragging a course across Levels must still respect the one-course-per-
+      // assessment-Level / one-Level-assessment-per-content-Level caps (item 4)
+      // that addResource enforces for library-driven adds.
+      const incomingIsAssessmentCourse = !!movedNode.metadata?.['isAssessmentCourse'];
+      const rootLevels = get().treeData[0]?.children ?? [];
+      if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse, isPrePostSlot(rootLevels, targetNode))) return;
+    }
     set((state) => {
       const node = bfsFind(state.treeData, nodeId);
       if (!node) return state;
@@ -277,11 +362,50 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     get().markDirty();
   },
 
-  addResource: (content, nodeId) => {
+  addResource: (content, nodeId, opts) => {
     const config = useEditorStore.getState().editorConfig;
+    const profile = useEditorStore.getState().editorProfile;
+    const rootId = get().treeData[0]?.id;
+    const incomingIsAssessmentCourse = !!opts?.isAssessmentCourse;
+
+    // LP profile: linking an assessment course targeted at root fills the
+    // open pre/post slot by auto-wrapping it in its own dedicated Level
+    // (doc: "assessment Levels contain exactly the one assessment course") —
+    // this is how the Prior/Outcome Assessment pickers add a course, instead
+    // of requiring the author to create the Level by hand first.
+    if (profile.derivedRoles && nodeId === rootId) {
+      if (!incomingIsAssessmentCourse) return false; // only assessment courses may target root directly
+      if (bfsFind(get().treeData, content.identifier)) return false; // duplicate guard
+
+      const rootNode = get().treeData[0];
+      const levels = rootNode?.children ?? [];
+      // Honor the caller's armed slot when given: filling "post" must never
+      // land in an open pre slot, and a filled requested slot is a rejection,
+      // not a fallback to the other slot.
+      const slot = opts?.slot ?? resolveOpenAssessmentSlot(levels);
+      if (!slot || isAssessmentSlotFilled(levels, slot)) return false;
+
+      const newLevelId = get().addNode(rootId, 'unit');
+      if (!newLevelId) return false;
+      // Name the wrapper Level after its slot — addNode's "Untitled Level"
+      // default would otherwise surface everywhere the node name renders
+      // (tree rows, breadcrumb, the saved hierarchy).
+      const { learningPath: lpLabels } = useI18nStore.getState().labelConfig;
+      get().updateNode(newLevelId, {
+        name: slot === 'pre' ? lpLabels.priorAssessmentLabel : lpLabels.outcomeAssessmentLabel,
+      });
+      if (slot === 'pre') {
+        // addNode always appends; pull the fresh Level back to index 0 for the pre slot.
+        const lastIndex = (get().treeData[0]?.children?.length ?? 1) - 1;
+        set((state) => ({
+          treeData: reorderInParent(state.treeData, rootId, lastIndex, 0),
+        }));
+      }
+      return get().addResource(content, newLevelId, opts);
+    }
+
     // Prevent adding content directly under the root node unless explicitly allowed by config
     const allowContentUnderRoot = config?.config?.allowContentUnderRoot ?? false;
-    const rootId = get().treeData[0]?.id;
     if (!allowContentUnderRoot && nodeId === rootId) {
       return false;
     }
@@ -289,6 +413,20 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     // Prevent duplicate content anywhere in the collection (cross-unit)
     if (bfsFind(get().treeData, content.identifier)) {
       return false;
+    }
+
+    // Leaf content is terminal in every profile — in an LP specifically, a
+    // course can never nest under a course. Callers may pass a leaf id (e.g.
+    // a selected course), so reject here rather than silently inserting under it.
+    const targetNode = bfsFind(get().treeData, nodeId);
+    if (!targetNode?.isFolder) {
+      return false;
+    }
+    if (profile.derivedRoles) {
+      const rootLevels = get().treeData[0]?.children ?? [];
+      if (!canAddCourseToLevel(targetNode, incomingIsAssessmentCourse, isPrePostSlot(rootLevels, targetNode))) {
+        return false;
+      }
     }
 
     // Enforce maxContentsLimit (default 1200) and maxQuestionsLimit (default 500)
@@ -310,7 +448,10 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       contentType: content.contentType,
       appIcon: content.appIcon,
       status: content.status,
-      metadata: content as unknown as Record<string, unknown>,
+      metadata: {
+        ...(content as unknown as Record<string, unknown>),
+        ...(incomingIsAssessmentCourse ? { isAssessmentCourse: true } : {}),
+      },
     };
 
     set((state) => ({
@@ -327,6 +468,39 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     // would otherwise show "Unsaved" and trigger the back-guard.
     const { editorMode, setIsDirty } = useEditorStore.getState();
     if (editorMode === 'edit') setIsDirty(true);
+  },
+
+  pruneCoursesByFramework: (frameworkId) => {
+    let removed = 0;
+    set((state) => {
+      const root = state.treeData[0];
+      if (!root) return state;
+      const newLevels: INode[] = [];
+      for (const lvl of root.children ?? []) {
+        const wasAssessmentLevel = isAssessmentLevel(lvl);
+        const keptChildren = (lvl.children ?? []).filter((child) => {
+          if (child.isFolder) return true;
+          const fw = child.metadata?.['framework'];
+          // Courses with no framework metadata are kept — only a KNOWN
+          // mismatch is unrelated to the new curriculum. A multi-value
+          // framework array must be checked by membership, not just its
+          // first element, or a course tagged under several frameworks
+          // (one of which matches) gets wrongly dropped.
+          const matches = !fw || (Array.isArray(fw) ? fw.includes(frameworkId) : fw === frameworkId);
+          if (!matches) removed++;
+          return matches;
+        });
+        // An emptied assessment slot loses its wrapper Level too, so the
+        // pre/post slot reverts to its dashed "Add …" placeholder instead of
+        // lingering as an empty content Level.
+        if (wasAssessmentLevel && keptChildren.length === 0) continue;
+        newLevels.push(keptChildren.length === (lvl.children ?? []).length ? lvl : { ...lvl, children: keptChildren });
+      }
+      if (removed === 0) return state;
+      return { treeData: [{ ...root, children: newLevels }] };
+    });
+    if (removed > 0) get().markDirty();
+    return removed;
   },
 
   replaceNodeIds: (identifiers) => {

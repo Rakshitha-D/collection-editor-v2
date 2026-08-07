@@ -4,8 +4,12 @@ import type { EditorMode } from '../../types/editor';
 import type { IContent } from '../../types/content';
 import { CT_FILTERS } from '../../types/content';
 import { useLibrary } from '../../hooks/useLibrary';
+import { useLibraryTargetLabel } from '../../hooks/useLibraryTargetLabel';
 import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
+import { useEditorStore } from '../../store/editor.store';
+import { useUiStore } from '../../store/ui.store';
+import { getAssessmentCourseInfo, hasExplicitCurriculum, isAssessmentSlotFilled, isPrePostSlot } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -19,6 +23,10 @@ interface LibraryDockProps {
   onToggleCollapse?: () => void;
   editorMode: EditorMode;
 }
+
+// Single permanently-active chip for the LP profile — 'all' so it renders
+// filled by default without needing extra state.
+const LP_COURSE_FILTER = [{ label: 'Courses', value: 'all' }] as const;
 
 // Collect all resource identifiers from the tree (non-folder nodes)
 function collectResourceIds(nodes: ReturnType<typeof useTreeStore.getState>['treeData']): Set<string> {
@@ -49,28 +57,120 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     applyAdvancedFilters,
     toggleSort,
     loadMore,
+    activeAssessmentSlot,
+    emptyReason,
   } = useLibrary();
 
-  const { addResource, selectedNodeId, treeData } = useTreeStore();
+  const { addResource, selectedNodeId, treeData, treeCache } = useTreeStore();
+  const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
+  const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
   const isEditable = editorMode === 'edit';
+
+  // LP profile: the header shows where an "Add" click will land — "Open a
+  // level to add" (root/nothing selected), "Add to {Level}" (a Level is
+  // selected), or the slot-specific label while an assessment slot is armed.
+  const libraryTargetLabel = useLibraryTargetLabel();
 
   // Panel state
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<LibraryFilters>({});
   const [previewContent, setPreviewContent] = useState<IContent | null>(null);
+  const [checkingAssessmentCourseId, setCheckingAssessmentCourseId] = useState<string | null>(null);
 
   // Build a set of already-added resource identifiers for O(1) lookup
   const addedIds = useMemo(() => collectResourceIds(treeData), [treeData]);
 
+  // Filling the Prior/Outcome Assessment slot: only a question-set-only
+  // course qualifies, and there's no metadata marker for that — the check
+  // requires reading the course's own hierarchy (Phase 1), done here on
+  // selection rather than filtering search results.
+  const handleFillAssessmentSlot = useCallback(
+    async (item: IContent, slot: 'pre' | 'post') => {
+      const rootId = treeData[0]?.id;
+      if (!rootId || checkingAssessmentCourseId) return;
+      // The slot stays armed while its detail page is open, so an add click
+      // can arrive for an already-filled slot — say so up front instead of
+      // running the question-set check and reporting the wrong problem.
+      if (isAssessmentSlotFilled(treeData[0]?.children ?? [], slot)) {
+        toast.error(slot === 'pre'
+          ? lbl.learningPath.priorSlotFilledToast
+          : lbl.learningPath.outcomeSlotFilledToast);
+        return;
+      }
+      setCheckingAssessmentCourseId(item.identifier);
+      try {
+        const { qualifies, meta } = await getAssessmentCourseInfo(item.identifier);
+        if (!qualifies) {
+          toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
+          return;
+        }
+        // Merge the course's own full metadata (framework + its skill tags) —
+        // the search item only carries the LP framework's skill field, which
+        // is the wrong one when the course was tagged under another framework.
+        const enriched = { ...item, ...meta } as unknown as IContent;
+        const added = addResource(enriched, rootId, { isAssessmentCourse: true, slot });
+        if (added === false) {
+          toast.error(lbl.learningPath.bothSlotsFilledToast);
+          return;
+        }
+        toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
+        setActiveAssessmentSlot(null);
+      } catch (e) {
+        console.error('[LibraryDock] assessment-course check failed:', e);
+        toast.error(lbl.learningPath.assessmentCheckFailedToast);
+      } finally {
+        setCheckingAssessmentCourseId(null);
+      }
+    },
+    [treeData, addResource, setActiveAssessmentSlot, checkingAssessmentCourseId, lbl],
+  );
+
   const handleAdd = useCallback(
     (item: IContent) => {
+      // Every course carries a skill tag under its OWN framework — with no
+      // Curriculum chosen yet, the path has nothing to check that tag
+      // against, and the course would just get pruned the moment one is set.
+      if (isLearningPath && !hasExplicitCurriculum(treeData[0], treeCache)) {
+        toast.error(lbl.learningPath.selectCurriculumFirstToast);
+        return;
+      }
+      if (activeAssessmentSlot) {
+        handleFillAssessmentSlot(item, activeAssessmentSlot);
+        return;
+      }
       if (!selectedNodeId) {
-        toast.error(lbl.libraryDock.selectUnitFirstToast);
+        toast.error(isLearningPath
+          ? lbl.learningPath.selectLevelFirstToast
+          : lbl.libraryDock.selectUnitFirstToast);
         return;
       }
       const rootId = treeData[0]?.id;
-      if (selectedNodeId === rootId) {
-        toast(lbl.libraryDock.selectUnitFromOutlineToast, {
+      const selectedNode = useTreeStore.getState().getNodeById(selectedNodeId);
+      // A filled pre/post slot is selected as its wrapper Level (arming only
+      // happens while the slot is empty), so an add here must say "slot
+      // already has a course" — not fall through to the duplicate message.
+      if (isLearningPath) {
+        const rootLevels = treeData[0]?.children ?? [];
+        const levelNode = selectedNode?.isFolder
+          ? selectedNode
+          : (selectedNode?.parent ? useTreeStore.getState().getNodeById(selectedNode.parent) : undefined);
+        // Position-aware: a content Level whose only course happens to be a
+        // Level assessment is shape-identical to a pre/post slot but must
+        // not report the wrong "slot already filled" error here.
+        if (levelNode && isPrePostSlot(rootLevels, levelNode)) {
+          const preLevelId = rootLevels[0]?.id;
+          toast.error(levelNode.id === preLevelId
+            ? lbl.learningPath.priorSlotFilledToast
+            : lbl.learningPath.outcomeSlotFilledToast);
+          return;
+        }
+      }
+      // Root and leaf targets both need a unit/Level picked first — a course
+      // can never receive children (LP rule: no course under a course).
+      if (selectedNodeId === rootId || !selectedNode?.isFolder) {
+        toast(isLearningPath
+          ? lbl.learningPath.selectLevelFromOutlineToast
+          : lbl.libraryDock.selectUnitFromOutlineToast, {
           icon: <Info size={16} />,
           duration: 4000,
         });
@@ -78,12 +178,14 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       const added = addResource(item, selectedNodeId);
       if (added === false) {
-        toast.error(lbl.libraryDock.itemAlreadyAddedToast.replace('{name}', item.name));
+        toast.error((isLearningPath
+          ? lbl.learningPath.itemAlreadyInPathToast
+          : lbl.libraryDock.itemAlreadyAddedToast).replace('{name}', item.name));
         return;
       }
       toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
     },
-    [selectedNodeId, addResource, treeData, lbl],
+    [activeAssessmentSlot, handleFillAssessmentSlot, selectedNodeId, addResource, treeData, treeCache, lbl, isLearningPath],
   );
 
   const handleApplyFilters = useCallback(
@@ -136,6 +238,9 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
             <span className={styles.count}>{totalCount}</span>
           )}
         </div>
+        {libraryTargetLabel && (
+          <span className={styles.libraryTargetLabel}>{libraryTargetLabel}</span>
+        )}
       </div>
 
       {/* Search + Filter button row */}
@@ -178,9 +283,15 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
         </button>
       </div>
 
-      {/* Content type filter chips */}
+      {/* Content type filter chips — LP profile only ever searches Courses
+          (see useLibrary's buildLpLibraryFilters), so show that as the sole,
+          permanently-active chip instead of the generic category list. */}
       <div className={styles.filters}>
-        <FilterChips filters={CT_FILTERS} active={activeFilter} onChange={setFilter} />
+        <FilterChips
+          filters={isLearningPath ? LP_COURSE_FILTER : CT_FILTERS}
+          active={activeFilter}
+          onChange={setFilter}
+        />
       </div>
 
       {/* Main area: card list + optional side panels */}
@@ -227,8 +338,22 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           ) : (
             <div className={styles.emptyState}>
               <Search size={24} />
-              <p>{lbl.libraryDock.noContentFound}</p>
-              <span>{lbl.libraryDock.tryDifferentSearch}</span>
+              {emptyReason === 'noCurriculum' ? (
+                <>
+                  <p>{lbl.learningPath.noCurriculumEmptyTitle}</p>
+                  <span>{lbl.learningPath.noCurriculumEmptyHint}</span>
+                </>
+              ) : emptyReason === 'noSkills' ? (
+                <>
+                  <p>{lbl.learningPath.noSkillsEmptyTitle}</p>
+                  <span>{lbl.learningPath.noSkillsEmptyHint}</span>
+                </>
+              ) : (
+                <>
+                  <p>{lbl.libraryDock.noContentFound}</p>
+                  <span>{lbl.libraryDock.tryDifferentSearch}</span>
+                </>
+              )}
             </div>
           )}
         </div>

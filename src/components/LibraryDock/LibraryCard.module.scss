@@ -5,7 +5,7 @@
   padding: 10px 10px 10px 12px;
   border-radius: var(--sbx-r-md);
   border: 1px solid var(--sbx-gray-200);
-  background: white;
+  background: var(--sbx-white);
   cursor: grab;
   transition: all 0.15s;
   user-select: none;
@@ -58,6 +58,21 @@
   white-space: nowrap;
 }
 
+.skillTags {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.skillTag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--sbx-r-xl);
+  background: var(--sbx-gray-100);
+  color: var(--sbx-gray-600);
+}
+
 .addBtn {
   flex-shrink: 0;
   display: flex;
@@ -75,7 +90,7 @@
 
   &:hover {
     background: var(--sbx-primary);
-    color: white;
+    color: var(--sbx-white);
   }
 }
 
@@ -108,5 +123,5 @@
   height: 20px;
   border-radius: 50%;
   background: var(--sbx-success);
-  color: white;
+  color: var(--sbx-white);
 }

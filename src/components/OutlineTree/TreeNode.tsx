@@ -11,18 +11,23 @@ import {
   FolderPlus,
   Book,
   Folder,
+  Milestone,
   Video,
   FileText,
   Layers,
   Package,
   Music,
   HelpCircle,
+  BookOpen,
   File,
 } from 'lucide-react';
 import type { INode, EditorMode } from '../../types/editor';
 import { getCtStyle } from '../../hooks/useContentType';
+import { isAssessmentLevel } from '../../utils/lpStructure';
 import { useIsDraftStatus } from '../../hooks/useContentStatus';
 import { useLabels } from '../../hooks/useLabels';
+import { useEditorStore } from '../../store/editor.store';
+import { LearningPathIcon } from '../shared/LearningPathIcon';
 import styles from './TreeNode.module.scss';
 
 const CT_ICON_COMPONENTS: Record<string, React.ElementType> = {
@@ -32,6 +37,7 @@ const CT_ICON_COMPONENTS: Record<string, React.ElementType> = {
   scorm: Package,
   audio: Music,
   quiz: HelpCircle,
+  course: BookOpen,
   default: File,
 };
 
@@ -50,6 +56,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   const [renameVal, setRenameVal] = useState(node.data.name);
   const menuRef = useRef<HTMLDivElement>(null);
   const lbl = useLabels();
+  const editorProfile = useEditorStore(s => s.editorProfile);
   const isEditable = editorMode === 'edit';
   const isDraft = useIsDraftStatus();
   const ctStyle = getCtStyle(node.data);
@@ -58,8 +65,18 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   const isRoot = node.level === 0;
   const isFolder =
     node.data.isFolder ?? (node.children && node.children.length > 0);
-  // Root (Course) → Book, Unit/Sub-Unit (folders) → Folder, leaf → content-type icon.
-  const NodeIcon = isRoot ? Book : isFolder ? Folder : CtIcon;
+  const isLearningPath = editorProfile.key === 'learningPath';
+  // Root → Book (Collection) / LearningPathIcon (Learning Path), Level
+  // folders → Milestone, Unit/Sub-Unit (folders) → Folder, leaf → content-type icon.
+  const NodeIcon = isRoot ? (isLearningPath ? LearningPathIcon : Book) : isFolder ? (isLearningPath ? Milestone : Folder) : CtIcon;
+  // Regular (non pre/post-assessment) Levels get a bolder title (design) —
+  // no number prefix; the row shows just the Level's own name.
+  const isRegularLpLevel = isLearningPath && isFolder && !isRoot && !isAssessmentLevel(node.data);
+  // Adding a folder inside the current node would exceed the profile's maxDepth
+  // (e.g. LP Levels can't contain sub-levels) — hide rather than error on click.
+  const canAddChildFolder = node.level + 1 <= editorProfile.maxDepth;
+  const addUnitLabel = isLearningPath ? lbl.learningPath.addLevelButton : lbl.treeNode.addSubunitMenuItem;
+  const addSiblingLabel = isLearningPath ? lbl.learningPath.addLevelButton : lbl.treeNode.addSiblingMenuItem;
 
   // Close menu on outside click
   useEffect(() => {
@@ -91,6 +108,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
     <div
       className={[
         styles.row,
+        isLearningPath ? styles.rowLp : '',
         isSelected ? styles.selected : '',
         (node.state as unknown as Record<string, boolean>).isOver && isFolder ? styles.dropTarget : '',
       ]
@@ -124,12 +142,17 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
         {node.isClosed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
       </button>
 
-      {/* Node icon: Book (root) / Folder (unit) / content-type (leaf) */}
+      {/* Node icon: Book (root) / Milestone (Level) / Folder (unit) / content-type (leaf). */}
       <span
-        className={`${styles.ctIcon} ${isRoot || isFolder ? styles.folderIcon ?? '' : ctStyle.bgClass}`}
+        className={[
+          styles.ctIcon,
+          isRoot || isFolder ? styles.folderIcon : ctStyle.bgClass,
+          isLearningPath ? styles.ctIconLp : '',
+          isRoot && isLearningPath ? styles.rootIcon : '',
+        ].filter(Boolean).join(' ')}
         aria-hidden="true"
       >
-        <NodeIcon size={12} />
+        <NodeIcon size={isRoot && isLearningPath ? 15 : 12} />
       </span>
 
       {/* Title or rename input */}
@@ -145,7 +168,11 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
         />
       ) : (
         <span
-          className={styles.title}
+          className={[
+            styles.title,
+            isLearningPath ? styles.titleLp : '',
+            isRegularLpLevel ? styles.levelTitle : '',
+          ].filter(Boolean).join(' ')}
           title={node.data.name}
           onDoubleClick={() => isEditable && setIsRenaming(true)}
         >
@@ -184,7 +211,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
               >
                 <Pencil size={13} /> {lbl.treeNode.renameMenuItem}
               </button>
-              {isFolder && isDraft && (
+              {isFolder && isDraft && canAddChildFolder && (
                 <button
                   role="menuitem"
                   onClick={() => {
@@ -192,10 +219,15 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
                     setMenuOpen(false);
                   }}
                 >
-                  <FolderPlus size={13} /> {lbl.treeNode.addSubunitMenuItem}
+                  <FolderPlus size={13} /> {addUnitLabel}
                 </button>
               )}
-              {node.data.parent && isDraft && (
+              {/* Learning Path: no row offers "Add Sibling" — Levels are
+                  added via the dedicated button below the tree (not
+                  positioned relative to an existing one), and a course's own
+                  sibling would insert a Level-shaped node into its parent
+                  Level's children, nesting a folder inside a Level. */}
+              {node.data.parent && isDraft && !isLearningPath && (
                 <button
                   role="menuitem"
                   onClick={() => {
@@ -203,7 +235,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
                     setMenuOpen(false);
                   }}
                 >
-                  <Plus size={13} /> {lbl.treeNode.addSiblingMenuItem}
+                  <Plus size={13} /> {addSiblingLabel}
                 </button>
               )}
               {!isRoot && (

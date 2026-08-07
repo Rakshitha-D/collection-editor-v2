@@ -4,3 +4,5 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { DropZone } from './DropZone';
 export { LanguageSelector } from './LanguageSelector/LanguageSelector';
+export { CourseDetailsPanel } from './CourseDetailsPanel';
+export { LearningPathIcon } from './LearningPathIcon';

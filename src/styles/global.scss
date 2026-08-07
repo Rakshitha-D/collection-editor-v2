@@ -13,6 +13,13 @@
   color: var(--sbx-gray-900);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+
+  // Form controls don't inherit font-family from ancestors under the
+  // browser's default UA stylesheet, so without this they fall back to
+  // the platform default (Arial/Times) instead of Rubik.
+  input, textarea, select, button {
+    font-family: inherit;
+  }
 }
 
 // Chip
@@ -33,13 +40,13 @@
     // the same height and baseline-aligned.
     border: 1.5px solid var(--sbx-primary);
     background: var(--sbx-primary);
-    color: white;
+    color: var(--sbx-white);
   }
 
   &.outline {
     border: 1.5px solid var(--sbx-gray-300);
     color: var(--sbx-gray-700);
-    background: white;
+    background: var(--sbx-white);
   }
 
   &.outline:hover,
@@ -70,12 +77,15 @@
 
 // Card
 .sbx-card {
-  background: white;
+  background: var(--sbx-white);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-1);
 }
 
 // Buttons base
+// Explicit font-family (not just inherited) because Button.tsx also renders
+// via these classes from the two document.body-portaled modals
+// (UnsavedChangesModal, LibraryPreviewPanel), outside .sb-split-builder.
 .sbx-btn {
   display: inline-flex;
   align-items: center;
@@ -83,6 +93,7 @@
   height: 36px;
   border-radius: var(--sbx-r-md);
   padding: 0 18px;
+  font-family: var(--sbx-font);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -100,7 +111,7 @@
 .sbx-btn-primary {
   @extend .sbx-btn;
   background: var(--sbx-primary);
-  color: white;
+  color: var(--sbx-white);
 
   &:hover:not(:disabled) {
     background: var(--sbx-primary-dark);
@@ -127,7 +138,7 @@
 
   &:hover:not(:disabled) {
     background: var(--sbx-error);
-    color: white;
+    color: var(--sbx-white);
   }
 }
 
@@ -136,6 +147,31 @@
   padding: 0 14px;
   font-size: 13px;
   border-radius: var(--sbx-r-sm);
+}
+
+// ── Learning Path only — design's larger/softer buttons & fully-round chips.
+// Scoped under the root .sbx-lp-profile marker (set by CollectionEditor)
+// so Collection/Course keeps the original button/chip sizing above.
+.sbx-lp-profile {
+  .sbx-chip {
+    border-radius: var(--sbx-r-pill);
+  }
+
+  .sbx-btn {
+    height: 42px;
+    border-radius: var(--sbx-r-btn);
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  .sbx-btn-primary {
+    box-shadow: var(--sbx-shadow-1);
+  }
+
+  .sbx-btn-ghost {
+    color: var(--sbx-gray-900);
+    border: 1px solid var(--sbx-gray-200);
+  }
 }
 
 // Targeted RTL overrides (dir="ar" sets document.documentElement[dir="rtl"]

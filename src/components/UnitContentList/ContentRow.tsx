@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, X, Video, FileText, Layers, Package, Music, HelpCircle, File } from 'lucide-react';
+import { GripVertical, X, Video, FileText, Layers, Package, Music, HelpCircle, BookOpen, File } from 'lucide-react';
 import type { INode } from '../../types/editor';
 import { getCtStyle } from '../../hooks/useContentType';
 import { useLabels } from '../../hooks/useLabels';
@@ -9,7 +9,7 @@ import styles from './ContentRow.module.scss';
 
 const CT_ICONS: Record<string, React.ElementType> = {
   video: Video, pdf: FileText, h5p: Layers, scorm: Package,
-  audio: Music, quiz: HelpCircle, default: File,
+  audio: Music, quiz: HelpCircle, course: BookOpen, default: File,
 };
 
 interface ContentRowProps {

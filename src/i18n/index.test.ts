@@ -28,6 +28,14 @@ describe('mergeLocale', () => {
     const merged = mergeLocale('ar');
     expect(merged.topbar.saveAsDraftButton).not.toBe('Save as Draft');
   });
+
+  it('translates the Learning Path section in every supported locale', () => {
+    for (const lang of ['ar', 'fr', 'pt']) {
+      const merged = mergeLocale(lang);
+      expect(Object.keys(merged.learningPath)).toEqual(Object.keys(mergeLocale('en').learningPath));
+      expect(merged.learningPath.addLevelButton).not.toBe('Add Level');
+    }
+  });
 });
 
 describe('isRtl', () => {

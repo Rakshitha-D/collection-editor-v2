@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { EditorMode, ToolbarAction, INode } from '../../types/editor';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
+import { useUiStore } from '../../store/ui.store';
 import { Breadcrumb } from './Breadcrumb';
 import { TabBar } from './TabBar';
 import { SparkMetaForm } from '../SparkMetaForm';
@@ -12,7 +13,11 @@ import { ResourceReorderDialog } from '../ResourceReorder/ResourceReorderDialog'
 import { AssignPageNumber } from '../AssignPageNumber/AssignPageNumber';
 import { ContentEditForm } from './ContentEditForm';
 import { TitleAppIcon } from './TitleAppIcon';
+import { CourseDetailsPanel } from '../shared/CourseDetailsPanel';
+import { AssessmentDetailPanel } from './AssessmentDetailPanel';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import { useLabels } from '../../hooks/useLabels';
+import { isAssessmentLevel, getLevelDisplayInfo } from '../../utils/lpStructure';
 import styles from './ContextualEditor.module.scss';
 
 const QUESTIONSET_MIME = 'application/vnd.sunbird.questionset';
@@ -43,15 +48,25 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const [errorTabs, setErrorTabs] = useState<TabId[]>([]);
   const [reorderResourceId, setReorderResourceId] = useState<string | null>(null);
   const [showAssignPage, setShowAssignPage] = useState(false);
+  const [courseContentCount, setCourseContentCount] = useState<number | null>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const { selectedNodeId, breadcrumb, activeNodeMeta, updateNode, treeData } = useTreeStore();
+  const { selectedNodeId, breadcrumb, activeNodeMeta, updateNode, treeData, selectNode } = useTreeStore();
+  const activeAssessmentSlot = useUiStore(s => s.activeAssessmentSlot);
   const contentId = useEditorStore(
     s => s.editorConfig?.context?.contentId ?? s.editorConfig?.context?.identifier ?? '',
   );
+  const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
 
   const selectedNode = selectedNodeId ? findNodeById(treeData, selectedNodeId) : null;
+
+  // Reset the course-detail "Course · N contents" count on selection change
+  // so it doesn't briefly show the previous course's count while the new
+  // one's hierarchy read is still in flight.
+  useEffect(() => {
+    setCourseContentCount(null);
+  }, [selectedNode?.identifier]);
 
   // Derive node flags synchronously from the resolved node. The editor-store
   // flags (isCurrentNodeRoot/isCurrentNodeFolder) are set asynchronously in
@@ -63,6 +78,16 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   const isQuml = selectedNode && QUML_TYPES.includes(selectedNode.mimeType ?? '');
   const isSingleQuestion = selectedNode?.mimeType === QUESTION_MIME;
   const isLeafContent = selectedNode && !selectedNode.isFolder && !isQuml && !isCurrentNodeRoot;
+
+  // LP profile: the pre/post assessment Level gets a dedicated view instead
+  // of the generic Level panel — see AssessmentDetailPanel. An unfilled slot
+  // has no Level to select yet (derived, not stored), so "Add Prior/Outcome
+  // Assessment" navigates here virtually via activeAssessmentSlot instead;
+  // any other explicit navigation clears it (see tree.store's selectNode).
+  const isAssessmentSlot = isLearningPath && isCurrentNodeFolder && isAssessmentLevel(selectedNode ?? undefined);
+  const assessmentSlotType: 'pre' | 'post' | null = isAssessmentSlot
+    ? (treeData[0]?.children?.[0]?.id === selectedNode?.id ? 'pre' : 'post')
+    : (isLearningPath ? activeAssessmentSlot : null);
 
   // Review comment from previous rejection cycle — only while still in the
   // Draft-after-reject state; hidden once resubmitted for review or published.
@@ -107,6 +132,53 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
     );
   }
 
+  // LP profile: a linked Course is never authored/played inline — show the
+  // read-only "Course details" (Title, Units, Topics) instead of
+  // ContentPlayer + ContentEditForm (design: "Course details ... Back to {Level}").
+  if (isLearningPath && isLeafContent && selectedNode.primaryCategory === 'Course') {
+    const parentLevelInfo = selectedNode.parent
+      ? getLevelDisplayInfo(treeData[0]?.children ?? [], selectedNode.parent)
+      : null;
+    const backToLabel = parentLevelInfo?.role === 'pre' ? lbl.learningPath.priorAssessmentLabel
+      : parentLevelInfo?.role === 'post' ? lbl.learningPath.outcomeAssessmentLabel
+      : parentLevelInfo?.role === 'level'
+        ? lbl.learningPath.levelNumberPrefix.replace('{n}', String(parentLevelInfo.levelNumber))
+        : null;
+    const contentCountLabel = courseContentCount === null ? ''
+      : ` · ${(courseContentCount === 1 ? lbl.learningPath.contentCountLabel : lbl.learningPath.contentCountLabelPlural)
+          .replace('{count}', String(courseContentCount))}`;
+    return (
+      <div className={styles.container}>
+        <button
+          type="button"
+          className={styles.backToPathButton}
+          onClick={() => selectedNode.parent && selectNode(selectedNode.parent)}
+        >
+          <ArrowLeft size={14} />
+          {backToLabel ? lbl.learningPath.backToLevelButton.replace('{label}', backToLabel) : lbl.learningPath.backToPathButton}
+        </button>
+        <div className={styles.courseDetailHeader}>
+          <span className={styles.courseDetailIcon}><BookOpen size={26} /></span>
+          <div>
+            <h2 className={styles.courseDetailTitle}>{selectedNode.name}</h2>
+            <span className={styles.courseDetailMeta}>{selectedNode.primaryCategory}{contentCountLabel}</span>
+          </div>
+        </div>
+        <CourseDetailsPanel
+          key={selectedNode.identifier}
+          courseId={selectedNode.identifier}
+          variant="full"
+          title={selectedNode.name}
+          onLoaded={({ totalContents }) => setCourseContentCount(totalContents)}
+        />
+      </div>
+    );
+  }
+
+  if (assessmentSlotType) {
+    return <AssessmentDetailPanel slot={assessmentSlotType} isEditable={editorMode === 'edit'} />;
+  }
+
   if (isLeafContent) {
     return (
       <div className={styles.leafContentLayout}>
@@ -141,7 +213,7 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
       )}
 
       {/* Title row: app icon (root only) + inline editable title */}
-      <div className={styles.titleRow}>
+      <div className={[styles.titleRow, isLearningPath ? styles.titleRowLp : ''].filter(Boolean).join(' ')}>
         {isCurrentNodeRoot && selectedNodeId && (
           <TitleAppIcon
             nodeId={selectedNodeId}
@@ -151,7 +223,11 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         )}
         <div
           ref={titleRef}
-          className={styles.nodeTitle}
+          className={[
+            styles.nodeTitle,
+            isLearningPath && isCurrentNodeRoot ? styles.nodeTitleLpRoot : '',
+            isLearningPath && !isCurrentNodeRoot ? styles.nodeTitleSub : '',
+          ].filter(Boolean).join(' ')}
           contentEditable={editorMode === 'edit'}
           suppressContentEditableWarning
           onInput={handleTitleChange}
@@ -163,12 +239,14 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
         </div>
       </div>
 
-      {/* Tabs — root shows all three; units show only Details */}
+      {/* Tabs — Collection root shows all three; units, and the LP root
+          (no target framework / audience fields at all — profile sets
+          targetFWType: []), show only Details. */}
       <TabBar
         activeTab={activeTab}
         onChange={tab => setActiveTab(tab as TabId)}
         errorTabs={errorTabs}
-        visibleTabs={isCurrentNodeRoot ? undefined : ['details']}
+        visibleTabs={isCurrentNodeRoot && !isLearningPath ? undefined : ['details']}
       />
 
       {/* Form */}
@@ -187,8 +265,8 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
 
       {/* Content list — for folder nodes (both root and non-root units) */}
       {(isCurrentNodeFolder || isCurrentNodeRoot) && activeTab === 'details' && (
-        <div className={styles.contentListArea}>
-          <UnitContentList editorMode={editorMode} />
+        <div className={[styles.contentListArea, isLearningPath ? styles.contentListAreaLp : ''].filter(Boolean).join(' ')}>
+          <UnitContentList editorMode={editorMode} isRoot={isCurrentNodeRoot} />
         </div>
       )}
 

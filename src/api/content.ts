@@ -1,6 +1,18 @@
 import { apiClient } from './client';
 import type { IContent } from '../types/content';
 
+export const DEFAULT_SEARCH_FIELDS = [
+  'identifier',
+  'name',
+  'mimeType',
+  'contentType',
+  'primaryCategory',
+  'appIcon',
+  'channel',
+  'organisation',
+  'pkgVersion',
+];
+
 export async function compositeSearch(params: {
   filters?: Record<string, unknown>;
   query?: string;
@@ -25,17 +37,7 @@ export async function compositeSearch(params: {
       limit: params.limit ?? 20,
       offset: params.offset ?? 0,
       sort_by: params.sortBy ?? { lastUpdatedOn: 'desc' },
-      fields: params.fields ?? [
-        'identifier',
-        'name',
-        'mimeType',
-        'contentType',
-        'primaryCategory',
-        'appIcon',
-        'channel',
-        'organisation',
-        'pkgVersion',
-      ],
+      fields: params.fields ?? DEFAULT_SEARCH_FIELDS,
     },
   }, {
     headers: {

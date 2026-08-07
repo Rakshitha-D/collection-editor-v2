@@ -26,6 +26,7 @@ import { KeywordSuggestField } from './fields/KeywordSuggestField';
 import { NestedSelectField } from './fields/NestedSelectField';
 import { LicenseSelectField } from './fields/LicenseSelectField';
 import { DialcodeInputField } from './fields/DialcodeInputField';
+import { PolicyCardField } from './fields/PolicyCardField';
 import styles from './SparkMetaForm.module.scss';
 
 interface SparkMetaFormProps {
@@ -44,6 +45,8 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
 }) => {
   const lbl = useLabels();
   const config = useEditorStore(s => s.editorConfig);
+  const editorProfile = useEditorStore(s => s.editorProfile);
+  const isLearningPath = editorProfile.key === 'learningPath';
   const rootFormConfig = useEditorStore(s => s.rootFormConfig);
   const unitFormConfig = useEditorStore(s => s.unitFormConfig);
   const categoryMeta = useEditorStore(s => s.categoryMeta);
@@ -113,6 +116,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
     collectionAdditionalCategories,
     contentAdditionalCategories,
     childCount,
+    profile: editorProfile,
   };
 
   // Use category-definition API fields if available, fall back to static config
@@ -224,6 +228,18 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
         if (changedField === 'framework' && isRoot && typeof value === 'string' && value) {
           const editorState = useEditorStore.getState();
           editorState.setContentFramework(value, editorState.contentTargetFWIds);
+          // LP: courses tagged under another curriculum carry skills the new
+          // scope can't read — drop them (incl. an emptied pre/post slot) and
+          // tell the author what happened.
+          if (isLearningPath) {
+            const removed = useTreeStore.getState().pruneCoursesByFramework(value);
+            if (removed > 0) {
+              toast(
+                lbl.learningPath.coursesRemovedFrameworkChangeToast.replace('{count}', String(removed)),
+                { icon: <Info size={16} />, duration: 5000 },
+              );
+            }
+          }
         }
         // transformFieldPatch omits UI-only keys (allowECM/setPeriod → null) and
         // maps levels→outcomeDeclaration, instances→{label}.
@@ -301,6 +317,21 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
       required: field.required,
       disabled: field.editable === false,
     };
+    // LP root's consumption-policy field gets the design's 3-card selector
+    // instead of a plain dropdown, regardless of the category definition's
+    // declared inputType (select) — same special-casing pattern as dialcodes.
+    // Wrapped to span the full width of its 2-col section grid (design: the
+    // 3 cards sit in one row, never squeezed into a half-width cell).
+    // Gated to LP specifically — a future/unrelated category schema could
+    // reuse the code 'policy' for something else entirely (e.g. a licensing
+    // policy) and shouldn't get LP's hardcoded 3-card options.
+    if (isLearningPath && field.code === 'policy') {
+      return (
+        <div key={field.code} className={styles.fullWidthField}>
+          <PolicyCardField {...commonProps} />
+        </div>
+      );
+    }
     switch (field.inputType) {
       case 'textarea':
         return <TextField {...commonProps} multiline maxLength={field.maxLength} />;
@@ -333,7 +364,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
 
   return (
     <FormProvider {...form}>
-      <div className={styles.form}>
+      <div className={[styles.form, isLearningPath ? styles.formLp : ''].filter(Boolean).join(' ')}>
         {sectionGroups.map((group, idx) => {
           const display = group.section ? SECTION_DISPLAY[group.section] : undefined;
           if (display) {
@@ -345,7 +376,7 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
           }
           // Fields with no known section: render flat inside an unstyled wrapper
           return (
-            <div key={idx} className={styles.ungrouped}>
+            <div key={idx} className={[styles.ungrouped, isLearningPath ? styles.ungroupedLp : ''].filter(Boolean).join(' ')}>
               {group.fields.map(renderField)}
             </div>
           );

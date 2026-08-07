@@ -26,6 +26,7 @@ export const CT_COLOR_MAP = {
   scorm: '#7C3AED',
   audio: '#DB2777',
   quiz: '#16A34A',
+  course: '#A85236',
   default: '#6B7280',
 } as const satisfies Record<string, string>;
 
@@ -36,6 +37,7 @@ export const CT_ICON_MAP = {
   scorm: 'Package',
   audio: 'Music',
   quiz: 'HelpCircle',
+  course: 'BookOpen',
   default: 'File',
 } as const satisfies Record<string, string>;
 

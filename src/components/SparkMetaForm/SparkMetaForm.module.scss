@@ -4,12 +4,30 @@
   gap: 20px;
 }
 
+// Learning Path only (design) — the whole form reads as a bordered card;
+// Collection's form stays borderless (fields sit directly in the panel).
+.formLp {
+  border: 1px solid var(--sbx-gray-100);
+  border-radius: var(--sbx-r-md);
+}
+
 .ungrouped {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px 24px;
 
   @media (max-width: 700px) { grid-template-columns: 1fr; }
+}
+
+.ungroupedLp {
+  padding: 24px;
+}
+
+// Fields that must span the full width of their 2-col section/ungrouped
+// grid (e.g. PolicyCardField's 3-card row) rather than being squeezed into
+// a single half-width cell.
+.fullWidthField {
+  grid-column: 1 / -1;
 }
 
 .noFields {

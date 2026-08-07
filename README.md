@@ -90,6 +90,61 @@ registerCollectionEditor('my-collection-editor');
 
 ---
 
+## Learning Path profile
+
+Setting `config.primaryCategory` to `'Learning Path'` switches the editor into the **Learning Path**
+profile — a config-driven variant of the same editor, not a fork. Everything else about the public
+API (props, events, `apiBaseUrl`, the web component) is unchanged; the profile only affects internal
+behavior:
+
+- The hierarchy is `Learning Path → Level → Course`. Levels are the only unit type (`maxDepth: 1`);
+  Courses are linked whole as leaves, never authored inline.
+- The path's first and last Level are the **Prior** and **Outcome Assessment** slots — ordinary
+  Levels wrapping a single question-set-only Course, rendered by `OutlineTree` as pinned rows above
+  and below the Level list rather than as regular tree rows.
+- A Level's skill scope comes from the Prior Assessment's own skill tags (never from linked courses);
+  with no Prior Assessment linked, Levels fall back to manual selection from the active framework's
+  skill-equivalent category.
+- CSV bulk upload, dial codes, and inline Course preview are disabled for this profile; publish is
+  gated by the derived structural rules (see `IEditorProfile`) instead of a manual checklist.
+
+```tsx
+import { CollectionEditor } from '@project-sunbird/collection-editor-react';
+import '@project-sunbird/collection-editor-react/dist/style.css';
+
+const learningPathConfig = {
+  context: {
+    authToken: 'your-bearer-token',
+    userId: 'user-id',
+    sid: 'session-id',
+    did: 'device-id',
+    channel: 'channel-id',
+    pdata: { id: 'your.app.id', ver: '1.0' },
+    env: 'collection_editor',
+    identifier: 'do_lp_123456789',
+    contentId: 'do_lp_123456789',
+    framework: 'USF',
+  },
+  config: {
+    mode: 'edit',
+    objectType: 'Collection',
+    primaryCategory: 'Learning Path', // the only switch — everything else is resolved from this
+  },
+};
+
+export default function App() {
+  return <CollectionEditor {...learningPathConfig} />;
+}
+```
+
+The equivalent web-component usage is identical to the standard flow — just set
+`primaryCategory: 'Learning Path'` in the JSON passed to `el.config`.
+
+`IEditorProfile` (exported for advanced integrations that need to introspect the active profile,
+e.g. `unitLabelKey`/`features` for a custom host toolbar) is re-exported from the package root.
+
+---
+
 ## API
 
 ### `<CollectionEditor>` props

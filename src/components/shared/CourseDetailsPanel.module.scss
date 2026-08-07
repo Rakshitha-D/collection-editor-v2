@@ -1,0 +1,215 @@
+.courseDetails {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.courseDetailsLoading, .courseDetailsError {
+  font-size: 13px;
+  color: var(--sbx-gray-500);
+}
+
+// "full" variant only (the tree's already-linked-course page) — the Library
+// preview modal ("compact") stays a bare Units list.
+.detailsCard, .unitsCard {
+  background: var(--sbx-white);
+  border: 1px solid var(--sbx-gray-100);
+  border-radius: var(--sbx-r-md);
+  box-shadow: var(--sbx-shadow-1);
+  max-width: 920px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.cardTitle {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sbx-obsidian);
+}
+
+.fieldGroup {
+  margin-bottom: 18px;
+}
+
+.fieldGroupLast {
+  margin-bottom: 0;
+}
+
+.fieldLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: var(--sbx-gray-500);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.fieldValue {
+  font-size: 14px;
+  color: var(--sbx-obsidian);
+}
+
+.fieldValueMultiline {
+  font-size: 13.5px;
+  color: var(--sbx-charcoal);
+  line-height: 1.6;
+}
+
+.unitsLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sbx-gray-500);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.unitsDescription {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: var(--sbx-gray-500);
+}
+
+.unitList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.unitCard {
+  border: 1px solid var(--sbx-gray-100);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.unitHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--sbx-gray-400);
+  text-align: left;
+}
+
+.unitIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--sbx-gray-100);
+  color: var(--sbx-gray-500);
+  flex-shrink: 0;
+}
+
+.unitTitle {
+  flex: 1;
+  font-size: 14.5px;
+  color: var(--sbx-obsidian);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unitCount {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--sbx-gray-500);
+}
+
+.unitBody {
+  border-top: 1px solid var(--sbx-gray-100);
+  padding: 14px 16px;
+}
+
+.unitDescription {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--sbx-charcoal);
+  line-height: 1.55;
+}
+
+.unitKeywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.keywordPill {
+  font-size: 10.5px;
+  padding: 2px 9px;
+  border-radius: var(--sbx-r-pill);
+  color: var(--sbx-gray-700);
+  border: 1px solid var(--sbx-gray-200);
+  background: var(--sbx-gray-50);
+  white-space: nowrap;
+}
+
+.unitTopicsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 11.5px;
+  color: var(--sbx-gray-500);
+
+  .fieldLabel {
+    margin: 0;
+  }
+}
+
+// The extra left indent (beyond .unitBody's own 16px) aligns content rows
+// under the unit header's icon column — description/keywords/topics above
+// stay flush at .unitBody's padding since they're unit-level, not per-item.
+.unitContents {
+  padding-left: 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contentRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.contentIcon {
+  color: var(--sbx-gray-500);
+  flex-shrink: 0;
+}
+
+.contentTitle {
+  font-size: 13.5px;
+  color: var(--sbx-charcoal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contentSkills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.skillPill {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 9px;
+  border-radius: var(--sbx-r-pill);
+  color: var(--sbx-primary);
+  border: 1px solid var(--sbx-primary);
+  background: color-mix(in srgb, var(--sbx-primary) 12%, var(--sbx-white));
+  white-space: nowrap;
+}

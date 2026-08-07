@@ -17,6 +17,10 @@ export interface ICategory {
   identifier: string;
   name: string;
   code: string;
+  /** Category order within the framework — the LP editor resolves the
+   *  skill-equivalent category as the one with the highest index (USF's
+   *  `skill` category also has the highest index, so one rule covers both). */
+  index?: number;
   terms?: ITerm[];
 }
 

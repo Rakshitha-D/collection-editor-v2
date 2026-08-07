@@ -40,6 +40,24 @@ const MOCK_CONFIG: IEditorConfig = {
   enableSplitBuilder: true,
 };
 
+// Learning Path sample config — same shape as MOCK_CONFIG, just a different
+// primaryCategory/objectType/contentId. Load with ?profile=lp.
+const LP_MOCK_CONFIG: IEditorConfig = {
+  ...MOCK_CONFIG,
+  context: {
+    ...MOCK_CONFIG.context,
+    identifier: 'do_2145942355538657281391',
+    contentId: 'do_2145942355538657281391',
+  },
+  config: {
+    ...MOCK_CONFIG.config,
+    maxDepth: undefined,
+    primaryCategory: 'Learning Path',
+  },
+};
+
+const useLpProfile = new URLSearchParams(window.location.search).get('profile') === 'lp';
+
 const rootEl = document.getElementById('root');
 if (!rootEl) {
   throw new Error('Root element #root not found');
@@ -49,7 +67,7 @@ createRoot(rootEl).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <CollectionEditor
-        {...MOCK_CONFIG}
+        {...(useLpProfile ? LP_MOCK_CONFIG : MOCK_CONFIG)}
         onToolbarEvent={console.log}
       />
       <Toaster position="top-right" />

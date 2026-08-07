@@ -5,6 +5,10 @@ import type { IContent } from '../types/content';
 type ContentLike = Partial<INode> | Partial<IContent>;
 
 function resolveKey(item: ContentLike): string {
+  // A linked Course confirmed (Phase 2) to be question-set-only renders with
+  // the quiz icon regardless of its own mimeType/primaryCategory.
+  if ((item as INode).metadata?.isAssessmentCourse) return 'quiz';
+
   const str = [
     (item as IContent).mimeType ?? '',
     (item as IContent).primaryCategory ?? '',
@@ -24,6 +28,7 @@ function resolveKey(item: ContentLike): string {
     str.includes('ecml')
   )
     return 'quiz';
+  if ((item as IContent).primaryCategory === 'Course') return 'course';
   return 'default';
 }
 

@@ -1,11 +1,12 @@
 $ct-map: (
-  'video': (#EA580C, white),
-  'pdf': (#DC2626, white),
-  'h5p': (#0D9488, white),
-  'scorm': (#7C3AED, white),
-  'audio': (#DB2777, white),
-  'quiz': (#16A34A, white),
-  'default': (#6B7280, white)
+  'video': (#EA580C, var(--sbx-white)),
+  'pdf': (#DC2626, var(--sbx-white)),
+  'h5p': (#0D9488, var(--sbx-white)),
+  'scorm': (#7C3AED, var(--sbx-white)),
+  'audio': (#DB2777, var(--sbx-white)),
+  'quiz': (#16A34A, var(--sbx-white)),
+  'course': (#A85236, var(--sbx-white)),
+  'default': (#6B7280, var(--sbx-white))
 );
 
 @each $key, $vals in $ct-map {

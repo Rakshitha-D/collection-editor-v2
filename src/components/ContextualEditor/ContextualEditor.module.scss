@@ -1,3 +1,122 @@
+.backToPathButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin: 0 0 14px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sbx-gray-500);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.assessmentTitle {
+  margin: 0 0 8px;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--sbx-obsidian);
+}
+
+.slotPills {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.slotPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: var(--sbx-r-pill);
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+// Prior Assessment pills
+.slotPillHint {
+  color: #2F5E3A;
+  background: var(--sbx-status-ok-bg, #F0F4F0);
+}
+
+.slotPillPurpose {
+  color: #376673;
+  border-color: var(--sbx-info);
+  background: #EEF5F7;
+}
+
+// Outcome Assessment pills
+.slotPillWarning {
+  color: #9A6A12;
+  background: #FFF6E0;
+}
+
+.slotPillPrimary {
+  color: var(--sbx-primary);
+  border-color: var(--sbx-primary);
+  background: color-mix(in srgb, var(--sbx-primary) 12%, var(--sbx-white));
+}
+
+.courseCard {
+  padding: 24px;
+  background: var(--sbx-white);
+  border: 1px solid var(--sbx-gray-100);
+  border-radius: var(--sbx-r-md);
+  box-shadow: var(--sbx-shadow-1);
+  max-width: 920px;
+  margin-bottom: 20px;
+}
+
+.courseCardHeading {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sbx-obsidian);
+  margin: 0 0 4px;
+}
+
+.courseCardDescription {
+  font-size: 12.5px;
+  color: var(--sbx-gray-500);
+  margin: 0 0 20px;
+}
+
+.courseNotAdded {
+  padding: 16px;
+  border: 1.5px dashed var(--sbx-gray-200);
+  border-radius: 12px;
+  color: var(--sbx-gray-500);
+  font-size: 13px;
+}
+
+.assessmentExplainer {
+  padding: 18px 20px;
+  border: 1px solid var(--sbx-primary);
+  background: color-mix(in srgb, var(--sbx-primary) 6%, var(--sbx-white));
+  border-radius: var(--sbx-r-md);
+  max-width: 920px;
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--sbx-charcoal);
+  }
+}
+
+.assessmentExplainerHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sbx-obsidian);
+}
+
 // Leaf content: one scrollable column — player (intrinsic 16:9 via the
 // ContentPlayer 'flow' layout), info strip, then the edit form. The panel
 // itself scrolls so the bottom information is always reachable.
@@ -15,7 +134,7 @@
   // ContentEditForm at natural height in the scroll flow
   > *:last-child {
     flex: 0 0 auto;
-    background: #fff;
+    background: var(--sbx-white);
   }
 }
 
@@ -37,6 +156,11 @@
   gap: 10px;
   margin: 8px 0 16px;
 }
+// Learning Path only (design) — wider icon/title gap on the root page.
+.titleRowLp {
+  gap: 18px;
+  margin: 8px 0 22px;
+}
 .titleIcon {
   width: 40px;
   height: 40px;
@@ -56,8 +180,54 @@
   &:empty::before { content: attr(data-placeholder); color: var(--sbx-gray-400); }
   &[contenteditable="false"] { cursor: default; }
 }
+// Learning Path root page title (design: bigger + obsidian, distinct from
+// Collection's root title styling above).
+.nodeTitleLpRoot {
+  font-size: 26.5px;
+  color: var(--sbx-obsidian);
+}
+// Learning Path non-root titles (Level, leaf) — design uses a smaller
+// page-title size here than the LP root's own title. Collection node
+// titles are unaffected (stay at the base .nodeTitle size).
+.nodeTitleSub {
+  font-size: 21px;
+  color: var(--sbx-obsidian);
+}
+
+// Course-detail page header (design: big icon chip + heading + "Course · N
+// contents"), replacing the generic .titleRow for this one leaf-content view.
+.courseDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.courseDetailIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--sbx-primary);
+  color: var(--sbx-white);
+  flex-shrink: 0;
+}
+.courseDetailTitle {
+  margin: 0 0 6px;
+  font-size: 23px;
+  font-weight: 700;
+  color: var(--sbx-obsidian);
+}
+.courseDetailMeta {
+  font-size: 13px;
+  color: var(--sbx-gray-500);
+}
 .formArea { margin-bottom: 24px; }
-.contentListArea { border-top: 1px solid var(--sbx-gray-200); padding-top: 20px; }
+.contentListArea { padding-top: 20px; }
+// Learning Path only — the Skills/Assessments cards below the form sit
+// flush against it (no extra gap), unlike Collection's content list.
+.contentListAreaLp { padding-top: 0; }
 .dropZone { position: absolute; inset: 0; z-index: 5; border-radius: 0; }
 
 // Review comment banner
@@ -109,7 +279,7 @@
   font-size: 12px;
   border: 1px solid var(--sbx-gray-300, #d9d9d9);
   border-radius: 4px;
-  background: #fff;
+  background: var(--sbx-white);
   cursor: pointer;
   &:hover { border-color: var(--sbx-primary, #1890ff); color: var(--sbx-primary, #1890ff); }
 }
@@ -125,7 +295,7 @@
   padding: 6px 14px;
   border: 1px solid var(--sbx-gray-300, #d9d9d9);
   border-radius: 4px;
-  background: #fff;
+  background: var(--sbx-white);
   cursor: pointer;
   &:hover { border-color: var(--sbx-primary, #1890ff); color: var(--sbx-primary, #1890ff); }
 }

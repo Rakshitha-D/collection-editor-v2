@@ -1,6 +1,6 @@
 .panel {
   padding: 20px;
-  background: white;
+  background: var(--sbx-white);
   border-radius: var(--sbx-r-md);
   border: 1px solid var(--sbx-gray-200);
 }
@@ -28,7 +28,7 @@
   border: 1px solid var(--sbx-gray-300);
   border-radius: var(--sbx-r-sm);
   overflow: hidden;
-  background: white;
+  background: var(--sbx-white);
   padding: 4px;
 }
 

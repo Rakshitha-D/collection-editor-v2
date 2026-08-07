@@ -3,6 +3,8 @@ import { useTreeStore } from '../store/tree.store';
 import { useEditorStore } from '../store/editor.store';
 import { updateHierarchy } from '../api/hierarchy';
 import type { INode } from '../types/editor';
+import type { IEditorProfile } from '../types/profile';
+import { collectionProfile } from '../types/profile';
 import toast from 'react-hot-toast';
 
 // ---------------------------------------------------------------------------
@@ -16,10 +18,11 @@ import toast from 'react-hot-toast';
 //                      children that have cached edits (name/keywords/optional)
 //  3. lastUpdatedBy  → top-level field on `data`, NOT inside nodesModified entries
 // ---------------------------------------------------------------------------
-function buildSavePayload(
+export function buildSavePayload(
   nodes: INode[],
   treeCache: Record<string, Record<string, unknown>>,
   channel: string,
+  profile: IEditorProfile = collectionProfile,
 ): {
   nodesModified: Record<string, unknown>;
   hierarchy: Record<string, unknown>;
@@ -32,6 +35,10 @@ function buildSavePayload(
     'id', 'isFolder', 'children', 'parent', 'isNew', 'breadcrumb', 'title',
     // relationalMetadata is leaf-content-specific; it does not belong in nodesModified metadata
     'relationalMetadata', 'optional',
+    // a literal 'metadata' key is always an accidental nested patch, never a real field
+    'metadata',
+    // LP-local flag for assessment-slot detection — recomputed on load, never persisted
+    'isAssessmentCourse',
   ]);
 
   // Framework fields that require validated term identifiers.
@@ -122,8 +129,8 @@ function buildSavePayload(
         metadata = {
           mimeType: 'application/vnd.ekstep.content-collection',
           code: identifier,
-          contentType: (node.metadata?.contentType as string) ?? 'CourseUnit',
-          primaryCategory: (node.metadata?.primaryCategory as string) ?? 'Course Unit',
+          contentType: (node.metadata?.contentType as string) ?? profile.unitContentType,
+          primaryCategory: (node.metadata?.primaryCategory as string) ?? profile.unitPrimaryCategory,
           name: node.name,
           visibility: 'Parent',
           channel,
@@ -203,7 +210,8 @@ export function useSaveHierarchy() {
 
     setIsSaving(true);
     try {
-      const { nodesModified, hierarchy } = buildSavePayload(treeData, treeCache, channel);
+      const profile = useEditorStore.getState().editorProfile;
+      const { nodesModified, hierarchy } = buildSavePayload(treeData, treeCache, channel, profile);
       const { identifiers } = await updateHierarchy(contentId, nodesModified, hierarchy, lastUpdatedBy);
       // Replace temp- ids with server-assigned do_ ids so subsequent saves
       // don't re-create the same nodes as new duplicates.

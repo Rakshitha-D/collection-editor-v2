@@ -17,6 +17,7 @@ import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
 import { Button } from '../shared/Button';
+import { LearningPathIcon } from '../shared/LearningPathIcon';
 import { PublishChecklist } from '../modals/PublishChecklist';
 import { QualityParamsModal } from '../modals/QualityParamsModal';
 import { ManageCollaborators } from '../Collaborators/ManageCollaborators';
@@ -263,7 +264,10 @@ export const Topbar: React.FC<TopbarProps> = ({
   // generateDIALCodes default "Yes" means QR codes are enabled for this content type.
   // Default to showing if the API hasn't loaded yet (backward compat).
   const categoryMeta = useEditorStore((s) => s.categoryMeta);
-  const showDialcode = !categoryMeta || categoryMeta.schemaDefaults.generateDIALCodes !== 'No';
+  const editorProfile = useEditorStore((s) => s.editorProfile);
+  const isLearningPath = editorProfile.key === 'learningPath';
+  const showDialcode = editorProfile.features.dialcodes
+    && (!categoryMeta || categoryMeta.schemaDefaults.generateDIALCodes !== 'No');
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showConfirmReview, setShowConfirmReview] = useState(false);
@@ -412,6 +416,13 @@ export const Topbar: React.FC<TopbarProps> = ({
             {title}
           </h1>
 
+          {isLearningPath && (
+            <span className={styles.profileBadge}>
+              <LearningPathIcon size={13} aria-hidden="true" />
+              {lbl.learningPath.profileBadgeLabel}
+            </span>
+          )}
+
           <span className={`sbx-chip ${styles.statusChip}`} aria-label={`${lbl.topbar.statusAriaLabelPrefix} ${statusLabel}`}>
             {statusLabel}
           </span>
@@ -469,16 +480,19 @@ export const Topbar: React.FC<TopbarProps> = ({
                 &nbsp;{lbl.topbar.sendForReviewButton}
               </Button>
 
-              {/* Collaborators — icon only with tooltip */}
-              <button
-                className={styles.iconBtn}
-                onClick={() => openModal('manageCollaborators')}
-                aria-label={lbl.topbar.collaboratorsLabel}
-                title={lbl.topbar.collaboratorsLabel}
-                type="button"
-              >
-                <Users size={16} aria-hidden="true" />
-              </button>
+              {/* Collaborators — icon only with tooltip. Not applicable to
+                  Learning Path (no per-content collaborator model). */}
+              {editorProfile.features.collaborators && (
+                <button
+                  className={styles.iconBtn}
+                  onClick={() => openModal('manageCollaborators')}
+                  aria-label={lbl.topbar.collaboratorsLabel}
+                  title={lbl.topbar.collaboratorsLabel}
+                  type="button"
+                >
+                  <Users size={16} aria-hidden="true" />
+                </button>
+              )}
 
               {/* QR Codes dropdown — hidden when generateDIALCodes is "No" for this category */}
               {showDialcode && <div className={styles.qrDropdown} ref={qrMenuRef}>

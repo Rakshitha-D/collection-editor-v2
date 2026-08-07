@@ -1,15 +1,17 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Plus, Video, FileText, Layers, Package, Music, HelpCircle, File, Check } from 'lucide-react';
+import { Plus, Video, FileText, Layers, Package, Music, HelpCircle, BookOpen, File, Check } from 'lucide-react';
 import type { IContent } from '../../types/content';
 import { getCtStyle } from '../../hooks/useContentType';
 import { useIsDraftStatus, useSelectedNodeIsUnit } from '../../hooks/useContentStatus';
 import { useLabels } from '../../hooks/useLabels';
+import { useEditorStore } from '../../store/editor.store';
+import { useSkillCategory } from '../../hooks/useSkillCategory';
 import styles from './LibraryCard.module.scss';
 
 const CT_ICONS: Record<string, React.ElementType> = {
   video: Video, pdf: FileText, h5p: Layers, scorm: Package,
-  audio: Music, quiz: HelpCircle, default: File,
+  audio: Music, quiz: HelpCircle, course: BookOpen, default: File,
 };
 
 interface LibraryCardProps {
@@ -34,6 +36,15 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   const isUnitSelected = useSelectedNodeIsUnit();
   // Content can only be added while the collection is in Draft and a unit is selected.
   const canAdd = isDraft && !isAdded && isUnitSelected;
+
+  const competencyScoped = useEditorStore(s => s.editorProfile.competencyScoped);
+  const skillCategory = useSkillCategory();
+  const skillTags = competencyScoped && skillCategory
+    ? (() => {
+        const raw = (item as unknown as Record<string, unknown>)[skillCategory.code];
+        return Array.isArray(raw) ? raw as string[] : raw ? [String(raw)] : [];
+      })()
+    : [];
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.identifier,
@@ -73,6 +84,11 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
           {item.organisation?.[0] && item.primaryCategory ? ' · ' : ''}
           {item.primaryCategory ?? ''}
         </span>
+        {skillTags.length > 0 && (
+          <span className={styles.skillTags}>
+            {skillTags.slice(0, 3).map(t => <span key={t} className={styles.skillTag}>{t}</span>)}
+          </span>
+        )}
       </div>
 
       {/* Already-added badge */}
