@@ -12,6 +12,6 @@ export interface IChannelData {
 }
 
 export async function getChannelData(channelId: string): Promise<IChannelData> {
-  const response = await apiClient.get(`/api/channel/v1/read/${channelId}`);
+  const response = await apiClient.get(`/action/channel/v1/read/${channelId}`);
   return response.data?.result?.channel as IChannelData;
 }

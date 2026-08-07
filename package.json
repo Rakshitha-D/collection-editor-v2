@@ -1,6 +1,6 @@
 {
   "name": "@project-sunbird/collection-editor-react",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
