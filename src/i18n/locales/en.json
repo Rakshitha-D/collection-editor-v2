@@ -478,6 +478,8 @@
     "searchSkillsPlaceholder": "Search skills",
     "noSkillsAvailable": "No skills available yet",
     "noMatchingSkills": "No matching skills",
+    "noSkillsSelectedYet": "No skills selected",
+    "removeSkillAriaLabel": "Remove {skill}",
     "skillScopeFromPriorNote": "Pick which skills — from the Prior Assessment — this level builds. The Library filters courses to these skills.",
     "skillScopeManualNote": "No Prior Assessment yet, so pick from the general skill catalog. The Library filters courses to these skills.",
     "skillsCoveredHeading": "Skills covered",

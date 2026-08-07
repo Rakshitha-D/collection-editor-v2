@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Search, X, Check } from 'lucide-react';
 import { useLabels } from '../../hooks/useLabels';
 import styles from './UnitContentList.module.scss';
 
@@ -17,12 +17,26 @@ interface SkillPickerProps {
 }
 
 // Searchable skill multi-select for a Level's "Skills" field (design:
-// lvl.hasSkillPicker, "No matching skills" empty state).
+// lvl.hasSkillPicker) — selected skills render as removable pills; a search
+// box opens a checkbox dropdown of the remaining options, so the picker
+// stays compact regardless of how many skills the catalog/scope has.
 export const SkillPicker: React.FC<SkillPickerProps> = ({
   options, selected, outOfScope, onChange, isEditable, description,
 }) => {
   const lbl = useLabels();
   const [query, setQuery] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [dropdownOpen]);
+
   const filtered = query
     ? options.filter(o => o.toLowerCase().includes(query.toLowerCase()))
     : options;
@@ -30,6 +44,11 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
   const toggle = (skill: string) => {
     if (!isEditable) return;
     onChange(selected.includes(skill) ? selected.filter(s => s !== skill) : [...selected, skill]);
+  };
+
+  const remove = (skill: string) => {
+    if (!isEditable) return;
+    onChange(selected.filter(s => s !== skill));
   };
 
   return (
@@ -46,47 +65,79 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
         </div>
       )}
 
-      {isEditable && (
-        <div className={styles.skillSearchWrap}>
-          <Search size={13} className={styles.searchIcon} />
-          <input
-            type="search"
-            className={styles.skillSearchInput}
-            placeholder={lbl.learningPath.searchSkillsPlaceholder}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label={lbl.learningPath.searchSkillsPlaceholder}
-          />
-        </div>
-      )}
-
-      {options.length === 0 ? (
-        <span className={styles.emptyHint}>{lbl.learningPath.noSkillsAvailable}</span>
-      ) : filtered.length === 0 ? (
-        <span className={styles.emptyHint}>{lbl.learningPath.noMatchingSkills}</span>
-      ) : (
-        <div className={styles.chips}>
-          {filtered.map((skill) => {
-            const isSelected = selected.includes(skill);
+      {selected.length > 0 && (
+        <div className={styles.selectedSkills}>
+          {selected.map((skill) => {
             const isFlagged = outOfScope.includes(skill);
             return (
-              <button
+              <span
                 key={skill}
-                type="button"
-                disabled={!isEditable}
-                className={[
-                  styles.chip,
-                  styles.chipToggle,
-                  isSelected ? styles.chipActive : '',
-                  isFlagged ? styles.chipFlagged : '',
-                ].join(' ')}
-                onClick={() => toggle(skill)}
+                className={[styles.skillPill, isFlagged ? styles.skillPillFlagged : ''].join(' ')}
               >
                 {skill}
-              </button>
+                {isEditable && (
+                  <button
+                    type="button"
+                    className={styles.skillPillRemove}
+                    onClick={() => remove(skill)}
+                    aria-label={lbl.learningPath.removeSkillAriaLabel.replace('{skill}', skill)}
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </span>
             );
           })}
         </div>
+      )}
+
+      {isEditable ? (
+        <div className={styles.skillSearchBox} ref={wrapRef}>
+          <div className={styles.skillSearchWrap} onClick={() => setDropdownOpen(true)}>
+            <input
+              type="search"
+              className={styles.skillSearchInput}
+              placeholder={lbl.learningPath.searchSkillsPlaceholder}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setDropdownOpen(true)}
+              aria-label={lbl.learningPath.searchSkillsPlaceholder}
+            />
+            <Search size={14} className={styles.searchIcon} />
+          </div>
+
+          {dropdownOpen && (
+            <div className={styles.skillDropdown} role="listbox">
+              {options.length === 0 ? (
+                <div className={styles.skillDropdownEmpty}>{lbl.learningPath.noSkillsAvailable}</div>
+              ) : filtered.length === 0 ? (
+                <div className={styles.skillDropdownEmpty}>{lbl.learningPath.noMatchingSkills}</div>
+              ) : (
+                filtered.map((skill) => {
+                  const isSelected = selected.includes(skill);
+                  return (
+                    <div
+                      key={skill}
+                      role="option"
+                      aria-selected={isSelected}
+                      className={styles.skillOption}
+                      onClick={() => toggle(skill)}
+                    >
+                      <span className={[styles.skillCheckbox, isSelected ? styles.skillCheckboxChecked : ''].join(' ')}>
+                        {isSelected && <Check size={12} />}
+                      </span>
+                      {skill}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        selected.length === 0 && (
+          <span className={styles.emptyHint}>{lbl.learningPath.noSkillsSelectedYet}</span>
+        )
       )}
     </div>
   );

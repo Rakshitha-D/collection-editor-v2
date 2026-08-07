@@ -478,6 +478,8 @@
     "searchSkillsPlaceholder": "Rechercher des compétences",
     "noSkillsAvailable": "Aucune compétence disponible pour le moment",
     "noMatchingSkills": "Aucune compétence correspondante",
+    "noSkillsSelectedYet": "Aucune compétence sélectionnée",
+    "removeSkillAriaLabel": "Supprimer {skill}",
     "skillScopeFromPriorNote": "Choisissez les compétences — issues de l'évaluation préalable — que ce niveau développe. La bibliothèque filtre les cours selon ces compétences.",
     "skillScopeManualNote": "Aucune évaluation préalable pour le moment — choisissez dans le catalogue général des compétences. La bibliothèque filtre les cours selon ces compétences.",
     "skillsCoveredHeading": "Compétences couvertes",

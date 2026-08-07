@@ -478,6 +478,8 @@
     "searchSkillsPlaceholder": "البحث عن المهارات",
     "noSkillsAvailable": "لا توجد مهارات متاحة حتى الآن",
     "noMatchingSkills": "لا توجد مهارات مطابقة",
+    "noSkillsSelectedYet": "لم يتم تحديد مهارات",
+    "removeSkillAriaLabel": "إزالة {skill}",
     "skillScopeFromPriorNote": "اختر المهارات — من التقييم المسبق — التي يبنيها هذا المستوى. تُصفّي المكتبة المقررات وفق هذه المهارات.",
     "skillScopeManualNote": "لا يوجد تقييم مسبق حتى الآن، فاختر من كتالوج المهارات العام. تُصفّي المكتبة المقررات وفق هذه المهارات.",
     "skillsCoveredHeading": "المهارات المشمولة",

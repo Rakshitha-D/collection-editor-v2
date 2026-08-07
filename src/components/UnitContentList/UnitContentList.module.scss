@@ -80,48 +80,145 @@
   color: var(--sbx-gray-700);
 }
 
-.chipToggle {
-  border: 1px solid var(--sbx-gray-200);
-  cursor: pointer;
-
-  &:disabled {
-    cursor: default;
-  }
-}
-
-.chipActive {
-  background: var(--sbx-primary-light);
-  border-color: var(--sbx-primary);
-  color: var(--sbx-primary);
-}
-
-.chipFlagged {
-  border-color: var(--sbx-danger, #dc2626);
-}
-
 .skillWarning {
   font-size: 12px;
   color: var(--sbx-danger, #dc2626);
 }
 
-.skillSearchWrap {
-  position: relative;
+// ── Selected skills — removable pills above the search box ────────────────
+.selectedSkills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skillPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 13px;
+  border-radius: var(--sbx-r-pill);
+  background: var(--sbx-primary);
+  color: var(--sbx-white);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.skillPillFlagged {
+  background: var(--sbx-danger, #dc2626);
+}
+
+.skillPillRemove {
   display: flex;
   align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  opacity: 0.85;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// ── Search box + checkbox dropdown for adding skills ───────────────────────
+.skillSearchBox {
+  position: relative;
+  max-width: 320px;
+}
+
+.skillSearchWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid var(--sbx-gray-200);
+  border-radius: var(--sbx-r-md);
+  cursor: text;
+  transition: border-color 0.15s;
+
+  &:focus-within {
+    border-color: var(--sbx-primary);
+  }
 }
 
 .searchIcon {
-  position: absolute;
-  left: 8px;
+  flex-shrink: 0;
   color: var(--sbx-gray-400);
 }
 
 .skillSearchInput {
-  width: 100%;
-  padding: 6px 8px 6px 26px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 13px;
+  font-family: var(--sbx-font);
+
+  &::placeholder {
+    color: var(--sbx-gray-400);
+  }
+}
+
+.skillDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 8;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--sbx-white);
   border: 1px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md);
-  font-size: 12px;
+  box-shadow: var(--sbx-shadow-3);
+}
+
+.skillOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  color: var(--sbx-charcoal);
+  cursor: pointer;
+  border-bottom: 1px solid var(--sbx-gray-50);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--sbx-gray-50);
+  }
+}
+
+.skillCheckbox {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--sbx-gray-300);
+  color: var(--sbx-white);
+}
+
+.skillCheckboxChecked {
+  background: var(--sbx-primary);
+  border-color: var(--sbx-primary);
+}
+
+.skillDropdownEmpty {
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: var(--sbx-gray-400);
 }
 
 .skillPickerNote {

@@ -478,6 +478,8 @@
     "searchSkillsPlaceholder": "Buscar habilidades",
     "noSkillsAvailable": "Nenhuma habilidade disponível ainda",
     "noMatchingSkills": "Nenhuma habilidade correspondente",
+    "noSkillsSelectedYet": "Nenhuma habilidade selecionada",
+    "removeSkillAriaLabel": "Remover {skill}",
     "skillScopeFromPriorNote": "Escolha quais habilidades — da Avaliação prévia — este nível desenvolve. A biblioteca filtra os cursos por essas habilidades.",
     "skillScopeManualNote": "Ainda não há Avaliação prévia, então escolha no catálogo geral de habilidades. A biblioteca filtra os cursos por essas habilidades.",
     "skillsCoveredHeading": "Habilidades abordadas",
