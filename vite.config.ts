@@ -24,6 +24,11 @@ export default defineConfig({
     rollupOptions: {
       external: ['react', 'react-dom', 'react/jsx-runtime'],
       output: {
+        // Vite's library-mode default names the extracted CSS bundle after
+        // build.lib.name (→ collection-editor-react.css) — pin it to
+        // style.css instead, matching package.json's exports map
+        // ("./dist/style.css") and the documented dist/ output shape.
+        assetFileNames: 'style.css',
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
