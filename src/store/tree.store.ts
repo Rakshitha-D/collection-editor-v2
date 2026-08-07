@@ -15,7 +15,7 @@ interface TreeState {
   // actions
   setTreeData: (nodes: INode[]) => void;
   selectNode: (id: string) => void;
-  updateNode: (id: string, patch: Record<string, unknown>) => void;
+  updateNode: (id: string, patch: Record<string, unknown>, extraMirrorKeys?: string[]) => void;
   addNode: (parentId: string, type: 'unit' | 'subunit') => string;
   deleteNode: (id: string) => void;
   reorderChildren: (parentId: string, fromIndex: number, toIndex: number) => void;
@@ -59,18 +59,26 @@ function getNodeDepth(nodes: INode[], targetId: string, depth = 0): number {
 const METADATA_MIRROR_FIELDS = new Set([
   'name', 'appIcon', 'description', 'keywords', 'trackable',
   'qrCodeProcessId', 'reservedDialcodes',
-  // LP Level skills — must live flat in treeCache so buildSavePayload
-  // persists them as a real `competencies` field, not nested under 'metadata'.
-  'competencies',
 ]);
 
-function deepMergeNode(nodes: INode[], id: string, patch: Record<string, unknown>): INode[] {
+// extraMirrorKeys: for patch keys whose NAME is only known at call time (e.g.
+// a Level's skill selection, stored under the resolved skill-category code —
+// 'skill' for USF, a different code for another framework — never the
+// reserved Sunbird `competencies` field, whose platform schema expects
+// competency-ontology objects, not plain framework-term strings). Callers
+// pass the dynamic key(s) explicitly rather than growing the static set above.
+function deepMergeNode(
+  nodes: INode[], id: string, patch: Record<string, unknown>, extraMirrorKeys?: string[],
+): INode[] {
   return nodes.map((node) => {
     if (node.id === id) {
       const explicitMetaPatch = (patch['metadata'] as Record<string, unknown>) ?? {};
       // Mirror top-level patch fields into metadata so cleanMetadata sees the latest values
+      const mirrorFields = extraMirrorKeys?.length
+        ? new Set([...METADATA_MIRROR_FIELDS, ...extraMirrorKeys])
+        : METADATA_MIRROR_FIELDS;
       const mirroredFields: Record<string, unknown> = {};
-      for (const key of METADATA_MIRROR_FIELDS) {
+      for (const key of mirrorFields) {
         if (key in patch) mirroredFields[key] = patch[key];
       }
       return {
@@ -80,7 +88,7 @@ function deepMergeNode(nodes: INode[], id: string, patch: Record<string, unknown
       };
     }
     if (node.children && node.children.length > 0) {
-      return { ...node, children: deepMergeNode(node.children, id, patch) };
+      return { ...node, children: deepMergeNode(node.children, id, patch, extraMirrorKeys) };
     }
     return node;
   });
@@ -209,9 +217,9 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     set({ selectedNodeId: id, breadcrumb, activeNodeMeta });
   },
 
-  updateNode: (id, patch) => {
+  updateNode: (id, patch, extraMirrorKeys) => {
     set((state) => ({
-      treeData: deepMergeNode(state.treeData, id, patch),
+      treeData: deepMergeNode(state.treeData, id, patch, extraMirrorKeys),
       treeCache: {
         ...state.treeCache,
         [id]: { ...(state.treeCache[id] ?? {}), ...patch },

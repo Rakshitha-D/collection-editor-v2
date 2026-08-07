@@ -350,8 +350,8 @@ describe('computeSkillsCovered', () => {
       id: 'root',
       children: [
         level({ id: 'pre', children: [assessmentCourseWithSkills('a1', ['Python programming'])] }),
-        level({ id: 'lvl1', metadata: { competencies: ['Java'] }, children: [course('c1')] }),
-        level({ id: 'lvl2', metadata: { competencies: ['Java', 'SQL'] }, children: [course('c2')] }),
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1')] }),
+        level({ id: 'lvl2', metadata: { skill: ['Java', 'SQL'] }, children: [course('c2')] }),
         level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL', 'Testing'])] }),
       ],
     });
@@ -360,7 +360,7 @@ describe('computeSkillsCovered', () => {
     );
   });
 
-  it('never pulls skills from a content Level\'s linked courses, only its own competencies field', () => {
+  it('never pulls skills from a content Level\'s linked courses, only its own resolved skill-category field', () => {
     const root = level({
       id: 'root',
       children: [
@@ -406,7 +406,7 @@ function validPath(policy = 'Fixed') {
     children: [
       level({ id: 'pre', children: [assessmentCourseWithSkills('a1', ['Python programming'])] }),
       level({
-        id: 'lvl1', metadata: { competencies: ['Java'] },
+        id: 'lvl1', metadata: { skill: ['Java'] },
         children: [course('c1', { metadata: { skill: ['Java'] } })],
       }),
       level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
@@ -429,7 +429,7 @@ describe('validateLearningPathStructure', () => {
     const noPrior = level({
       id: 'root', metadata: { policy: 'Fixed' },
       children: [
-        level({ id: 'lvl1', metadata: { competencies: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } })] }),
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } })] }),
         level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
       ],
     });

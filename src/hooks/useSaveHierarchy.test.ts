@@ -149,7 +149,11 @@ describe('buildSavePayload (learningPath profile)', () => {
     expect(hierarchy['temp-level1']).toMatchObject({ children: ['do_course1'] });
   });
 
-  it('persists a Level\'s selected skills as a flat competencies field, stripping nested metadata patches and local flags', () => {
+  it('persists a Level\'s selected skills as a flat resolved-skill-category field, stripping nested metadata patches and local flags', () => {
+    // Field name is the resolved skill-category code (e.g. 'skill' for
+    // USF) — never the reserved Sunbird 'competencies' field, whose
+    // platform schema expects competency-ontology objects, not plain
+    // framework-term strings (see lpStructure.ts).
     const lpTree: INode[] = [
       {
         id: 'do_lp', identifier: 'do_lp', name: 'My Path', isFolder: true,
@@ -157,7 +161,7 @@ describe('buildSavePayload (learningPath profile)', () => {
         children: [
           {
             id: 'do_level1', identifier: 'do_level1', name: 'Level 1', isFolder: true, parent: 'do_lp',
-            metadata: { name: 'Level 1', competencies: ['Python basics'] },
+            metadata: { name: 'Level 1', skill: ['Python basics'] },
             children: [],
           },
         ],
@@ -165,9 +169,9 @@ describe('buildSavePayload (learningPath profile)', () => {
     ];
     const lpTreeCache = {
       'do_level1': {
-        competencies: ['Python basics', 'Data handling'],
+        skill: ['Python basics', 'Data handling'],
         // legacy nested patch shape + local-only flag — must never reach the API
-        metadata: { competencies: ['stale'] },
+        metadata: { skill: ['stale'] },
         isAssessmentCourse: true,
       },
     };
@@ -175,7 +179,7 @@ describe('buildSavePayload (learningPath profile)', () => {
     const { nodesModified } = buildSavePayload(lpTree, lpTreeCache, 'test-channel', learningPathProfile);
 
     const levelMeta = (nodesModified['do_level1'] as { metadata: Record<string, unknown> }).metadata;
-    expect(levelMeta.competencies).toEqual(['Python basics', 'Data handling']);
+    expect(levelMeta.skill).toEqual(['Python basics', 'Data handling']);
     expect(levelMeta).not.toHaveProperty('metadata');
     expect(levelMeta).not.toHaveProperty('isAssessmentCourse');
   });

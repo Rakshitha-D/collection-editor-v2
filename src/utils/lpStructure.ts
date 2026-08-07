@@ -264,8 +264,10 @@ export function hasExplicitCurriculum(
  * "Skills covered" (root summary, Phase 4): the union of skills tagged
  * across the Prior Assessment, each Level's *selected* skills, and the
  * Outcome Assessment — never skills scraped from linked courses' content.
- * Assessment Levels contribute their course's skillCategoryCode tags;
- * content Levels contribute their own `competencies` metadata.
+ * Both assessment Levels (their course's tags) and content Levels (their
+ * own selection) read the SAME resolved skillCategoryCode metadata field —
+ * never the reserved Sunbird `competencies` field, whose platform schema
+ * expects competency-ontology objects, not plain framework-term strings.
  */
 /**
  * "Path shape" (root summary, Phase 4): level count excludes the pre/post
@@ -290,7 +292,7 @@ export function computeSkillsCovered(root: INode | undefined, skillCategoryCode:
     if (isAssessmentLevel(lvl)) {
       toStringArray(lvl.children![0].metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
     } else {
-      toStringArray(lvl.metadata?.['competencies']).forEach((s) => covered.add(s));
+      toStringArray(lvl.metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
     }
   }
   return Array.from(covered);
@@ -369,7 +371,7 @@ export function validateLearningPathStructure(
       issues.push({ code: 'emptyLevel', nodeId: lvl.id, message: `"${lvl.name}" has no courses yet.` });
       continue;
     }
-    const skills = toStringArray(lvl.metadata?.['competencies']);
+    const skills = skillCategoryCode ? toStringArray(lvl.metadata?.[skillCategoryCode]) : [];
     if (skills.length === 0) {
       issues.push({ code: 'levelMissingSkills', nodeId: lvl.id, message: `"${lvl.name}" needs at least one skill selected.` });
     } else if (skillScope.length > 0) {

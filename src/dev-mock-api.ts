@@ -457,11 +457,10 @@ const LEARNING_PATH_OCD = {
               name: 'Description', placeholder: 'What learners build in this level',
               renderingHints: { class: 'sb-g-col-lg-1' }, required: false, visible: true,
             },
-            {
-              code: 'competencies', dataType: 'list', editable: true, inputType: 'multiSelect', label: 'Skills',
-              name: 'Skills', placeholder: 'Select skills', renderingHints: { class: 'sb-g-col-lg-1 required' },
-              required: true, visible: true,
-            },
+            // No 'competencies'/Skills field here — deliberately, see
+            // learning_path_ocd.md §3 item 4 (reserved-field collision; the
+            // editor's own SkillPicker writes the resolved skill-category
+            // code directly, which a static form field can't represent).
           ],
         },
       ],

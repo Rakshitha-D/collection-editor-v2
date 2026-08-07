@@ -139,8 +139,10 @@ export function useLibrary() {
     : undefined;
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const selectedLevelSkills = Array.isArray(activeNodeMeta['competencies'])
-    ? activeNodeMeta['competencies'] as string[]
+  // Same resolved skill-category field a Level's own SkillPicker writes to
+  // (never the reserved Sunbird `competencies` field — see lpStructure.ts).
+  const selectedLevelSkills = skillCategory && Array.isArray(activeNodeMeta[skillCategory.code])
+    ? activeNodeMeta[skillCategory.code] as string[]
     : EMPTY_SKILLS;
 
   // A regular content Level (not root, not a pre/post/level-assessment slot

@@ -34,19 +34,23 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
 
   const { scope, source } = useSkillScope();
   const skillCategory = useSkillCategory();
-  const selectedSkills = Array.isArray(activeNodeMeta['competencies'])
-    ? activeNodeMeta['competencies'] as string[]
+  // Selected skills live under the resolved skill-category code (e.g. 'skill'
+  // for USF) — the SAME field a linked course's own tags use — never the
+  // reserved Sunbird `competencies` field, whose platform schema expects
+  // competency-ontology objects, not plain framework-term strings.
+  const selectedSkills = skillCategory && Array.isArray(activeNodeMeta[skillCategory.code])
+    ? activeNodeMeta[skillCategory.code] as string[]
     : [];
   const outOfScopeSkills = source === 'prior' ? selectedSkills.filter(s => !scope.includes(s)) : [];
   const skillsCovered = isLpRoot ? computeSkillsCovered(treeData[0], skillCategory?.code) : [];
 
   const handleSkillsChange = useCallback((skills: string[]) => {
-    if (!selectedNodeId) return;
-    // Flat patch — 'competencies' is a METADATA_MIRROR_FIELD, so this lands in
-    // node.metadata AND flat in treeCache, where buildSavePayload persists it.
-    // A nested { metadata: {...} } patch would save a bogus 'metadata' field.
-    updateNode(selectedNodeId, { competencies: skills });
-  }, [selectedNodeId, updateNode]);
+    if (!selectedNodeId || !skillCategory?.code) return;
+    // Flat patch — extraMirrorKeys makes this land in node.metadata AND flat
+    // in treeCache, where buildSavePayload persists it. A nested
+    // { metadata: {...} } patch would save a bogus 'metadata' field.
+    updateNode(selectedNodeId, { [skillCategory.code]: skills }, [skillCategory.code]);
+  }, [selectedNodeId, skillCategory?.code, updateNode]);
 
   const sensors = useSensors(
     // distance:5 prevents conflict with outer DnD context (distance:8) while still feeling responsive

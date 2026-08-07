@@ -100,6 +100,38 @@ describe('tree.store (Learning Path) — assessment-slot auto-wrap', () => {
   });
 });
 
+describe('tree.store — updateNode extraMirrorKeys (dynamic skill-category field)', () => {
+  beforeEach(setupLpTree);
+
+  it('mirrors a dynamically-named field into node.metadata only when passed via extraMirrorKeys', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().updateNode(levelId, { skill: ['Python basics'] }, ['skill']);
+
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.metadata?.['skill']).toEqual(['Python basics']);
+    expect(useTreeStore.getState().treeCache[levelId]?.['skill']).toEqual(['Python basics']);
+  });
+
+  it('does not mirror a dynamically-named field into node.metadata without extraMirrorKeys', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().updateNode(levelId, { skill: ['Python basics'] });
+
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.metadata?.['skill']).toBeUndefined();
+    // treeCache is unconditional regardless of extraMirrorKeys — still persists.
+    expect(useTreeStore.getState().treeCache[levelId]?.['skill']).toEqual(['Python basics']);
+  });
+
+  it('still mirrors the static METADATA_MIRROR_FIELDS alongside a dynamic extra key', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().updateNode(levelId, { name: 'Level A', skill: ['Java'] }, ['skill']);
+
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.metadata?.['name']).toBe('Level A');
+    expect(level.metadata?.['skill']).toEqual(['Java']);
+  });
+});
+
 describe('tree.store (Learning Path) — per-Level course caps (addResource)', () => {
   beforeEach(setupLpTree);
 
