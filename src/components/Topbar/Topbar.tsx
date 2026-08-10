@@ -23,6 +23,9 @@ import { QualityParamsModal } from '../modals/QualityParamsModal';
 import { ManageCollaborators } from '../Collaborators/ManageCollaborators';
 import { reserveDialcodes, getDialcodeProcessStatus } from '../../api/dialcode';
 import { useLabels } from '../../hooks/useLabels';
+import { useSkillCategory } from '../../hooks/useSkillCategory';
+import { useSkillScope } from '../../hooks/useSkillScope';
+import { validateLearningPathStructure } from '../../utils/lpStructure';
 import toast from 'react-hot-toast';
 import styles from './Topbar.module.scss';
 
@@ -136,6 +139,21 @@ const ConfirmReviewModal: React.FC<ConfirmReviewModalProps> = ({ onConfirm, onCa
   const lbl = useLabels();
   const [agreed, setAgreed] = useState(false);
 
+  // LP: surface every structural gap up front (same rules + same list style
+  // as PublishChecklist's LearningPathChecklist) instead of the one-issue-
+  // at-a-time toast useToolbarActions' checkLpStructure shows on submit —
+  // otherwise the author has to resend for review once per issue to
+  // discover the next one.
+  const isLearningPath = useEditorStore((s) => s.editorProfile.key === 'learningPath');
+  const root = useTreeStore((s) => s.treeData[0]);
+  const treeCache = useTreeStore((s) => s.treeCache);
+  const skillCategory = useSkillCategory();
+  const { scope } = useSkillScope();
+  const lpIssues = isLearningPath
+    ? validateLearningPathStructure(root, skillCategory?.code, scope, treeCache)
+    : [];
+  const hasBlockingIssues = lpIssues.length > 0;
+
   return (
     <div className={styles.sbOverlay} role="dialog" aria-modal="true" aria-labelledby="review-confirm-title">
       <div className={styles.sbModal}>
@@ -146,33 +164,44 @@ const ConfirmReviewModal: React.FC<ConfirmReviewModalProps> = ({ onConfirm, onCa
           </button>
         </div>
         <div className={styles.sbModalBody}>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.55 }}>
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              style={{ marginTop: 2 }}
-            />
-            <span>
-              {lbl.confirmReviewModal.agreementTextPart1}{' '}
-              <a
-                className="sb-color-primary"
-                style={{ fontWeight: 600 }}
-                href="https://creativecommons.org/licenses"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {lbl.confirmReviewModal.creativeCommonsLinkText}
-              </a>{' '}
-              {lbl.confirmReviewModal.agreementTextPart2} <strong>{lbl.confirmReviewModal.contentPolicyText}</strong>{lbl.confirmReviewModal.agreementTextPart3}
-            </span>
-          </label>
+          {hasBlockingIssues ? (
+            <>
+              <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600 }}>{lbl.learningPath.resolveBeforeSendingForReview}</p>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.6 }}>
+                {lpIssues.map((issue, i) => <li key={`${issue.code}-${issue.nodeId ?? i}`}>{issue.message}</li>)}
+              </ul>
+            </>
+          ) : (
+            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.55 }}>
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                style={{ marginTop: 2 }}
+              />
+              <span>
+                {lbl.confirmReviewModal.agreementTextPart1}{' '}
+                <a
+                  className="sb-color-primary"
+                  style={{ fontWeight: 600 }}
+                  href="https://creativecommons.org/licenses"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {lbl.confirmReviewModal.creativeCommonsLinkText}
+                </a>{' '}
+                {lbl.confirmReviewModal.agreementTextPart2} <strong>{lbl.confirmReviewModal.contentPolicyText}</strong>{lbl.confirmReviewModal.agreementTextPart3}
+              </span>
+            </label>
+          )}
         </div>
         <div className={styles.sbModalFooter}>
           <Button variant="ghost" onClick={onCancel}>{lbl.confirmReviewModal.cancelButton}</Button>
-          <Button variant="primary" onClick={onConfirm} disabled={!agreed}>
-            {lbl.confirmReviewModal.submitButton}
-          </Button>
+          {!hasBlockingIssues && (
+            <Button variant="primary" onClick={onConfirm} disabled={!agreed}>
+              {lbl.confirmReviewModal.submitButton}
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -29,6 +29,10 @@ interface TreeState {
   /** LP: drop linked courses tagged under a different framework than the
    *  root's newly-selected curriculum. Returns how many were removed. */
   pruneCoursesByFramework: (frameworkId: string) => number;
+  /** LP: clear every Level's selected-skills field under the OLD resolved
+   *  skill-category code when the Curriculum changes. Returns how many
+   *  Levels had a selection cleared. */
+  clearLevelSkills: (skillCategoryCode: string | undefined) => number;
 }
 
 // BFS through treeData to find a node by id
@@ -501,6 +505,32 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     });
     if (removed > 0) get().markDirty();
     return removed;
+  },
+
+  clearLevelSkills: (skillCategoryCode) => {
+    if (!skillCategoryCode) return 0;
+    let cleared = 0;
+    set((state) => {
+      const root = state.treeData[0];
+      if (!root) return state;
+      const newTreeCache = { ...state.treeCache };
+      const newLevels = (root.children ?? []).map((lvl) => {
+        const hadSelection = lvl.metadata?.[skillCategoryCode] !== undefined
+          || newTreeCache[lvl.id]?.[skillCategoryCode] !== undefined;
+        if (!hadSelection) return lvl;
+        cleared++;
+        const { [skillCategoryCode]: _metaRemoved, ...restMeta } = lvl.metadata ?? {};
+        if (newTreeCache[lvl.id]) {
+          const { [skillCategoryCode]: _cacheRemoved, ...restCache } = newTreeCache[lvl.id];
+          newTreeCache[lvl.id] = restCache;
+        }
+        return { ...lvl, metadata: restMeta };
+      });
+      if (cleared === 0) return state;
+      return { treeData: [{ ...root, children: newLevels }], treeCache: newTreeCache };
+    });
+    if (cleared > 0) get().markDirty();
+    return cleared;
   },
 
   replaceNodeIds: (identifiers) => {

@@ -9,6 +9,10 @@ interface SkillPickerProps {
   /** Selected skills that fell outside the scope after the prior assessment changed —
    *  flagged for re-selection rather than silently dropped. */
   outOfScope: string[];
+  /** Selected skills with zero linked course under this Level actually
+   *  tagged for them — covered in name only. Independent of outOfScope; a
+   *  skill can be flagged for both at once. */
+  uncovered: string[];
   onChange: (skills: string[]) => void;
   isEditable: boolean;
   /** Explains where the options come from — prior assessment scope, or the
@@ -21,7 +25,7 @@ interface SkillPickerProps {
 // box opens a checkbox dropdown of the remaining options, so the picker
 // stays compact regardless of how many skills the catalog/scope has.
 export const SkillPicker: React.FC<SkillPickerProps> = ({
-  options, selected, outOfScope, onChange, isEditable, description,
+  options, selected, outOfScope, uncovered, onChange, isEditable, description,
 }) => {
   const lbl = useLabels();
   const [query, setQuery] = useState('');
@@ -65,14 +69,26 @@ export const SkillPicker: React.FC<SkillPickerProps> = ({
         </div>
       )}
 
+      {uncovered.length > 0 && (
+        <div className={styles.skillWarning} role="alert">
+          {lbl.learningPath.skillsUncoveredWarning.replace('{skills}', uncovered.join(', '))}
+        </div>
+      )}
+
       {selected.length > 0 && (
         <div className={styles.selectedSkills}>
           {selected.map((skill) => {
             const isFlagged = outOfScope.includes(skill);
+            const isUncovered = uncovered.includes(skill);
             return (
               <span
                 key={skill}
-                className={[styles.skillPill, isFlagged ? styles.skillPillFlagged : ''].join(' ')}
+                className={[
+                  styles.skillPill,
+                  isFlagged ? styles.skillPillFlagged : '',
+                  isUncovered ? styles.skillPillUncovered : '',
+                ].filter(Boolean).join(' ')}
+                title={isUncovered ? lbl.learningPath.skillUncoveredPillTitle : undefined}
               >
                 {skill}
                 {isEditable && (

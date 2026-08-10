@@ -468,6 +468,7 @@
     "outcomeCheckBadge": "Verificação de resultado",
     "assessmentCourseMeta": "Curso · Apenas banco de questões",
     "addAssessmentSlotButton": "Adicionar {label} — um curso com apenas um banco de questões",
+    "requiredSlotBadge": "Obrigatório",
     "removeAssessmentSlotButton": "Remover",
     "deletePriorAssessmentConfirm": "Excluir a Avaliação prévia remove a pontuação usada pelos avanços adaptativos deste percurso. Continuar?",
     "deleteAssessmentSlotConfirm": "Remover este curso de avaliação do percurso?",
@@ -477,6 +478,8 @@
     "assessmentCheckFailedToast": "Não foi possível verificar este curso. Tente novamente.",
     "skillsHeading": "Habilidades",
     "skillsOutOfScopeWarning": "Fora do escopo, selecione novamente: {skills}",
+    "skillsUncoveredWarning": "Nenhum curso cobre ainda: {skills}",
+    "skillUncoveredPillTitle": "Nenhum curso vinculado está marcado com esta habilidade ainda",
     "searchSkillsPlaceholder": "Buscar habilidades",
     "noSkillsAvailable": "Nenhuma habilidade disponível ainda",
     "noMatchingSkills": "Nenhuma habilidade correspondente",
@@ -509,6 +512,7 @@
     "courseUnitTopicsLabelPlural": "{count} tópicos",
     "verifyingAssessmentCourses": "Verificando cursos de avaliação…",
     "resolveBeforePublishing": "Resolva os itens abaixo antes de publicar:",
+    "resolveBeforeSendingForReview": "Resolva os itens abaixo antes de enviar para revisão:",
     "assessmentsCardHeading": "Avaliações prévia e de resultado",
     "assessmentsCardDescription": "Adicione os cursos compostos apenas por banco de questões que abrem e encerram este percurso.",
     "assessmentNotAddedYet": "Ainda não adicionado — escolha um curso composto apenas por banco de questões na Biblioteca.",
@@ -545,6 +549,8 @@
     "dropOntoPathError": "Solte os cursos sobre um nível, não diretamente na trilha de aprendizagem.",
     "priorSlotFilledToast": "A Avaliação prévia já tem um curso — remova-o antes de adicionar outro.",
     "outcomeSlotFilledToast": "A Avaliação final já tem um curso — remova-o antes de adicionar outro.",
-    "coursesRemovedFrameworkChangeToast": "{count} curso(s) vinculados a outro currículo foram removidos desta trilha."
+    "coursesRemovedFrameworkChangeToast": "{count} curso(s) vinculados a outro currículo foram removidos desta trilha.",
+    "levelSkillsResetFrameworkChangeToast": "{count} nível(is) tiveram as habilidades selecionadas apagadas — elas não se aplicam ao novo currículo.",
+    "priorAssessmentNarrowedScopeToast": "A Avaliação prévia reduziu o escopo de habilidades — {count} nível(is) agora têm habilidades fora dele."
   }
 }

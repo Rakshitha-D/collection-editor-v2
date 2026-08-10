@@ -11,6 +11,22 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
+/**
+ * Every src/api/*.ts call hardcodes one of three prefixes (/action, /api,
+ * /portal) matching this editor's own dev-proxy assumptions about which
+ * backend service owns a route. A host portal's own gateway may collapse all
+ * three under one prefix of its own — rather than guess at that mapping, the
+ * portal tells us via config.metadata.apiSlug, and every request gets its
+ * leading /action|/api|/portal segment swapped for it. No apiSlug (the
+ * default) leaves every hardcoded prefix exactly as each api file wrote it.
+ */
+export function resolveApiUrl(url: string | undefined, apiSlug: unknown): string | undefined {
+  if (!url || typeof apiSlug !== 'string' || !apiSlug.trim()) return url;
+  const trimmed = apiSlug.trim().replace(/\/+$/, '');
+  const slug = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return url.replace(/^\/(action|api|portal)(?=\/|$)/, slug);
+}
+
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   // Lazy import to avoid circular dependency
   const { useEditorStore } = await import('../store/editor.store');
@@ -34,6 +50,8 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
   if (ctx?.channel) {
     config.headers['X-Channel-Id'] = ctx.channel;
   }
+
+  config.url = resolveApiUrl(config.url, state.editorConfig?.metadata?.['apiSlug']);
 
   if (baseUrl) {
     config.baseURL = baseUrl;

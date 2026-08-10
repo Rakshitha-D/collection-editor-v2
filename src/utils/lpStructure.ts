@@ -167,7 +167,7 @@ export function getLevelDisplayInfo(
     return { role: idx === 0 ? 'pre' : 'post', levelNumber: null };
   }
   const levelNumber = levels.slice(0, idx + 1)
-    .filter((l, i) => !isPrePostSlotAtIndex(levels, i)).length;
+    .filter((_, i) => !isPrePostSlotAtIndex(levels, i)).length;
   return { role: 'level', levelNumber };
 }
 
@@ -331,6 +331,50 @@ export function computeSkillsCovered(root: INode | undefined, skillCategoryCode:
   return Array.from(covered);
 }
 
+/**
+ * Content Levels whose selected skills include at least one outside the
+ * given scope — same rule as validateLearningPathStructure's
+ * levelSkillsOutOfScope issue, exposed standalone so a scope-narrowing event
+ * (linking or changing the Prior Assessment) can proactively notify the
+ * author instead of waiting for send-for-review/publish to surface it.
+ */
+export function findLevelsWithOutOfScopeSkills(
+  root: INode | undefined,
+  skillCategoryCode: string | undefined,
+  scope: string[],
+): INode[] {
+  if (!root || !skillCategoryCode || scope.length === 0) return [];
+  const levels = root.children ?? [];
+  return levels.filter((lvl, idx) => {
+    if (isPrePostSlotAtIndex(levels, idx)) return false;
+    const skills = toStringArray(lvl.metadata?.[skillCategoryCode]);
+    return skills.some((s) => !scope.includes(s));
+  });
+}
+
+/**
+ * Which of a content Level's SELECTED skills currently have zero linked
+ * course tagged with them. computeSkillsCovered (and the root "Skills
+ * covered" summary) reads only the Level's own selection — it has no idea
+ * whether any course under that Level actually carries a given skill tag,
+ * so a Level can claim to cover a skill that nothing linked to it teaches.
+ * Courses missing a skill tag entirely are already caught separately by
+ * validateLearningPathStructure's courseMissingSkillTag rule; this is about
+ * the Level's selection vs. what its courses are ACTUALLY tagged with.
+ */
+export function computeUncoveredSkills(
+  level: INode | undefined,
+  selectedSkills: string[],
+  skillCategoryCode: string | undefined,
+): string[] {
+  if (!level || !skillCategoryCode || selectedSkills.length === 0) return [];
+  const covered = new Set<string>();
+  for (const course of level.children ?? []) {
+    toStringArray(course.metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
+  }
+  return selectedSkills.filter((s) => !covered.has(s));
+}
+
 // ---------------------------------------------------------------------------
 // Publish validation (Phase 5) — every rule from learning_path_plan.md §5.
 // ---------------------------------------------------------------------------
@@ -344,27 +388,38 @@ export interface LpValidationIssue {
 // Exported so every "does this policy require a Prior Assessment" check —
 // the publish gate here AND the delete-confirmation guard in
 // useAssessmentSlots.ts — shares one definition rather than two policy
-// lists that can drift out of sync.
-export const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic', 'PriorLearning']);
+// lists that can drift out of sync. Diagnostic ("Adaptive") skips solely on
+// the Prior Assessment score, so it must have one. PriorLearning skips can
+// instead draw on external evidence (a verified certificate or prior
+// course) "not the assessment alone" (policyPriorLearningDescription) — the
+// Prior Assessment is optional there, not required. Fixed never skips.
+export const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic']);
 
 /**
  * Every synchronous (no network) LP publish rule: consumption policy set;
- * prior assessment required only for Diagnostic/PriorLearning (not Fixed —
- * confirmed open question #1); outcome assessment required always; pre/post
- * slot purity; every content Level has ≥1 course and ≥1 in-scope skill; no
- * empty Levels; every linked course carries a skill tag; no duplicate course
- * across the path. `skillScope` empty means "no scope constraint yet"
- * (matches useSkillScope's manual-fallback catalog, not an empty scope).
+ * prior assessment required only for the Diagnostic ("Adaptive") policy
+ * (not Fixed, not PriorLearning — see REQUIRES_PRIOR_POLICIES); pre/post
+ * slot purity when a slot IS filled (Outcome Assessment itself is optional
+ * — an empty post slot no longer blocks publish/send-for-review); every
+ * content Level has ≥1 course and ≥1 in-scope skill; no empty Levels; every
+ * linked course carries a skill tag; no duplicate course across the path.
+ * `skillScope` empty means "no scope constraint yet" (matches
+ * useSkillScope's manual-fallback catalog, not an empty scope).
  */
 export function validateLearningPathStructure(
   root: INode | undefined,
   skillCategoryCode: string | undefined,
   skillScope: string[],
+  treeCache: Record<string, Record<string, unknown>> = {},
 ): LpValidationIssue[] {
   const issues: LpValidationIssue[] = [];
   if (!root) return issues;
 
-  const policy = root.metadata?.['policy'] as string | undefined;
+  // treeCache first — a policy change lands there immediately (updateNode's
+  // unconditional cache write) but only mirrors into root.metadata once a
+  // save round-trips it back, same precedence as getExplicitCurriculum and
+  // useAssessmentSlots' own policy lookup.
+  const policy = (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined;
   if (!policy) {
     issues.push({ code: 'policyMissing', message: 'Set a consumption policy for this path.' });
   }
@@ -376,11 +431,11 @@ export function validateLearningPathStructure(
   const postFilled = isAssessmentLevel(postLevel);
 
   if (!preFilled && policy && REQUIRES_PRIOR_POLICIES.has(policy)) {
-    issues.push({ code: 'priorAssessmentRequired', message: 'A Prior Assessment is required for the Adaptive/Prior learning policy.' });
+    issues.push({ code: 'priorAssessmentRequired', message: 'A Prior Assessment is required for the Adaptive policy.' });
   }
-  if (!postFilled) {
-    issues.push({ code: 'outcomeAssessmentMissing', message: 'Add an Outcome Assessment to close the path.' });
-  }
+  // Outcome Assessment is no longer mandatory (as of this change) — an empty
+  // post slot doesn't block publish/send-for-review. slotNotPure below still
+  // applies if one WAS added but isn't a pure question-set-only course.
 
   ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const).forEach(([lvl, label]) => {
     if (!lvl) return;
@@ -404,19 +459,35 @@ export function validateLearningPathStructure(
 
   for (const lvl of contentLevels) {
     const children = lvl.children ?? [];
-    if (children.length === 0) {
+    const isEmpty = children.length === 0;
+    if (isEmpty) {
       issues.push({ code: 'emptyLevel', nodeId: lvl.id, message: `"${lvl.name}" has no courses yet.` });
-      continue;
     }
     const skills = skillCategoryCode ? toStringArray(lvl.metadata?.[skillCategoryCode]) : [];
     if (skills.length === 0) {
-      issues.push({ code: 'levelMissingSkills', nodeId: lvl.id, message: `"${lvl.name}" needs at least one skill selected.` });
-    } else if (skillScope.length > 0) {
-      const outOfScope = skills.filter((s) => !skillScope.includes(s));
-      if (outOfScope.length > 0) {
+      // An empty Level's "no courses yet" above already covers this — the
+      // less specific "needs a skill selected" would be redundant noise.
+      if (!isEmpty) {
+        issues.push({ code: 'levelMissingSkills', nodeId: lvl.id, message: `"${lvl.name}" needs at least one skill selected.` });
+      }
+    } else {
+      if (skillScope.length > 0) {
+        const outOfScope = skills.filter((s) => !skillScope.includes(s));
+        if (outOfScope.length > 0) {
+          issues.push({
+            code: 'levelSkillsOutOfScope', nodeId: lvl.id,
+            message: `"${lvl.name}" has skills outside the current scope: ${outOfScope.join(', ')}.`,
+          });
+        }
+      }
+      // Independent of scope, and runs even when isEmpty (every selected
+      // skill is trivially uncovered with zero courses) — naming exactly
+      // which skills still need a covering course, not just "no courses yet."
+      const uncovered = computeUncoveredSkills(lvl, skills, skillCategoryCode);
+      if (uncovered.length > 0) {
         issues.push({
-          code: 'levelSkillsOutOfScope', nodeId: lvl.id,
-          message: `"${lvl.name}" has skills outside the current scope: ${outOfScope.join(', ')}.`,
+          code: 'levelSkillsUncovered', nodeId: lvl.id,
+          message: `"${lvl.name}" has no course covering: ${uncovered.join(', ')}.`,
         });
       }
     }

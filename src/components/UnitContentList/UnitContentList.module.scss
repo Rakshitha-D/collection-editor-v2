@@ -108,6 +108,14 @@
   background: var(--sbx-danger, #dc2626);
 }
 
+// Selected but no course under this Level is tagged with it yet — a
+// separate condition from out-of-scope (skillPillFlagged above); a skill
+// can carry both modifiers at once.
+.skillPillUncovered {
+  background: var(--sbx-warning);
+  color: var(--sbx-gray-900, #111827);
+}
+
 .skillPillRemove {
   display: flex;
   align-items: center;
@@ -418,4 +426,23 @@
   padding: 16px;
   border-color: var(--sbx-gray-200);
   border-radius: 12px;
+}
+
+.addRowText {
+  flex: 1;
+  text-align: left;
+}
+
+// Flags a currently-empty Prior/Outcome Assessment slot that publish will
+// block on (validateLearningPathStructure) — Outcome always, Prior only
+// under a policy in REQUIRES_PRIOR_POLICIES.
+.requiredBadge {
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border-radius: var(--sbx-r-pill);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sbx-error);
+  border: 1px solid var(--sbx-error);
+  background: color-mix(in srgb, var(--sbx-error) 12%, var(--sbx-white));
 }

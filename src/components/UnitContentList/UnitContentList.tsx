@@ -7,7 +7,7 @@ import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useLabels } from '../../hooks/useLabels';
 import { useSkillScope } from '../../hooks/useSkillScope';
-import { computeSkillsCovered, isAssessmentLevel } from '../../utils/lpStructure';
+import { computeSkillsCovered, computeUncoveredSkills, isAssessmentLevel } from '../../utils/lpStructure';
 import { useSkillCategory } from '../../hooks/useSkillCategory';
 import { ContentRow } from './ContentRow';
 import { SkillPicker } from './SkillPicker';
@@ -43,6 +43,11 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
     : [];
   const outOfScopeSkills = source === 'prior' ? selectedSkills.filter(s => !scope.includes(s)) : [];
   const skillsCovered = isLpRoot ? computeSkillsCovered(treeData[0], skillCategory?.code) : [];
+  // Selected but no linked course under THIS Level actually carries the tag —
+  // independent of (and can overlap with) out-of-scope: a skill can be both.
+  const uncoveredSkills = isLpLevel
+    ? computeUncoveredSkills(selectedNode, selectedSkills, skillCategory?.code)
+    : [];
 
   const handleSkillsChange = useCallback((skills: string[]) => {
     if (!selectedNodeId || !skillCategory?.code) return;
@@ -110,6 +115,7 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
           options={scope}
           selected={selectedSkills}
           outOfScope={outOfScopeSkills}
+          uncovered={uncoveredSkills}
           onChange={handleSkillsChange}
           isEditable={isEditable}
           description={source === 'prior'

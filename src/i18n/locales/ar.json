@@ -468,6 +468,7 @@
     "outcomeCheckBadge": "فحص النتيجة",
     "assessmentCourseMeta": "مقرر · بنك أسئلة فقط",
     "addAssessmentSlotButton": "إضافة {label} — مقرر يحتوي على بنك أسئلة فقط",
+    "requiredSlotBadge": "مطلوب",
     "removeAssessmentSlotButton": "إزالة",
     "deletePriorAssessmentConfirm": "حذف التقييم المسبق يزيل الدرجة التي يعتمد عليها التخطي التكيفي لهذا المسار. هل تريد الاستمرار؟",
     "deleteAssessmentSlotConfirm": "هل تريد إزالة مقرر التقييم هذا من المسار؟",
@@ -477,6 +478,8 @@
     "assessmentCheckFailedToast": "تعذر التحقق من هذا المقرر. حاول مرة أخرى.",
     "skillsHeading": "المهارات",
     "skillsOutOfScopeWarning": "خارج النطاق، يرجى إعادة الاختيار: {skills}",
+    "skillsUncoveredWarning": "لا يغطي أي مقرر هذه المهارات بعد: {skills}",
+    "skillUncoveredPillTitle": "لا يوجد مقرر مرتبط موسوم بهذه المهارة بعد",
     "searchSkillsPlaceholder": "البحث عن المهارات",
     "noSkillsAvailable": "لا توجد مهارات متاحة حتى الآن",
     "noMatchingSkills": "لا توجد مهارات مطابقة",
@@ -509,6 +512,7 @@
     "courseUnitTopicsLabelPlural": "{count} مواضيع",
     "verifyingAssessmentCourses": "جارٍ التحقق من مقررات التقييم…",
     "resolveBeforePublishing": "حل هذه النقاط قبل النشر:",
+    "resolveBeforeSendingForReview": "حل هذه النقاط قبل الإرسال للمراجعة:",
     "assessmentsCardHeading": "التقييم المسبق وتقييم النتائج",
     "assessmentsCardDescription": "أضف المقررات التي تحتوي على بنك أسئلة فقط والتي تفتح وتغلق هذا المسار.",
     "assessmentNotAddedYet": "لم تتم إضافته بعد — اختر مقررًا يحتوي على بنك أسئلة فقط من المكتبة.",
@@ -545,6 +549,8 @@
     "dropOntoPathError": "أفلِت المقررات على مستوى، وليس على مسار التعلم مباشرة.",
     "priorSlotFilledToast": "التقييم المسبق يحتوي على مقرر بالفعل — أزِله قبل إضافة مقرر آخر.",
     "outcomeSlotFilledToast": "التقييم الختامي يحتوي على مقرر بالفعل — أزِله قبل إضافة مقرر آخر.",
-    "coursesRemovedFrameworkChangeToast": "تمت إزالة {count} من المقررات المرتبطة بمنهج مختلف من هذا المسار."
+    "coursesRemovedFrameworkChangeToast": "تمت إزالة {count} من المقررات المرتبطة بمنهج مختلف من هذا المسار.",
+    "levelSkillsResetFrameworkChangeToast": "تم مسح المهارات المختارة في {count} من المستويات — فهي لا تنطبق على المنهج الجديد.",
+    "priorAssessmentNarrowedScopeToast": "أدى التقييم المسبق إلى تضييق نطاق المهارات — أصبح لدى {count} من المستويات مهارات خارج هذا النطاق."
   }
 }

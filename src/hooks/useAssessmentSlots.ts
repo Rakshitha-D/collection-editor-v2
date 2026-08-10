@@ -8,6 +8,12 @@ export interface AssessmentSlotInfo {
   level: INode | undefined;
   filled: boolean;
   courseName: string | undefined;
+  /** Whether publish/send-for-review blocks without this slot
+   *  (validateLearningPathStructure): Prior Assessment only under a policy
+   *  in REQUIRES_PRIOR_POLICIES (Diagnostic/"Adaptive" — it skips solely on
+   *  this score; PriorLearning can skip on external evidence instead).
+   *  Outcome Assessment is optional — always false. */
+  required: boolean;
 }
 
 export interface UseAssessmentSlotsResult {
@@ -38,18 +44,18 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
   const postLevel = rootLevels.length > 1 ? rootLevels[rootLevels.length - 1] : undefined;
   const preFilled = isAssessmentLevel(preLevel);
   const postFilled = isAssessmentLevel(postLevel);
+  const root = treeData[0];
+  const policy = root ? (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined : undefined;
+  const preRequired = !!policy && REQUIRES_PRIOR_POLICIES.has(policy);
 
   const deleteSlot = (slot: 'pre' | 'post') => {
     const level = slot === 'pre' ? preLevel : postLevel;
     if (!level) return;
-    const root = treeData[0];
-    const policy = root ? (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined : undefined;
     // Every slot deletion confirms first, matching the window.confirm pattern
     // used for all other content removal (UnitContentList's handleRemove) —
-    // the pre-slot under an Adaptive/Prior-learning policy gets the stronger,
-    // consequence-specific wording since it also drives the path's skips.
-    const requiresStrongConfirm = slot === 'pre' && !!policy && REQUIRES_PRIOR_POLICIES.has(policy);
-    const message = requiresStrongConfirm
+    // the pre-slot under the Adaptive (Diagnostic) policy gets the stronger,
+    // consequence-specific wording since it's the sole basis for that path's skips.
+    const message = slot === 'pre' && preRequired
       ? lbl.learningPath.deletePriorAssessmentConfirm
       : lbl.learningPath.deleteAssessmentSlotConfirm;
     if (!window.confirm(message)) return;
@@ -57,8 +63,9 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
   };
 
   return {
-    pre: { level: preLevel, filled: preFilled, courseName: preFilled ? preLevel?.children?.[0]?.name : undefined },
-    post: { level: postLevel, filled: postFilled, courseName: postFilled ? postLevel?.children?.[0]?.name : undefined },
+    pre: { level: preLevel, filled: preFilled, courseName: preFilled ? preLevel?.children?.[0]?.name : undefined, required: preRequired },
+    // Outcome Assessment is optional — never blocks publish/send-for-review.
+    post: { level: postLevel, filled: postFilled, courseName: postFilled ? postLevel?.children?.[0]?.name : undefined, required: false },
     activeAssessmentSlot,
     setActiveAssessmentSlot,
     deleteSlot,

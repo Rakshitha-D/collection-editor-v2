@@ -309,6 +309,43 @@ describe('tree.store (Learning Path) — pruneCoursesByFramework', () => {
   });
 });
 
+describe('tree.store (Learning Path) — clearLevelSkills', () => {
+  beforeEach(setupLpTree);
+
+  it('removes the given skill-category field from every Level that had one, from both metadata and treeCache', () => {
+    const lvl1 = useTreeStore.getState().addNode('root', 'unit');
+    const lvl2 = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().updateNode(lvl1, { skill: ['Java'] }, ['skill']);
+    useTreeStore.getState().updateNode(lvl2, { skill: ['Python programming'] }, ['skill']);
+
+    const cleared = useTreeStore.getState().clearLevelSkills('skill');
+
+    expect(cleared).toBe(2);
+    const state = useTreeStore.getState();
+    for (const id of [lvl1, lvl2]) {
+      const lvl = state.treeData[0].children!.find((c) => c.id === id)!;
+      expect(lvl.metadata?.['skill']).toBeUndefined();
+      expect(state.treeCache[id]?.['skill']).toBeUndefined();
+    }
+  });
+
+  it('leaves Levels with no selection under that field untouched', () => {
+    const lvl1 = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addNode('root', 'unit'); // lvl2, no skill selection
+    useTreeStore.getState().updateNode(lvl1, { skill: ['Java'] }, ['skill']);
+
+    expect(useTreeStore.getState().clearLevelSkills('skill')).toBe(1);
+  });
+
+  it('is a no-op (returns 0, tree untouched) without a skill-category code, or when nothing has a selection', () => {
+    useTreeStore.getState().addNode('root', 'unit');
+    const before = useTreeStore.getState().treeData;
+    expect(useTreeStore.getState().clearLevelSkills(undefined)).toBe(0);
+    expect(useTreeStore.getState().clearLevelSkills('skill')).toBe(0);
+    expect(useTreeStore.getState().treeData).toBe(before);
+  });
+});
+
 describe('tree.store (Learning Path) — pinned post slot stays last (addNode)', () => {
   beforeEach(setupLpTree);
 

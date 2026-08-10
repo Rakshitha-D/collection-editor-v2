@@ -16,11 +16,12 @@ const LearningPathChecklist: React.FC<{ objectType: string; onConfirm: () => voi
 }) => {
   const lbl = useLabels();
   const root = useTreeStore((s) => s.treeData[0]);
+  const treeCache = useTreeStore((s) => s.treeCache);
   const skillCategory = useSkillCategory();
   const { scope } = useSkillScope();
   const [asyncIssues, setAsyncIssues] = useState<LpValidationIssue[] | null>(null);
 
-  const structuralIssues = validateLearningPathStructure(root, skillCategory?.code, scope);
+  const structuralIssues = validateLearningPathStructure(root, skillCategory?.code, scope, treeCache);
 
   useEffect(() => {
     let cancelled = false;

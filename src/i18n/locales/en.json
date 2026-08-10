@@ -468,6 +468,7 @@
     "outcomeCheckBadge": "Outcome check",
     "assessmentCourseMeta": "Course · Question set only",
     "addAssessmentSlotButton": "Add {label} — a course with only a question set",
+    "requiredSlotBadge": "Required",
     "removeAssessmentSlotButton": "Remove",
     "deletePriorAssessmentConfirm": "Deleting the Prior Assessment removes the score this path's Adaptive skips are based on. Continue?",
     "deleteAssessmentSlotConfirm": "Remove this assessment course from the path?",
@@ -477,6 +478,8 @@
     "assessmentCheckFailedToast": "Could not verify this course. Please try again.",
     "skillsHeading": "Skills",
     "skillsOutOfScopeWarning": "Out of scope, please re-select: {skills}",
+    "skillsUncoveredWarning": "No course covers these yet: {skills}",
+    "skillUncoveredPillTitle": "No linked course is tagged with this skill yet",
     "searchSkillsPlaceholder": "Search skills",
     "noSkillsAvailable": "No skills available yet",
     "noMatchingSkills": "No matching skills",
@@ -509,6 +512,7 @@
     "courseUnitTopicsLabelPlural": "{count} topics",
     "verifyingAssessmentCourses": "Verifying assessment courses…",
     "resolveBeforePublishing": "Resolve these before publishing:",
+    "resolveBeforeSendingForReview": "Resolve these before sending for review:",
     "assessmentsCardHeading": "Prior & outcome assessments",
     "assessmentsCardDescription": "Add the question-set-only courses that open and close this path.",
     "assessmentNotAddedYet": "Not added yet — pick a question-set-only course from the Library.",
@@ -545,6 +549,8 @@
     "dropOntoPathError": "Drop courses onto a level, not directly on the learning path.",
     "priorSlotFilledToast": "The Prior Assessment already has a course — remove it before adding a different one.",
     "outcomeSlotFilledToast": "The Outcome Assessment already has a course — remove it before adding a different one.",
-    "coursesRemovedFrameworkChangeToast": "{count} course(s) tagged to a different curriculum were removed from this path."
+    "coursesRemovedFrameworkChangeToast": "{count} course(s) tagged to a different curriculum were removed from this path.",
+    "levelSkillsResetFrameworkChangeToast": "{count} Level(s) had their selected skills cleared — they don't apply to the new curriculum.",
+    "priorAssessmentNarrowedScopeToast": "The Prior Assessment narrowed the skill scope — {count} Level(s) now have skills outside it."
   }
 }

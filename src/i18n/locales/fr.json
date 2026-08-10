@@ -468,6 +468,7 @@
     "outcomeCheckBadge": "Vérification du résultat",
     "assessmentCourseMeta": "Cours · Questionnaire uniquement",
     "addAssessmentSlotButton": "Ajouter {label} — un cours contenant uniquement un questionnaire",
+    "requiredSlotBadge": "Obligatoire",
     "removeAssessmentSlotButton": "Retirer",
     "deletePriorAssessmentConfirm": "Supprimer l'évaluation préalable retire le score sur lequel se basent les sauts adaptatifs de ce parcours. Continuer ?",
     "deleteAssessmentSlotConfirm": "Retirer ce cours d'évaluation du parcours ?",
@@ -477,6 +478,8 @@
     "assessmentCheckFailedToast": "Impossible de vérifier ce cours. Veuillez réessayer.",
     "skillsHeading": "Compétences",
     "skillsOutOfScopeWarning": "Hors du périmètre, veuillez resélectionner : {skills}",
+    "skillsUncoveredWarning": "Aucun cours ne couvre encore : {skills}",
+    "skillUncoveredPillTitle": "Aucun cours associé n'est encore étiqueté avec cette compétence",
     "searchSkillsPlaceholder": "Rechercher des compétences",
     "noSkillsAvailable": "Aucune compétence disponible pour le moment",
     "noMatchingSkills": "Aucune compétence correspondante",
@@ -509,6 +512,7 @@
     "courseUnitTopicsLabelPlural": "{count} sujets",
     "verifyingAssessmentCourses": "Vérification des cours d'évaluation…",
     "resolveBeforePublishing": "Résolvez les points suivants avant de publier :",
+    "resolveBeforeSendingForReview": "Résolvez les points suivants avant d'envoyer pour révision :",
     "assessmentsCardHeading": "Évaluations préalable et finale",
     "assessmentsCardDescription": "Ajoutez les cours composés uniquement d'un questionnaire qui ouvrent et ferment ce parcours.",
     "assessmentNotAddedYet": "Pas encore ajouté — choisissez un cours composé uniquement d'un questionnaire dans la bibliothèque.",
@@ -545,6 +549,8 @@
     "dropOntoPathError": "Déposez les cours sur un niveau, pas directement sur le parcours d'apprentissage.",
     "priorSlotFilledToast": "L'Évaluation préalable contient déjà un cours — retirez-le avant d'en ajouter un autre.",
     "outcomeSlotFilledToast": "L'Évaluation finale contient déjà un cours — retirez-le avant d'en ajouter un autre.",
-    "coursesRemovedFrameworkChangeToast": "{count} cours associé(s) à un autre curriculum ont été retirés de ce parcours."
+    "coursesRemovedFrameworkChangeToast": "{count} cours associé(s) à un autre curriculum ont été retirés de ce parcours.",
+    "levelSkillsResetFrameworkChangeToast": "{count} niveau(x) ont eu leurs compétences sélectionnées effacées — elles ne s'appliquent pas au nouveau curriculum.",
+    "priorAssessmentNarrowedScopeToast": "L'évaluation préalable a réduit le périmètre des compétences — {count} niveau(x) ont désormais des compétences hors de ce périmètre."
   }
 }

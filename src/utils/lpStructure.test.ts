@@ -15,6 +15,8 @@ import {
   hasExplicitCurriculum,
   getExplicitCurriculum,
   computeSkillsCovered,
+  computeUncoveredSkills,
+  findLevelsWithOutOfScopeSkills,
   computePathShape,
   validateLearningPathStructure,
   revalidateAssessmentSlots,
@@ -439,6 +441,94 @@ describe('computeSkillsCovered', () => {
   });
 });
 
+describe('computeUncoveredSkills', () => {
+  it('flags a selected skill with zero linked course tagged for it', () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java'] },
+      children: [course('c1', { metadata: { skill: ['Python programming'] } })],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java'], 'skill')).toEqual(['Java']);
+  });
+
+  it('returns nothing once every selected skill has at least one covering course', () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java'] },
+      children: [
+        course('c1', { metadata: { skill: ['Python programming'] } }),
+        course('c2', { metadata: { skill: ['Java'] } }),
+      ],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java'], 'skill')).toEqual([]);
+  });
+
+  it("doesn't let redundant coverage of one skill mask another selected skill having none — a Level 'looks' populated with 2 courses while Java has zero coverage", () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java'] },
+      children: [
+        course('c1', { metadata: { skill: ['Python programming'] } }),
+        course('c2', { metadata: { skill: ['Python programming'] } }), // redundant with c1
+      ],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java'], 'skill')).toEqual(['Java']);
+  });
+
+  it('unions coverage across multiple courses under the same Level', () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java', 'SQL'] },
+      children: [
+        course('c1', { metadata: { skill: ['Python programming'] } }),
+        course('c2', { metadata: { skill: ['Java', 'SQL'] } }),
+      ],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java', 'SQL'], 'skill')).toEqual([]);
+  });
+
+  it('flags every selected skill when the Level has no courses at all', () => {
+    const lvl = level({ id: 'lvl1', metadata: { skill: ['Python programming'] }, children: [] });
+    expect(computeUncoveredSkills(lvl, ['Python programming'], 'skill')).toEqual(['Python programming']);
+  });
+
+  it('returns an empty array with no level, no skill category, or no selected skills', () => {
+    expect(computeUncoveredSkills(undefined, ['Java'], 'skill')).toEqual([]);
+    expect(computeUncoveredSkills(level({ children: [] }), ['Java'], undefined)).toEqual([]);
+    expect(computeUncoveredSkills(level({ children: [] }), [], 'skill')).toEqual([]);
+  });
+});
+
+describe('findLevelsWithOutOfScopeSkills', () => {
+  it('returns content Levels with at least one selected skill outside the scope', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1')] }),
+        level({ id: 'lvl2', metadata: { skill: ['Python programming'] }, children: [course('c2')] }),
+      ],
+    });
+    const affected = findLevelsWithOutOfScopeSkills(root, 'skill', ['Java']);
+    expect(affected.map(l => l.id)).toEqual(['lvl2']);
+  });
+
+  it('excludes the pre/post assessment slots — their course tags are not a Level skill selection', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'pre', children: [assessmentCourseWithSkills('a1', ['Python programming'])] }),
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1')] }),
+      ],
+    });
+    // 'Python programming' (the pre-slot's own course tag) is irrelevant here —
+    // only lvl1's OWN selection ('Java') is checked against the scope.
+    expect(findLevelsWithOutOfScopeSkills(root, 'skill', ['Java']).map(l => l.id)).toEqual([]);
+  });
+
+  it('returns nothing without a root, a skill category, or a non-empty scope', () => {
+    const root = level({ id: 'root', children: [level({ id: 'lvl1', metadata: { skill: ['Java'] } })] });
+    expect(findLevelsWithOutOfScopeSkills(undefined, 'skill', ['Java'])).toEqual([]);
+    expect(findLevelsWithOutOfScopeSkills(root, undefined, ['Java'])).toEqual([]);
+    expect(findLevelsWithOutOfScopeSkills(root, 'skill', [])).toEqual([]); // empty scope = no constraint yet
+  });
+});
+
 describe('computePathShape', () => {
   it('excludes pre/post assessment slots from the level count, includes their courses in the course count', () => {
     const root = level({
@@ -500,7 +590,7 @@ describe('validateLearningPathStructure', () => {
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('policyMissing');
   });
 
-  it('requires a Prior Assessment only for Diagnostic/PriorLearning, not Fixed', () => {
+  it('requires a Prior Assessment only for Diagnostic ("Adaptive") — not Fixed, not PriorLearning', () => {
     const noPrior = level({
       id: 'root', metadata: { policy: 'Fixed' },
       children: [
@@ -512,12 +602,32 @@ describe('validateLearningPathStructure', () => {
 
     const diagnostic = { ...noPrior, metadata: { policy: 'Diagnostic' } };
     expect(validateLearningPathStructure(diagnostic, 'skill', []).map(i => i.code)).toContain('priorAssessmentRequired');
+
+    // PriorLearning can skip on external evidence (a verified certificate or
+    // prior course) "not the assessment alone" — the Prior Assessment stays
+    // optional here, unlike Diagnostic which skips solely on its score.
+    const priorLearning = { ...noPrior, metadata: { policy: 'PriorLearning' } };
+    expect(validateLearningPathStructure(priorLearning, 'skill', []).map(i => i.code)).not.toContain('priorAssessmentRequired');
   });
 
-  it('always requires an Outcome Assessment', () => {
+  it("sees an unsaved policy change from treeCache, not just root.metadata — updateNode's flat patch lands there before a save mirrors it into metadata", () => {
+    const noPrior = level({
+      id: 'root', metadata: {}, // no policy committed to metadata yet
+      children: [
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } })] }),
+        level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
+      ],
+    });
+    const treeCache = { root: { policy: 'Diagnostic' } };
+    const issues = validateLearningPathStructure(noPrior, 'skill', [], treeCache).map(i => i.code);
+    expect(issues).toContain('priorAssessmentRequired');
+    expect(issues).not.toContain('policyMissing');
+  });
+
+  it('does not require an Outcome Assessment — an empty post slot is not flagged', () => {
     const root = validPath();
     root.children = root.children!.slice(0, -1); // drop the post slot
-    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('outcomeAssessmentMissing');
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).not.toContain('outcomeAssessmentMissing');
   });
 
   it('flags a pre/post slot that is not exactly one assessment course', () => {
@@ -531,7 +641,16 @@ describe('validateLearningPathStructure', () => {
     root.children![1].children = [];
     const issues = validateLearningPathStructure(root, 'skill', []);
     expect(issues.map(i => i.code)).toContain('emptyLevel');
-    expect(issues.map(i => i.code)).not.toContain('levelMissingSkills'); // short-circuits on empty
+    expect(issues.map(i => i.code)).not.toContain('levelMissingSkills'); // redundant with emptyLevel
+  });
+
+  it("also names the selected skill(s) an empty Level still needs a course for — not just 'no courses yet'", () => {
+    const root = validPath();
+    root.children![1].children = []; // lvl1 keeps its metadata.skill: ['Java'] selection
+    const issues = validateLearningPathStructure(root, 'skill', []);
+    expect(issues.map(i => i.code)).toContain('emptyLevel');
+    expect(issues.map(i => i.code)).toContain('levelSkillsUncovered');
+    expect(issues.find(i => i.code === 'levelSkillsUncovered')?.message).toContain('Java');
   });
 
   it('flags a content Level with no selected skills', () => {
@@ -549,10 +668,31 @@ describe('validateLearningPathStructure', () => {
       .not.toContain('levelSkillsOutOfScope');
   });
 
+  it('is clean for a valid path where every selected skill has a covering course', () => {
+    expect(validateLearningPathStructure(validPath(), 'skill', []).map(i => i.code))
+      .not.toContain('levelSkillsUncovered');
+  });
+
+  it('flags a content Level with a selected skill no linked course is tagged with', () => {
+    const root = validPath();
+    root.children![1].metadata = { skill: ['Java', 'Python programming'] }; // course c1 is only tagged 'Java'
+    const issues = validateLearningPathStructure(root, 'skill', []);
+    expect(issues.map(i => i.code)).toContain('levelSkillsUncovered');
+    expect(issues.find(i => i.code === 'levelSkillsUncovered')?.message).toContain('Python programming');
+  });
+
   it('flags a linked course with no skill tag', () => {
     const root = validPath();
     root.children![1].children![0].metadata = {};
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('courseMissingSkillTag');
+  });
+
+  it("pairs courseMissingSkillTag with levelSkillsUncovered when that untagged course was the Level's only coverage — the two facts surface together rather than needing one message to explain the other", () => {
+    const root = validPath();
+    root.children![1].children![0].metadata = {}; // c1 loses its 'Java' tag — lvl1's only course
+    const issues = validateLearningPathStructure(root, 'skill', []).map(i => i.code);
+    expect(issues).toContain('courseMissingSkillTag');
+    expect(issues).toContain('levelSkillsUncovered');
   });
 
   it('flags a course that appears more than once in the path', () => {
