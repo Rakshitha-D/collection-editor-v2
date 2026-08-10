@@ -18,7 +18,7 @@ import { findLevelsWithOutOfScopeSkills } from '../utils/lpStructure';
  */
 export function useSkillScopeNarrowingAlert(): void {
   const lbl = useLabels();
-  const isLearningPath = useEditorStore((s) => s.editorProfile.competencyScoped);
+  const isLearningPath = useEditorStore((s) => s.editorProfile.key === 'learningPath');
   const treeData = useTreeStore((s) => s.treeData);
   const skillCategory = useSkillCategory();
   const { scope, source } = useSkillScope();
