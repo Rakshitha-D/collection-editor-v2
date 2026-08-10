@@ -8,10 +8,11 @@ export interface AssessmentSlotInfo {
   level: INode | undefined;
   filled: boolean;
   courseName: string | undefined;
-  /** Whether publish blocks without this slot (validateLearningPathStructure):
-   *  Outcome Assessment always; Prior Assessment only under a policy in
-   *  REQUIRES_PRIOR_POLICIES (Diagnostic/"Adaptive" — it skips solely on
-   *  this score; PriorLearning can skip on external evidence instead). */
+  /** Whether publish/send-for-review blocks without this slot
+   *  (validateLearningPathStructure): Prior Assessment only under a policy
+   *  in REQUIRES_PRIOR_POLICIES (Diagnostic/"Adaptive" — it skips solely on
+   *  this score; PriorLearning can skip on external evidence instead).
+   *  Outcome Assessment is optional — always false. */
   required: boolean;
 }
 
@@ -63,10 +64,8 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
 
   return {
     pre: { level: preLevel, filled: preFilled, courseName: preFilled ? preLevel?.children?.[0]?.name : undefined, required: preRequired },
-    // Outcome Assessment is unconditionally required for publish
-    // (validateLearningPathStructure's outcomeAssessmentMissing check has no
-    // policy gate), unlike the Prior Assessment above.
-    post: { level: postLevel, filled: postFilled, courseName: postFilled ? postLevel?.children?.[0]?.name : undefined, required: true },
+    // Outcome Assessment is optional — never blocks publish/send-for-review.
+    post: { level: postLevel, filled: postFilled, courseName: postFilled ? postLevel?.children?.[0]?.name : undefined, required: false },
     activeAssessmentSlot,
     setActiveAssessmentSlot,
     deleteSlot,

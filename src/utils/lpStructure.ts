@@ -398,12 +398,13 @@ export const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic']);
 /**
  * Every synchronous (no network) LP publish rule: consumption policy set;
  * prior assessment required only for the Diagnostic ("Adaptive") policy
- * (not Fixed, not PriorLearning — see REQUIRES_PRIOR_POLICIES); outcome
- * assessment required always; pre/post slot purity; every content Level has
- * ≥1 course and ≥1 in-scope skill; no empty Levels; every linked course
- * carries a skill tag; no duplicate course across the path. `skillScope`
- * empty means "no scope constraint yet" (matches useSkillScope's
- * manual-fallback catalog, not an empty scope).
+ * (not Fixed, not PriorLearning — see REQUIRES_PRIOR_POLICIES); pre/post
+ * slot purity when a slot IS filled (Outcome Assessment itself is optional
+ * — an empty post slot no longer blocks publish/send-for-review); every
+ * content Level has ≥1 course and ≥1 in-scope skill; no empty Levels; every
+ * linked course carries a skill tag; no duplicate course across the path.
+ * `skillScope` empty means "no scope constraint yet" (matches
+ * useSkillScope's manual-fallback catalog, not an empty scope).
  */
 export function validateLearningPathStructure(
   root: INode | undefined,
@@ -432,9 +433,9 @@ export function validateLearningPathStructure(
   if (!preFilled && policy && REQUIRES_PRIOR_POLICIES.has(policy)) {
     issues.push({ code: 'priorAssessmentRequired', message: 'A Prior Assessment is required for the Adaptive policy.' });
   }
-  if (!postFilled) {
-    issues.push({ code: 'outcomeAssessmentMissing', message: 'Add an Outcome Assessment to close the path.' });
-  }
+  // Outcome Assessment is no longer mandatory (as of this change) — an empty
+  // post slot doesn't block publish/send-for-review. slotNotPure below still
+  // applies if one WAS added but isn't a pure question-set-only course.
 
   ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const).forEach(([lvl, label]) => {
     if (!lvl) return;

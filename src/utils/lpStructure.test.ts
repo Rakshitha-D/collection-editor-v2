@@ -624,10 +624,10 @@ describe('validateLearningPathStructure', () => {
     expect(issues).not.toContain('policyMissing');
   });
 
-  it('always requires an Outcome Assessment', () => {
+  it('does not require an Outcome Assessment — an empty post slot is not flagged', () => {
     const root = validPath();
     root.children = root.children!.slice(0, -1); // drop the post slot
-    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('outcomeAssessmentMissing');
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).not.toContain('outcomeAssessmentMissing');
   });
 
   it('flags a pre/post slot that is not exactly one assessment course', () => {
