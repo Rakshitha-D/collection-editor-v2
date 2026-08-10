@@ -15,6 +15,7 @@ import {
   hasExplicitCurriculum,
   getExplicitCurriculum,
   computeSkillsCovered,
+  computeUncoveredSkills,
   computePathShape,
   validateLearningPathStructure,
   revalidateAssessmentSlots,
@@ -439,6 +440,49 @@ describe('computeSkillsCovered', () => {
   });
 });
 
+describe('computeUncoveredSkills', () => {
+  it('flags a selected skill with zero linked course tagged for it', () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java'] },
+      children: [course('c1', { metadata: { skill: ['Python programming'] } })],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java'], 'skill')).toEqual(['Java']);
+  });
+
+  it('returns nothing once every selected skill has at least one covering course', () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java'] },
+      children: [
+        course('c1', { metadata: { skill: ['Python programming'] } }),
+        course('c2', { metadata: { skill: ['Java'] } }),
+      ],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java'], 'skill')).toEqual([]);
+  });
+
+  it('unions coverage across multiple courses under the same Level', () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java', 'SQL'] },
+      children: [
+        course('c1', { metadata: { skill: ['Python programming'] } }),
+        course('c2', { metadata: { skill: ['Java', 'SQL'] } }),
+      ],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java', 'SQL'], 'skill')).toEqual([]);
+  });
+
+  it('flags every selected skill when the Level has no courses at all', () => {
+    const lvl = level({ id: 'lvl1', metadata: { skill: ['Python programming'] }, children: [] });
+    expect(computeUncoveredSkills(lvl, ['Python programming'], 'skill')).toEqual(['Python programming']);
+  });
+
+  it('returns an empty array with no level, no skill category, or no selected skills', () => {
+    expect(computeUncoveredSkills(undefined, ['Java'], 'skill')).toEqual([]);
+    expect(computeUncoveredSkills(level({ children: [] }), ['Java'], undefined)).toEqual([]);
+    expect(computeUncoveredSkills(level({ children: [] }), [], 'skill')).toEqual([]);
+  });
+});
+
 describe('computePathShape', () => {
   it('excludes pre/post assessment slots from the level count, includes their courses in the course count', () => {
     const root = level({
@@ -567,6 +611,19 @@ describe('validateLearningPathStructure', () => {
     // Within scope: no issue.
     expect(validateLearningPathStructure(root, 'skill', ['Java']).map(i => i.code))
       .not.toContain('levelSkillsOutOfScope');
+  });
+
+  it('is clean for a valid path where every selected skill has a covering course', () => {
+    expect(validateLearningPathStructure(validPath(), 'skill', []).map(i => i.code))
+      .not.toContain('levelSkillsUncovered');
+  });
+
+  it('flags a content Level with a selected skill no linked course is tagged with', () => {
+    const root = validPath();
+    root.children![1].metadata = { skill: ['Java', 'Python programming'] }; // course c1 is only tagged 'Java'
+    const issues = validateLearningPathStructure(root, 'skill', []);
+    expect(issues.map(i => i.code)).toContain('levelSkillsUncovered');
+    expect(issues.find(i => i.code === 'levelSkillsUncovered')?.message).toContain('Python programming');
   });
 
   it('flags a linked course with no skill tag', () => {

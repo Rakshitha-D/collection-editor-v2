@@ -108,6 +108,14 @@
   background: var(--sbx-danger, #dc2626);
 }
 
+// Selected but no course under this Level is tagged with it yet — a
+// separate condition from out-of-scope (skillPillFlagged above); a skill
+// can carry both modifiers at once.
+.skillPillUncovered {
+  background: var(--sbx-warning);
+  color: var(--sbx-gray-900, #111827);
+}
+
 .skillPillRemove {
   display: flex;
   align-items: center;

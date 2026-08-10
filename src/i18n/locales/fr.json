@@ -478,6 +478,8 @@
     "assessmentCheckFailedToast": "Impossible de vérifier ce cours. Veuillez réessayer.",
     "skillsHeading": "Compétences",
     "skillsOutOfScopeWarning": "Hors du périmètre, veuillez resélectionner : {skills}",
+    "skillsUncoveredWarning": "Aucun cours ne couvre encore : {skills}",
+    "skillUncoveredPillTitle": "Aucun cours associé n'est encore étiqueté avec cette compétence",
     "searchSkillsPlaceholder": "Rechercher des compétences",
     "noSkillsAvailable": "Aucune compétence disponible pour le moment",
     "noMatchingSkills": "Aucune compétence correspondante",

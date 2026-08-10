@@ -478,6 +478,8 @@
     "assessmentCheckFailedToast": "تعذر التحقق من هذا المقرر. حاول مرة أخرى.",
     "skillsHeading": "المهارات",
     "skillsOutOfScopeWarning": "خارج النطاق، يرجى إعادة الاختيار: {skills}",
+    "skillsUncoveredWarning": "لا يغطي أي مقرر هذه المهارات بعد: {skills}",
+    "skillUncoveredPillTitle": "لا يوجد مقرر مرتبط موسوم بهذه المهارة بعد",
     "searchSkillsPlaceholder": "البحث عن المهارات",
     "noSkillsAvailable": "لا توجد مهارات متاحة حتى الآن",
     "noMatchingSkills": "لا توجد مهارات مطابقة",

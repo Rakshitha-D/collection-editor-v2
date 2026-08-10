@@ -478,6 +478,8 @@
     "assessmentCheckFailedToast": "Não foi possível verificar este curso. Tente novamente.",
     "skillsHeading": "Habilidades",
     "skillsOutOfScopeWarning": "Fora do escopo, selecione novamente: {skills}",
+    "skillsUncoveredWarning": "Nenhum curso cobre ainda: {skills}",
+    "skillUncoveredPillTitle": "Nenhum curso vinculado está marcado com esta habilidade ainda",
     "searchSkillsPlaceholder": "Buscar habilidades",
     "noSkillsAvailable": "Nenhuma habilidade disponível ainda",
     "noMatchingSkills": "Nenhuma habilidade correspondente",

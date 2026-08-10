@@ -331,6 +331,29 @@ export function computeSkillsCovered(root: INode | undefined, skillCategoryCode:
   return Array.from(covered);
 }
 
+/**
+ * Which of a content Level's SELECTED skills currently have zero linked
+ * course tagged with them. computeSkillsCovered (and the root "Skills
+ * covered" summary) reads only the Level's own selection — it has no idea
+ * whether any course under that Level actually carries a given skill tag,
+ * so a Level can claim to cover a skill that nothing linked to it teaches.
+ * Courses missing a skill tag entirely are already caught separately by
+ * validateLearningPathStructure's courseMissingSkillTag rule; this is about
+ * the Level's selection vs. what its courses are ACTUALLY tagged with.
+ */
+export function computeUncoveredSkills(
+  level: INode | undefined,
+  selectedSkills: string[],
+  skillCategoryCode: string | undefined,
+): string[] {
+  if (!level || !skillCategoryCode || selectedSkills.length === 0) return [];
+  const covered = new Set<string>();
+  for (const course of level.children ?? []) {
+    toStringArray(course.metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
+  }
+  return selectedSkills.filter((s) => !covered.has(s));
+}
+
 // ---------------------------------------------------------------------------
 // Publish validation (Phase 5) — every rule from learning_path_plan.md §5.
 // ---------------------------------------------------------------------------
@@ -421,12 +444,23 @@ export function validateLearningPathStructure(
     const skills = skillCategoryCode ? toStringArray(lvl.metadata?.[skillCategoryCode]) : [];
     if (skills.length === 0) {
       issues.push({ code: 'levelMissingSkills', nodeId: lvl.id, message: `"${lvl.name}" needs at least one skill selected.` });
-    } else if (skillScope.length > 0) {
-      const outOfScope = skills.filter((s) => !skillScope.includes(s));
-      if (outOfScope.length > 0) {
+    } else {
+      if (skillScope.length > 0) {
+        const outOfScope = skills.filter((s) => !skillScope.includes(s));
+        if (outOfScope.length > 0) {
+          issues.push({
+            code: 'levelSkillsOutOfScope', nodeId: lvl.id,
+            message: `"${lvl.name}" has skills outside the current scope: ${outOfScope.join(', ')}.`,
+          });
+        }
+      }
+      // Independent of scope: a selected skill with zero linked course
+      // actually tagged for it is covered in name only.
+      const uncovered = computeUncoveredSkills(lvl, skills, skillCategoryCode);
+      if (uncovered.length > 0) {
         issues.push({
-          code: 'levelSkillsOutOfScope', nodeId: lvl.id,
-          message: `"${lvl.name}" has skills outside the current scope: ${outOfScope.join(', ')}.`,
+          code: 'levelSkillsUncovered', nodeId: lvl.id,
+          message: `"${lvl.name}" has no course covering: ${uncovered.join(', ')}.`,
         });
       }
     }

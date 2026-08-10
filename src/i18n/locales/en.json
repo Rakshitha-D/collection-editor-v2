@@ -478,6 +478,8 @@
     "assessmentCheckFailedToast": "Could not verify this course. Please try again.",
     "skillsHeading": "Skills",
     "skillsOutOfScopeWarning": "Out of scope, please re-select: {skills}",
+    "skillsUncoveredWarning": "No course covers these yet: {skills}",
+    "skillUncoveredPillTitle": "No linked course is tagged with this skill yet",
     "searchSkillsPlaceholder": "Search skills",
     "noSkillsAvailable": "No skills available yet",
     "noMatchingSkills": "No matching skills",
