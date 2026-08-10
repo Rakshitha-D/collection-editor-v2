@@ -549,6 +549,7 @@
     "dropOntoPathError": "Drop courses onto a level, not directly on the learning path.",
     "priorSlotFilledToast": "The Prior Assessment already has a course — remove it before adding a different one.",
     "outcomeSlotFilledToast": "The Outcome Assessment already has a course — remove it before adding a different one.",
-    "coursesRemovedFrameworkChangeToast": "{count} course(s) tagged to a different curriculum were removed from this path."
+    "coursesRemovedFrameworkChangeToast": "{count} course(s) tagged to a different curriculum were removed from this path.",
+    "priorAssessmentNarrowedScopeToast": "The Prior Assessment narrowed the skill scope — {count} Level(s) now have skills outside it."
   }
 }

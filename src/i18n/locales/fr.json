@@ -549,6 +549,7 @@
     "dropOntoPathError": "Déposez les cours sur un niveau, pas directement sur le parcours d'apprentissage.",
     "priorSlotFilledToast": "L'Évaluation préalable contient déjà un cours — retirez-le avant d'en ajouter un autre.",
     "outcomeSlotFilledToast": "L'Évaluation finale contient déjà un cours — retirez-le avant d'en ajouter un autre.",
-    "coursesRemovedFrameworkChangeToast": "{count} cours associé(s) à un autre curriculum ont été retirés de ce parcours."
+    "coursesRemovedFrameworkChangeToast": "{count} cours associé(s) à un autre curriculum ont été retirés de ce parcours.",
+    "priorAssessmentNarrowedScopeToast": "L'évaluation préalable a réduit le périmètre des compétences — {count} niveau(x) ont désormais des compétences hors de ce périmètre."
   }
 }

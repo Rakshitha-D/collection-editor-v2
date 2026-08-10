@@ -20,6 +20,7 @@ import { useEditorStore } from '../../store/editor.store';
 import { useSaveHierarchy } from '../../hooks/useSaveHierarchy';
 import { useToolbarActions } from '../../hooks/useToolbarActions';
 import { useLabels } from '../../hooks/useLabels';
+import { useSkillScopeNarrowingAlert } from '../../hooks/useSkillScopeNarrowingAlert';
 import { hasExplicitCurriculum, isAssessmentLevel } from '../../utils/lpStructure';
 import toast from 'react-hot-toast';
 import styles from './SplitBuilderShell.module.scss';
@@ -42,6 +43,11 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dockCollapsed, setDockCollapsed] = useState(false);
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+
+  // Mounted once for the whole session (unlike UnitContentList, which
+  // mounts/unmounts per node selection) so it can track "have I already
+  // alerted for this narrowing" across navigation.
+  useSkillScopeNarrowingAlert();
 
   const { addResource, treeData, treeCache } = useTreeStore();
   const setFormStatus = useEditorStore((s) => s.setFormStatus);

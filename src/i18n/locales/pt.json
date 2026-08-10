@@ -549,6 +549,7 @@
     "dropOntoPathError": "Solte os cursos sobre um nível, não diretamente na trilha de aprendizagem.",
     "priorSlotFilledToast": "A Avaliação prévia já tem um curso — remova-o antes de adicionar outro.",
     "outcomeSlotFilledToast": "A Avaliação final já tem um curso — remova-o antes de adicionar outro.",
-    "coursesRemovedFrameworkChangeToast": "{count} curso(s) vinculados a outro currículo foram removidos desta trilha."
+    "coursesRemovedFrameworkChangeToast": "{count} curso(s) vinculados a outro currículo foram removidos desta trilha.",
+    "priorAssessmentNarrowedScopeToast": "A Avaliação prévia reduziu o escopo de habilidades — {count} nível(is) agora têm habilidades fora dele."
   }
 }

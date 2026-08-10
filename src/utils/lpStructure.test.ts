@@ -16,6 +16,7 @@ import {
   getExplicitCurriculum,
   computeSkillsCovered,
   computeUncoveredSkills,
+  findLevelsWithOutOfScopeSkills,
   computePathShape,
   validateLearningPathStructure,
   revalidateAssessmentSlots,
@@ -460,6 +461,17 @@ describe('computeUncoveredSkills', () => {
     expect(computeUncoveredSkills(lvl, ['Python programming', 'Java'], 'skill')).toEqual([]);
   });
 
+  it("doesn't let redundant coverage of one skill mask another selected skill having none — a Level 'looks' populated with 2 courses while Java has zero coverage", () => {
+    const lvl = level({
+      id: 'lvl1', metadata: { skill: ['Python programming', 'Java'] },
+      children: [
+        course('c1', { metadata: { skill: ['Python programming'] } }),
+        course('c2', { metadata: { skill: ['Python programming'] } }), // redundant with c1
+      ],
+    });
+    expect(computeUncoveredSkills(lvl, ['Python programming', 'Java'], 'skill')).toEqual(['Java']);
+  });
+
   it('unions coverage across multiple courses under the same Level', () => {
     const lvl = level({
       id: 'lvl1', metadata: { skill: ['Python programming', 'Java', 'SQL'] },
@@ -480,6 +492,40 @@ describe('computeUncoveredSkills', () => {
     expect(computeUncoveredSkills(undefined, ['Java'], 'skill')).toEqual([]);
     expect(computeUncoveredSkills(level({ children: [] }), ['Java'], undefined)).toEqual([]);
     expect(computeUncoveredSkills(level({ children: [] }), [], 'skill')).toEqual([]);
+  });
+});
+
+describe('findLevelsWithOutOfScopeSkills', () => {
+  it('returns content Levels with at least one selected skill outside the scope', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1')] }),
+        level({ id: 'lvl2', metadata: { skill: ['Python programming'] }, children: [course('c2')] }),
+      ],
+    });
+    const affected = findLevelsWithOutOfScopeSkills(root, 'skill', ['Java']);
+    expect(affected.map(l => l.id)).toEqual(['lvl2']);
+  });
+
+  it('excludes the pre/post assessment slots — their course tags are not a Level skill selection', () => {
+    const root = level({
+      id: 'root',
+      children: [
+        level({ id: 'pre', children: [assessmentCourseWithSkills('a1', ['Python programming'])] }),
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1')] }),
+      ],
+    });
+    // 'Python programming' (the pre-slot's own course tag) is irrelevant here —
+    // only lvl1's OWN selection ('Java') is checked against the scope.
+    expect(findLevelsWithOutOfScopeSkills(root, 'skill', ['Java']).map(l => l.id)).toEqual([]);
+  });
+
+  it('returns nothing without a root, a skill category, or a non-empty scope', () => {
+    const root = level({ id: 'root', children: [level({ id: 'lvl1', metadata: { skill: ['Java'] } })] });
+    expect(findLevelsWithOutOfScopeSkills(undefined, 'skill', ['Java'])).toEqual([]);
+    expect(findLevelsWithOutOfScopeSkills(root, undefined, ['Java'])).toEqual([]);
+    expect(findLevelsWithOutOfScopeSkills(root, 'skill', [])).toEqual([]); // empty scope = no constraint yet
   });
 });
 

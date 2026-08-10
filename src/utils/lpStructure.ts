@@ -332,6 +332,27 @@ export function computeSkillsCovered(root: INode | undefined, skillCategoryCode:
 }
 
 /**
+ * Content Levels whose selected skills include at least one outside the
+ * given scope — same rule as validateLearningPathStructure's
+ * levelSkillsOutOfScope issue, exposed standalone so a scope-narrowing event
+ * (linking or changing the Prior Assessment) can proactively notify the
+ * author instead of waiting for send-for-review/publish to surface it.
+ */
+export function findLevelsWithOutOfScopeSkills(
+  root: INode | undefined,
+  skillCategoryCode: string | undefined,
+  scope: string[],
+): INode[] {
+  if (!root || !skillCategoryCode || scope.length === 0) return [];
+  const levels = root.children ?? [];
+  return levels.filter((lvl, idx) => {
+    if (isPrePostSlotAtIndex(levels, idx)) return false;
+    const skills = toStringArray(lvl.metadata?.[skillCategoryCode]);
+    return skills.some((s) => !scope.includes(s));
+  });
+}
+
+/**
  * Which of a content Level's SELECTED skills currently have zero linked
  * course tagged with them. computeSkillsCovered (and the root "Skills
  * covered" summary) reads only the Level's own selection — it has no idea
