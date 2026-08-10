@@ -510,6 +510,7 @@
     "courseUnitTopicsLabelPlural": "{count} tópicos",
     "verifyingAssessmentCourses": "Verificando cursos de avaliação…",
     "resolveBeforePublishing": "Resolva os itens abaixo antes de publicar:",
+    "resolveBeforeSendingForReview": "Resolva os itens abaixo antes de enviar para revisão:",
     "assessmentsCardHeading": "Avaliações prévia e de resultado",
     "assessmentsCardDescription": "Adicione os cursos compostos apenas por banco de questões que abrem e encerram este percurso.",
     "assessmentNotAddedYet": "Ainda não adicionado — escolha um curso composto apenas por banco de questões na Biblioteca.",

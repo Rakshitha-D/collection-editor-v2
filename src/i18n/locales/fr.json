@@ -510,6 +510,7 @@
     "courseUnitTopicsLabelPlural": "{count} sujets",
     "verifyingAssessmentCourses": "Vérification des cours d'évaluation…",
     "resolveBeforePublishing": "Résolvez les points suivants avant de publier :",
+    "resolveBeforeSendingForReview": "Résolvez les points suivants avant d'envoyer pour révision :",
     "assessmentsCardHeading": "Évaluations préalable et finale",
     "assessmentsCardDescription": "Ajoutez les cours composés uniquement d'un questionnaire qui ouvrent et ferment ce parcours.",
     "assessmentNotAddedYet": "Pas encore ajouté — choisissez un cours composé uniquement d'un questionnaire dans la bibliothèque.",

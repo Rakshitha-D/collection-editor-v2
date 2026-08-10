@@ -510,6 +510,7 @@
     "courseUnitTopicsLabelPlural": "{count} topics",
     "verifyingAssessmentCourses": "Verifying assessment courses…",
     "resolveBeforePublishing": "Resolve these before publishing:",
+    "resolveBeforeSendingForReview": "Resolve these before sending for review:",
     "assessmentsCardHeading": "Prior & outcome assessments",
     "assessmentsCardDescription": "Add the question-set-only courses that open and close this path.",
     "assessmentNotAddedYet": "Not added yet — pick a question-set-only course from the Library.",

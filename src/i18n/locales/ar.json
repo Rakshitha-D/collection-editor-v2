@@ -510,6 +510,7 @@
     "courseUnitTopicsLabelPlural": "{count} مواضيع",
     "verifyingAssessmentCourses": "جارٍ التحقق من مقررات التقييم…",
     "resolveBeforePublishing": "حل هذه النقاط قبل النشر:",
+    "resolveBeforeSendingForReview": "حل هذه النقاط قبل الإرسال للمراجعة:",
     "assessmentsCardHeading": "التقييم المسبق وتقييم النتائج",
     "assessmentsCardDescription": "أضف المقررات التي تحتوي على بنك أسئلة فقط والتي تفتح وتغلق هذا المسار.",
     "assessmentNotAddedYet": "لم تتم إضافته بعد — اختر مقررًا يحتوي على بنك أسئلة فقط من المكتبة.",
