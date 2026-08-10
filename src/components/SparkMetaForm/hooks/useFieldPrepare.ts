@@ -698,14 +698,17 @@ function adaptLpCurriculumFields(
 
   // Drop fields for categories the selected framework doesn't have (or the
   // skill category); normalize the survivors into the Curriculum card so a
-  // backend form's arbitrary section names can't scatter them.
+  // backend form's arbitrary section names can't scatter them. Every
+  // Curriculum-section category field is required, same as the framework
+  // selector itself — a backend form's own `required` (or lack of it) is
+  // overridden here for consistency.
   const kept = fields
     .filter(f => {
       const categoryCode = categoryCodeOf(f);
       if (!categoryCode) return true;
       return categoryCode !== skillCode && categories.some(c => c.code === categoryCode);
     })
-    .map(f => (categoryCodeOf(f) ? { ...f, section: CURRICULUM_SECTION } : f));
+    .map(f => (categoryCodeOf(f) ? { ...f, section: CURRICULUM_SECTION, required: true } : f));
 
   // The Curriculum (framework) selector is the anchor of the section — a
   // backend form config may not declare one (e.g. a Course-shaped default),
@@ -732,7 +735,7 @@ function adaptLpCurriculumFields(
     .filter(cat => cat.code !== skillCode && !existingCodes.has(cat.code))
     .map(cat => ({
       code: cat.code, label: cat.name, inputType: 'multiselect' as const,
-      editable: true, tab: 'details' as const, section: CURRICULUM_SECTION,
+      required: true, editable: true, tab: 'details' as const, section: CURRICULUM_SECTION,
       options: (cat.terms ?? []).map(t => ({ label: t.name, value: t.name })),
       currentValue: cv(meta, cat.code, 'multiselect'),
     }));

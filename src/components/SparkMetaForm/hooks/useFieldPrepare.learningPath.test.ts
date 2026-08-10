@@ -94,6 +94,22 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
     expect(fields.find(f => f.code === 'industry')!.options).toEqual([{ label: 'IT', value: 'IT' }]);
   });
 
+  it('marks every synthesized Curriculum category field as required, same as the Curriculum selector itself', () => {
+    const fields = useFieldPrepare([], {}, usf, true, { profile: learningPathProfile });
+    expect(fields.find(f => f.code === 'framework')!.required).toBe(true);
+    expect(fields.find(f => f.code === 'industry')!.required).toBe(true);
+    expect(fields.find(f => f.code === 'domain')!.required).toBe(true);
+  });
+
+  it("overrides a backend-declared category field's own required flag to true inside the Curriculum section", () => {
+    const cfg = [
+      { code: 'framework', label: 'Curriculum', inputType: 'framework' },
+      { code: 'industry', label: 'Industry', inputType: 'multiSelect', sourceCategory: 'industry', required: false },
+    ];
+    const fields = useFieldPrepare(cfg, {}, usf, true, { profile: learningPathProfile });
+    expect(fields.find(f => f.code === 'industry')!.required).toBe(true);
+  });
+
   it('adapts to a K-12 framework too — NCF shows board/medium/gradeLevel and excludes subject (its skill-equivalent)', () => {
     const fields = useFieldPrepare([], {}, ncf, true, { profile: learningPathProfile });
     expect(fields.map(f => f.code)).toEqual(['name', 'description', 'keywords', 'framework', 'board', 'medium', 'gradeLevel', 'policy']);
