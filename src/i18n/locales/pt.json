@@ -550,6 +550,7 @@
     "priorSlotFilledToast": "A Avaliação prévia já tem um curso — remova-o antes de adicionar outro.",
     "outcomeSlotFilledToast": "A Avaliação final já tem um curso — remova-o antes de adicionar outro.",
     "coursesRemovedFrameworkChangeToast": "{count} curso(s) vinculados a outro currículo foram removidos desta trilha.",
+    "levelSkillsResetFrameworkChangeToast": "{count} nível(is) tiveram as habilidades selecionadas apagadas — elas não se aplicam ao novo currículo.",
     "priorAssessmentNarrowedScopeToast": "A Avaliação prévia reduziu o escopo de habilidades — {count} nível(is) agora têm habilidades fora dele."
   }
 }

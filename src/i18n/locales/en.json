@@ -550,6 +550,7 @@
     "priorSlotFilledToast": "The Prior Assessment already has a course — remove it before adding a different one.",
     "outcomeSlotFilledToast": "The Outcome Assessment already has a course — remove it before adding a different one.",
     "coursesRemovedFrameworkChangeToast": "{count} course(s) tagged to a different curriculum were removed from this path.",
+    "levelSkillsResetFrameworkChangeToast": "{count} Level(s) had their selected skills cleared — they don't apply to the new curriculum.",
     "priorAssessmentNarrowedScopeToast": "The Prior Assessment narrowed the skill scope — {count} Level(s) now have skills outside it."
   }
 }

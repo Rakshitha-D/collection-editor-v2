@@ -550,6 +550,7 @@
     "priorSlotFilledToast": "التقييم المسبق يحتوي على مقرر بالفعل — أزِله قبل إضافة مقرر آخر.",
     "outcomeSlotFilledToast": "التقييم الختامي يحتوي على مقرر بالفعل — أزِله قبل إضافة مقرر آخر.",
     "coursesRemovedFrameworkChangeToast": "تمت إزالة {count} من المقررات المرتبطة بمنهج مختلف من هذا المسار.",
+    "levelSkillsResetFrameworkChangeToast": "تم مسح المهارات المختارة في {count} من المستويات — فهي لا تنطبق على المنهج الجديد.",
     "priorAssessmentNarrowedScopeToast": "أدى التقييم المسبق إلى تضييق نطاق المهارات — أصبح لدى {count} من المستويات مهارات خارج هذا النطاق."
   }
 }

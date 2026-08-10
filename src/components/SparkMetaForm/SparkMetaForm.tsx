@@ -9,6 +9,7 @@ import { useFramework } from '../../hooks/useFramework';
 import { useFrameworkOptions } from '../../hooks/useFrameworkOptions';
 import { useChannelData } from '../../hooks/useChannelData';
 import { useUserFullName } from '../../hooks/useUserFullName';
+import { useSkillCategory } from '../../hooks/useSkillCategory';
 import { useLabels } from '../../hooks/useLabels';
 import { useFieldPrepare, SECTION_DISPLAY } from './hooks/useFieldPrepare';
 import type { IPrepareContext } from './hooks/useFieldPrepare';
@@ -164,6 +165,13 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
   nodeTitleRef.current = (effectiveMeta.name as string) ?? '';
   const editorModeRef = useRef(editorMode);
   editorModeRef.current = editorMode;
+  // The CURRENT (pre-switch) resolved skill-category code — captured every
+  // render so the mount-only watch effect below reads the OLD framework's
+  // code at the moment a NEW Curriculum is picked, before setContentFramework
+  // triggers the re-render that would resolve it to the new one.
+  const skillCategory = useSkillCategory();
+  const skillCategoryCodeRef = useRef(skillCategory?.code);
+  skillCategoryCodeRef.current = skillCategory?.code;
   const REVIEW_MODES = ['review', 'read', 'sourcingreview', 'orgreview'];
 
   // Report initial validity on mount — mirrors Angular's setTimeout(() => emitStatus(), 0).
@@ -236,6 +244,18 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
             if (removed > 0) {
               toast(
                 lbl.learningPath.coursesRemovedFrameworkChangeToast.replace('{count}', String(removed)),
+                { icon: <Info size={16} />, duration: 5000 },
+              );
+            }
+            // A Level's selected skills are term names from the framework
+            // being left behind — meaningless (or worse, coincidentally
+            // colliding with an unrelated term) under the new one, so they
+            // must not linger as orphaned metadata a later switch back
+            // could resurface.
+            const clearedLevels = useTreeStore.getState().clearLevelSkills(skillCategoryCodeRef.current);
+            if (clearedLevels > 0) {
+              toast(
+                lbl.learningPath.levelSkillsResetFrameworkChangeToast.replace('{count}', String(clearedLevels)),
                 { icon: <Info size={16} />, duration: 5000 },
               );
             }
