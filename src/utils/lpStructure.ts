@@ -386,7 +386,7 @@ export function validateLearningPathStructure(
   const postFilled = isAssessmentLevel(postLevel);
 
   if (!preFilled && policy && REQUIRES_PRIOR_POLICIES.has(policy)) {
-    issues.push({ code: 'priorAssessmentRequired', message: 'A Prior Assessment is required for the Adaptive/Prior learning policy.' });
+    issues.push({ code: 'priorAssessmentRequired', message: 'A Prior Assessment is required for the Adaptive policy.' });
   }
   if (!postFilled) {
     issues.push({ code: 'outcomeAssessmentMissing', message: 'Add an Outcome Assessment to close the path.' });
