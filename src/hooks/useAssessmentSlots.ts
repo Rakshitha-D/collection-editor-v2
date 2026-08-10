@@ -10,7 +10,8 @@ export interface AssessmentSlotInfo {
   courseName: string | undefined;
   /** Whether publish blocks without this slot (validateLearningPathStructure):
    *  Outcome Assessment always; Prior Assessment only under a policy in
-   *  REQUIRES_PRIOR_POLICIES (it drives the Adaptive/Prior-learning skip). */
+   *  REQUIRES_PRIOR_POLICIES (Diagnostic/"Adaptive" — it skips solely on
+   *  this score; PriorLearning can skip on external evidence instead). */
   required: boolean;
 }
 
@@ -51,8 +52,8 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
     if (!level) return;
     // Every slot deletion confirms first, matching the window.confirm pattern
     // used for all other content removal (UnitContentList's handleRemove) —
-    // the pre-slot under an Adaptive/Prior-learning policy gets the stronger,
-    // consequence-specific wording since it also drives the path's skips.
+    // the pre-slot under the Adaptive (Diagnostic) policy gets the stronger,
+    // consequence-specific wording since it's the sole basis for that path's skips.
     const message = slot === 'pre' && preRequired
       ? lbl.learningPath.deletePriorAssessmentConfirm
       : lbl.learningPath.deleteAssessmentSlotConfirm;

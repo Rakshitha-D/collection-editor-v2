@@ -344,17 +344,22 @@ export interface LpValidationIssue {
 // Exported so every "does this policy require a Prior Assessment" check —
 // the publish gate here AND the delete-confirmation guard in
 // useAssessmentSlots.ts — shares one definition rather than two policy
-// lists that can drift out of sync.
-export const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic', 'PriorLearning']);
+// lists that can drift out of sync. Diagnostic ("Adaptive") skips solely on
+// the Prior Assessment score, so it must have one. PriorLearning skips can
+// instead draw on external evidence (a verified certificate or prior
+// course) "not the assessment alone" (policyPriorLearningDescription) — the
+// Prior Assessment is optional there, not required. Fixed never skips.
+export const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic']);
 
 /**
  * Every synchronous (no network) LP publish rule: consumption policy set;
- * prior assessment required only for Diagnostic/PriorLearning (not Fixed —
- * confirmed open question #1); outcome assessment required always; pre/post
- * slot purity; every content Level has ≥1 course and ≥1 in-scope skill; no
- * empty Levels; every linked course carries a skill tag; no duplicate course
- * across the path. `skillScope` empty means "no scope constraint yet"
- * (matches useSkillScope's manual-fallback catalog, not an empty scope).
+ * prior assessment required only for the Diagnostic ("Adaptive") policy
+ * (not Fixed, not PriorLearning — see REQUIRES_PRIOR_POLICIES); outcome
+ * assessment required always; pre/post slot purity; every content Level has
+ * ≥1 course and ≥1 in-scope skill; no empty Levels; every linked course
+ * carries a skill tag; no duplicate course across the path. `skillScope`
+ * empty means "no scope constraint yet" (matches useSkillScope's
+ * manual-fallback catalog, not an empty scope).
  */
 export function validateLearningPathStructure(
   root: INode | undefined,

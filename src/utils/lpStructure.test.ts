@@ -500,7 +500,7 @@ describe('validateLearningPathStructure', () => {
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('policyMissing');
   });
 
-  it('requires a Prior Assessment only for Diagnostic/PriorLearning, not Fixed', () => {
+  it('requires a Prior Assessment only for Diagnostic ("Adaptive") — not Fixed, not PriorLearning', () => {
     const noPrior = level({
       id: 'root', metadata: { policy: 'Fixed' },
       children: [
@@ -512,6 +512,12 @@ describe('validateLearningPathStructure', () => {
 
     const diagnostic = { ...noPrior, metadata: { policy: 'Diagnostic' } };
     expect(validateLearningPathStructure(diagnostic, 'skill', []).map(i => i.code)).toContain('priorAssessmentRequired');
+
+    // PriorLearning can skip on external evidence (a verified certificate or
+    // prior course) "not the assessment alone" — the Prior Assessment stays
+    // optional here, unlike Diagnostic which skips solely on its score.
+    const priorLearning = { ...noPrior, metadata: { policy: 'PriorLearning' } };
+    expect(validateLearningPathStructure(priorLearning, 'skill', []).map(i => i.code)).not.toContain('priorAssessmentRequired');
   });
 
   it("sees an unsaved policy change from treeCache, not just root.metadata — updateNode's flat patch lands there before a save mirrors it into metadata", () => {
