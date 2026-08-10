@@ -514,6 +514,20 @@ describe('validateLearningPathStructure', () => {
     expect(validateLearningPathStructure(diagnostic, 'skill', []).map(i => i.code)).toContain('priorAssessmentRequired');
   });
 
+  it("sees an unsaved policy change from treeCache, not just root.metadata — updateNode's flat patch lands there before a save mirrors it into metadata", () => {
+    const noPrior = level({
+      id: 'root', metadata: {}, // no policy committed to metadata yet
+      children: [
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } })] }),
+        level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
+      ],
+    });
+    const treeCache = { root: { policy: 'Diagnostic' } };
+    const issues = validateLearningPathStructure(noPrior, 'skill', [], treeCache).map(i => i.code);
+    expect(issues).toContain('priorAssessmentRequired');
+    expect(issues).not.toContain('policyMissing');
+  });
+
   it('always requires an Outcome Assessment', () => {
     const root = validPath();
     root.children = root.children!.slice(0, -1); // drop the post slot

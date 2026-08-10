@@ -167,7 +167,7 @@ export function getLevelDisplayInfo(
     return { role: idx === 0 ? 'pre' : 'post', levelNumber: null };
   }
   const levelNumber = levels.slice(0, idx + 1)
-    .filter((l, i) => !isPrePostSlotAtIndex(levels, i)).length;
+    .filter((_, i) => !isPrePostSlotAtIndex(levels, i)).length;
   return { role: 'level', levelNumber };
 }
 
@@ -360,11 +360,16 @@ export function validateLearningPathStructure(
   root: INode | undefined,
   skillCategoryCode: string | undefined,
   skillScope: string[],
+  treeCache: Record<string, Record<string, unknown>> = {},
 ): LpValidationIssue[] {
   const issues: LpValidationIssue[] = [];
   if (!root) return issues;
 
-  const policy = root.metadata?.['policy'] as string | undefined;
+  // treeCache first — a policy change lands there immediately (updateNode's
+  // unconditional cache write) but only mirrors into root.metadata once a
+  // save round-trips it back, same precedence as getExplicitCurriculum and
+  // useAssessmentSlots' own policy lookup.
+  const policy = (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined;
   if (!policy) {
     issues.push({ code: 'policyMissing', message: 'Set a consumption policy for this path.' });
   }

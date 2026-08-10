@@ -9,7 +9,10 @@ import {
   publishContent,
 } from '../api/hierarchy';
 import { findMissingRequiredFields } from '../utils/validateRequiredFields';
+import { validateLearningPathStructure } from '../utils/lpStructure';
 import { useFramework } from './useFramework';
+import { useSkillCategory } from './useSkillCategory';
+import { useSkillScope } from './useSkillScope';
 
 /**
  * Centralises the review / publish / reject toolbar flows — mirroring how the
@@ -23,6 +26,7 @@ import { useFramework } from './useFramework';
  */
 export function useToolbarActions(save: () => Promise<void>) {
   const config = useEditorStore((s) => s.editorConfig);
+  const editorProfile = useEditorStore((s) => s.editorProfile);
   const setButtonLoader = useEditorStore((s) => s.setButtonLoader);
   const validateAllForms = useEditorStore((s) => s.validateAllForms);
   const rootFormConfig = useEditorStore((s) => s.rootFormConfig);
@@ -30,6 +34,8 @@ export function useToolbarActions(save: () => Promise<void>) {
   const treeData = useTreeStore((s) => s.treeData);
   const treeCache = useTreeStore((s) => s.treeCache);
   const selectNode = useTreeStore((s) => s.selectNode);
+  const skillCategory = useSkillCategory();
+  const { scope: skillScope } = useSkillScope();
 
   // Same framework resolution as SparkMetaForm (react-query dedupes the read),
   // so required-field validation sees the same adapted field set the form
@@ -75,6 +81,26 @@ export function useToolbarActions(save: () => Promise<void>) {
     return false;
   }, [treeData, treeCache, rootFormConfig, unitFormConfig, config, selectNode, organisationFramework, targetFrameworks]);
 
+  /**
+   * LP structural gate for Send-for-review / Publish — checkRequiredFields
+   * above only validates form-declared fields (name, description, ...), not
+   * the LP-specific rules (Prior Assessment required under an Adaptive/Prior-
+   * learning policy, Outcome Assessment always required, no empty Levels,
+   * every course tagged with a skill, no duplicate course). Without this, a
+   * Learning Path with no Levels or assessments at all could be sent for
+   * review or published — the PublishChecklist modal already blocks its own
+   * "Yes" button on these same issues, but this closes the gap for
+   * sendForReview and for any caller that bypasses that modal. A no-op
+   * outside the LP profile.
+   */
+  const checkLpStructure = useCallback((): boolean => {
+    if (editorProfile.key !== 'learningPath') return true;
+    const issues = validateLearningPathStructure(treeData[0], skillCategory?.code, skillScope, treeCache);
+    if (issues.length === 0) return true;
+    toast.error(issues[0].message);
+    return false;
+  }, [editorProfile.key, treeData, treeCache, skillCategory, skillScope]);
+
   const runAction = useCallback(
     async (action: ToolbarAction, data?: unknown): Promise<boolean> => {
       const contentId =
@@ -90,12 +116,14 @@ export function useToolbarActions(save: () => Promise<void>) {
         switch (action) {
           case 'sendForReview':
             // Metadata-level gate (toasts specifics internally), then the
-            // touched-form mapper for format-level errors.
+            // touched-form mapper for format-level errors, then (LP only)
+            // the structural completeness rules.
             if (!checkRequiredFields()) return false;
             if (!validateAllForms(treeData)) {
               toast.error('Some units have missing required fields. Please fill them before sending for review.');
               return false;
             }
+            if (!checkLpStructure()) return false;
             setButtonLoader('saveCollection', true);
             // Persist the hierarchy first (Angular: saveContent() -> reviewContent()).
             await save();
@@ -117,6 +145,9 @@ export function useToolbarActions(save: () => Promise<void>) {
               toast.error('Some units have missing required fields. Please fill them before publishing.');
               return false;
             }
+            // Redundant with PublishChecklist's own "Yes" button gating, but
+            // closes the gap for any caller that bypasses that modal.
+            if (!checkLpStructure()) return false;
             setButtonLoader('publishCollection', true);
             await save();
             await publishContent(contentId, lastUpdatedBy);
@@ -142,7 +173,7 @@ export function useToolbarActions(save: () => Promise<void>) {
         setButtonLoader('publishCollection', false);
       }
     },
-    [config, save, setButtonLoader, checkRequiredFields, validateAllForms, treeData],
+    [config, save, setButtonLoader, checkRequiredFields, checkLpStructure, validateAllForms, treeData],
   );
 
   return { runAction, checkRequiredFields };
