@@ -595,7 +595,16 @@ describe('validateLearningPathStructure', () => {
     root.children![1].children = [];
     const issues = validateLearningPathStructure(root, 'skill', []);
     expect(issues.map(i => i.code)).toContain('emptyLevel');
-    expect(issues.map(i => i.code)).not.toContain('levelMissingSkills'); // short-circuits on empty
+    expect(issues.map(i => i.code)).not.toContain('levelMissingSkills'); // redundant with emptyLevel
+  });
+
+  it("also names the selected skill(s) an empty Level still needs a course for — not just 'no courses yet'", () => {
+    const root = validPath();
+    root.children![1].children = []; // lvl1 keeps its metadata.skill: ['Java'] selection
+    const issues = validateLearningPathStructure(root, 'skill', []);
+    expect(issues.map(i => i.code)).toContain('emptyLevel');
+    expect(issues.map(i => i.code)).toContain('levelSkillsUncovered');
+    expect(issues.find(i => i.code === 'levelSkillsUncovered')?.message).toContain('Java');
   });
 
   it('flags a content Level with no selected skills', () => {
@@ -630,6 +639,14 @@ describe('validateLearningPathStructure', () => {
     const root = validPath();
     root.children![1].children![0].metadata = {};
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('courseMissingSkillTag');
+  });
+
+  it("pairs courseMissingSkillTag with levelSkillsUncovered when that untagged course was the Level's only coverage — the two facts surface together rather than needing one message to explain the other", () => {
+    const root = validPath();
+    root.children![1].children![0].metadata = {}; // c1 loses its 'Java' tag — lvl1's only course
+    const issues = validateLearningPathStructure(root, 'skill', []).map(i => i.code);
+    expect(issues).toContain('courseMissingSkillTag');
+    expect(issues).toContain('levelSkillsUncovered');
   });
 
   it('flags a course that appears more than once in the path', () => {

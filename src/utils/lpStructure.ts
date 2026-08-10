@@ -437,13 +437,17 @@ export function validateLearningPathStructure(
 
   for (const lvl of contentLevels) {
     const children = lvl.children ?? [];
-    if (children.length === 0) {
+    const isEmpty = children.length === 0;
+    if (isEmpty) {
       issues.push({ code: 'emptyLevel', nodeId: lvl.id, message: `"${lvl.name}" has no courses yet.` });
-      continue;
     }
     const skills = skillCategoryCode ? toStringArray(lvl.metadata?.[skillCategoryCode]) : [];
     if (skills.length === 0) {
-      issues.push({ code: 'levelMissingSkills', nodeId: lvl.id, message: `"${lvl.name}" needs at least one skill selected.` });
+      // An empty Level's "no courses yet" above already covers this — the
+      // less specific "needs a skill selected" would be redundant noise.
+      if (!isEmpty) {
+        issues.push({ code: 'levelMissingSkills', nodeId: lvl.id, message: `"${lvl.name}" needs at least one skill selected.` });
+      }
     } else {
       if (skillScope.length > 0) {
         const outOfScope = skills.filter((s) => !skillScope.includes(s));
@@ -454,8 +458,9 @@ export function validateLearningPathStructure(
           });
         }
       }
-      // Independent of scope: a selected skill with zero linked course
-      // actually tagged for it is covered in name only.
+      // Independent of scope, and runs even when isEmpty (every selected
+      // skill is trivially uncovered with zero courses) — naming exactly
+      // which skills still need a covering course, not just "no courses yet."
       const uncovered = computeUncoveredSkills(lvl, skills, skillCategoryCode);
       if (uncovered.length > 0) {
         issues.push({
