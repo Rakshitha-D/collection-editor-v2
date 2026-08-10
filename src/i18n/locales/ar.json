@@ -468,6 +468,7 @@
     "outcomeCheckBadge": "فحص النتيجة",
     "assessmentCourseMeta": "مقرر · بنك أسئلة فقط",
     "addAssessmentSlotButton": "إضافة {label} — مقرر يحتوي على بنك أسئلة فقط",
+    "requiredSlotBadge": "مطلوب",
     "removeAssessmentSlotButton": "إزالة",
     "deletePriorAssessmentConfirm": "حذف التقييم المسبق يزيل الدرجة التي يعتمد عليها التخطي التكيفي لهذا المسار. هل تريد الاستمرار؟",
     "deleteAssessmentSlotConfirm": "هل تريد إزالة مقرر التقييم هذا من المسار؟",

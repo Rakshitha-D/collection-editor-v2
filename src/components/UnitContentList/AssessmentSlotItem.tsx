@@ -42,7 +42,10 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
         onClick={() => setActiveAssessmentSlot(slot)}
       >
         <span className={styles.addRowIcon}><Plus size={16} /></span>
-        {lbl.learningPath.addAssessmentSlotButton.replace('{label}', label)}
+        <span className={styles.addRowText}>{lbl.learningPath.addAssessmentSlotButton.replace('{label}', label)}</span>
+        {info.required && (
+          <span className={styles.requiredBadge}>{lbl.learningPath.requiredSlotBadge}</span>
+        )}
       </button>
     );
   }

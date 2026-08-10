@@ -468,6 +468,7 @@
     "outcomeCheckBadge": "Vérification du résultat",
     "assessmentCourseMeta": "Cours · Questionnaire uniquement",
     "addAssessmentSlotButton": "Ajouter {label} — un cours contenant uniquement un questionnaire",
+    "requiredSlotBadge": "Obligatoire",
     "removeAssessmentSlotButton": "Retirer",
     "deletePriorAssessmentConfirm": "Supprimer l'évaluation préalable retire le score sur lequel se basent les sauts adaptatifs de ce parcours. Continuer ?",
     "deleteAssessmentSlotConfirm": "Retirer ce cours d'évaluation du parcours ?",
