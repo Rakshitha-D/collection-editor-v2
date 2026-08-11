@@ -701,16 +701,22 @@ function adaptLpCurriculumFields(
   // Drop fields for categories the selected framework doesn't have (or the
   // skill category); normalize the survivors into the Curriculum card so a
   // backend form's arbitrary section names can't scatter them. Every
-  // Curriculum-section category field is required, same as the framework
-  // selector itself — a backend form's own `required` (or lack of it) is
-  // overridden here for consistency.
+  // Curriculum-section category field is required and single-select, same
+  // as the framework selector itself — the skill/leaf category is the only
+  // one that's ever multi-select (SkillPicker, a separate section entirely)
+  // — a backend form's own `required`/`inputType` is overridden here for
+  // consistency, and its stored value is re-normalized (normalizeCurrentValue
+  // takes raw[0] for a 'select' field even if a prior multiselect save left
+  // an array behind).
   const kept = fields
     .filter(f => {
       const categoryCode = categoryCodeOf(f);
       if (!categoryCode) return true;
       return categoryCode !== skillCode && categories.some(c => c.code === categoryCode);
     })
-    .map(f => (categoryCodeOf(f) ? { ...f, section: CURRICULUM_SECTION, required: true } : f));
+    .map(f => (categoryCodeOf(f)
+      ? { ...f, section: CURRICULUM_SECTION, required: true, inputType: 'select' as const, currentValue: cv(meta, f.code, 'select') }
+      : f));
 
   // The Curriculum (framework) selector is the anchor of the section — a
   // backend form config may not declare one (e.g. a Course-shaped default),
@@ -736,10 +742,10 @@ function adaptLpCurriculumFields(
   const dynamic: PreparedField[] = categories
     .filter(cat => cat.code !== skillCode && !existingCodes.has(cat.code))
     .map(cat => ({
-      code: cat.code, label: cat.name, inputType: 'multiselect' as const,
+      code: cat.code, label: cat.name, inputType: 'select' as const,
       required: true, editable: true, tab: 'details' as const, section: CURRICULUM_SECTION,
       options: (cat.terms ?? []).map(t => ({ label: t.name, value: t.name })),
-      currentValue: cv(meta, cat.code, 'multiselect'),
+      currentValue: cv(meta, cat.code, 'select'),
     }));
   if (!dynamic.length) return result;
 

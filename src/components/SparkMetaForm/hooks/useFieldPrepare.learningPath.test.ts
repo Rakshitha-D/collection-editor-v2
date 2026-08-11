@@ -110,6 +110,24 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
     expect(fields.find(f => f.code === 'industry')!.required).toBe(true);
   });
 
+  it('renders every synthesized Curriculum category field as single-select, not multi-select — only the skill/leaf category allows more than one term', () => {
+    const fields = useFieldPrepare([], {}, usf, true, { profile: learningPathProfile });
+    expect(fields.find(f => f.code === 'industry')!.inputType).toBe('select');
+    expect(fields.find(f => f.code === 'domain')!.inputType).toBe('select');
+  });
+
+  it("overrides a backend-declared category field's own multiSelect inputType to single-select inside the Curriculum section", () => {
+    const cfg = [
+      { code: 'framework', label: 'Curriculum', inputType: 'framework' },
+      { code: 'industry', label: 'Industry', inputType: 'multiSelect', sourceCategory: 'industry' },
+    ];
+    const fields = useFieldPrepare(cfg, { industry: ['IT'] }, usf, true, { profile: learningPathProfile });
+    const industry = fields.find(f => f.code === 'industry')!;
+    expect(industry.inputType).toBe('select');
+    // A prior multi-value save degrades gracefully to its first term, not a crash/blank.
+    expect(industry.currentValue).toBe('IT');
+  });
+
   it('adapts to a K-12 framework too — NCF shows board/medium/gradeLevel and excludes subject (its skill-equivalent)', () => {
     const fields = useFieldPrepare([], {}, ncf, true, { profile: learningPathProfile });
     expect(fields.map(f => f.code)).toEqual(['name', 'description', 'keywords', 'framework', 'board', 'medium', 'gradeLevel', 'policy']);
