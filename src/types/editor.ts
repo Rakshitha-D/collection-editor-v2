@@ -76,15 +76,16 @@ export interface IConfig {
     size?: number;
     accepted?: string;
   };
+  /** When set, replaces every API call's leading /action|/api|/portal
+   *  segment (see src/api/client.ts's resolveApiUrl) with this host-specific
+   *  prefix, e.g. if the portal's own gateway proxies every backend service
+   *  under one path of its own instead. */
+  apiSlug?: string;
 }
 
 export interface IEditorConfig {
   context: IContext;
   config: IConfig;
-  /** metadata.apiSlug — when set, replaces every API call's leading
-   *  /action|/api|/portal segment (see src/api/client.ts's resolveApiUrl)
-   *  with this host-specific prefix, e.g. if the portal's own gateway
-   *  proxies every backend service under one path of its own. */
   metadata?: Record<string, unknown>;
   data?: unknown;
   enableSplitBuilder?: boolean;
