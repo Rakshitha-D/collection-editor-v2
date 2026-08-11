@@ -219,6 +219,7 @@
     "saveButton": "Save"
   },
   "confirmDialog": {
+    "title": "Confirm deletion",
     "confirmButton": "Confirm",
     "cancelButton": "Cancel",
     "closeAriaLabel": "Close"
@@ -472,6 +473,9 @@
     "removeAssessmentSlotButton": "Remove",
     "deletePriorAssessmentConfirm": "Deleting the Prior Assessment removes the score this path's Adaptive skips are based on. Continue?",
     "deleteAssessmentSlotConfirm": "Remove this assessment course from the path?",
+    "deleteLevelConfirm": "Delete \"{name}\" and everything in it?",
+    "deleteCourseConfirm": "Remove this course from the path?",
+    "deleteMultipleConfirm": "Delete {count} selected items from the path?",
     "courseNameUnavailable": "Course details unavailable",
     "notAssessmentCourseToast": "\"{name}\" isn't a question-set-only course, so it can't be used as an assessment.",
     "bothSlotsFilledToast": "Both Prior and Outcome Assessment slots are already filled.",

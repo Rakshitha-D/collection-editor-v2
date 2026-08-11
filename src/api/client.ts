@@ -16,7 +16,7 @@ export const apiClient = axios.create({
  * /portal) matching this editor's own dev-proxy assumptions about which
  * backend service owns a route. A host portal's own gateway may collapse all
  * three under one prefix of its own — rather than guess at that mapping, the
- * portal tells us via config.metadata.apiSlug, and every request gets its
+ * portal tells us via config.config.apiSlug, and every request gets its
  * leading /action|/api|/portal segment swapped for it. No apiSlug (the
  * default) leaves every hardcoded prefix exactly as each api file wrote it.
  */
@@ -51,7 +51,7 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
     config.headers['X-Channel-Id'] = ctx.channel;
   }
 
-  config.url = resolveApiUrl(config.url, state.editorConfig?.metadata?.['apiSlug']);
+  config.url = resolveApiUrl(config.url, state.editorConfig?.config?.apiSlug);
 
   if (baseUrl) {
     config.baseURL = baseUrl;

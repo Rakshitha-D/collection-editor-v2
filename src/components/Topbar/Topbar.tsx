@@ -20,6 +20,7 @@ import { Button } from '../shared/Button';
 import { LearningPathIcon } from '../shared/LearningPathIcon';
 import { PublishChecklist } from '../modals/PublishChecklist';
 import { QualityParamsModal } from '../modals/QualityParamsModal';
+import { ConfirmDialog } from '../modals/ConfirmDialog';
 import { ManageCollaborators } from '../Collaborators/ManageCollaborators';
 import { reserveDialcodes, getDialcodeProcessStatus } from '../../api/dialcode';
 import { useLabels } from '../../hooks/useLabels';
@@ -642,6 +643,18 @@ export const Topbar: React.FC<TopbarProps> = ({
             onClose={closeModal}
           />
         </div>
+      )}
+
+      {activeModal === 'confirmDelete' && (
+        <ConfirmDialog
+          message={(modalData?.message as string) ?? ''}
+          onConfirm={() => {
+            const onConfirm = modalData?.onConfirm as (() => void) | undefined;
+            closeModal();
+            onConfirm?.();
+          }}
+          onCancel={closeModal}
+        />
       )}
 
       {showConfirmReview && (

@@ -2,14 +2,16 @@ import type { IFrameworkDetails, ITerm } from '../../../types/framework';
 import type { IEditorProfile } from '../../../types/profile';
 import { resolveSkillCategory } from '../../../hooks/useSkillCategory';
 
-// Design labels for the LP root's consumption-policy field — the schema enum
-// (learning_path_ocd.md §1) uses the raw values; friendly labels are an
+// Design labels for the LP root's consumption-policy field — the raw values
+// match the Viewer Service's tracking_policies enum (strict | adaptive |
+// priorLearning) so a saved path's policy is directly usable as that
+// service's batch config with no translation step; friendly labels are an
 // editor-side concern regardless of whether the field came from the category
 // definition's `range` or the local fallback below.
 export const POLICY_OPTIONS: Array<{ label: string; value: string }> = [
-  { label: 'Strict', value: 'Fixed' },
-  { label: 'Adaptive', value: 'Diagnostic' },
-  { label: 'Prior learning', value: 'PriorLearning' },
+  { label: 'Strict', value: 'strict' },
+  { label: 'Adaptive', value: 'adaptive' },
+  { label: 'Prior learning', value: 'priorLearning' },
 ];
 
 export interface NestedSelectLevel {
@@ -426,8 +428,8 @@ function resolveOptions(
 ): Array<{ label: string; value: string }> | undefined {
   const code = (field.code as string) ?? '';
 
-  // policy: the schema/form range carries raw values (Fixed/Diagnostic/
-  // PriorLearning) — always render the design's friendly labels regardless
+  // policy: the schema/form range carries raw values (strict/adaptive/
+  // priorLearning) — always render the design's friendly labels regardless
   // of what the category definition's `range` declares. LP-gated: a
   // future/unrelated category could reuse the code 'policy' for something
   // else and shouldn't get these hardcoded LP-specific options.
@@ -699,16 +701,22 @@ function adaptLpCurriculumFields(
   // Drop fields for categories the selected framework doesn't have (or the
   // skill category); normalize the survivors into the Curriculum card so a
   // backend form's arbitrary section names can't scatter them. Every
-  // Curriculum-section category field is required, same as the framework
-  // selector itself — a backend form's own `required` (or lack of it) is
-  // overridden here for consistency.
+  // Curriculum-section category field is required and single-select, same
+  // as the framework selector itself — the skill/leaf category is the only
+  // one that's ever multi-select (SkillPicker, a separate section entirely)
+  // — a backend form's own `required`/`inputType` is overridden here for
+  // consistency, and its stored value is re-normalized (normalizeCurrentValue
+  // takes raw[0] for a 'select' field even if a prior multiselect save left
+  // an array behind).
   const kept = fields
     .filter(f => {
       const categoryCode = categoryCodeOf(f);
       if (!categoryCode) return true;
       return categoryCode !== skillCode && categories.some(c => c.code === categoryCode);
     })
-    .map(f => (categoryCodeOf(f) ? { ...f, section: CURRICULUM_SECTION, required: true } : f));
+    .map(f => (categoryCodeOf(f)
+      ? { ...f, section: CURRICULUM_SECTION, required: true, inputType: 'select' as const, currentValue: cv(meta, f.code, 'select') }
+      : f));
 
   // The Curriculum (framework) selector is the anchor of the section — a
   // backend form config may not declare one (e.g. a Course-shaped default),
@@ -734,10 +742,10 @@ function adaptLpCurriculumFields(
   const dynamic: PreparedField[] = categories
     .filter(cat => cat.code !== skillCode && !existingCodes.has(cat.code))
     .map(cat => ({
-      code: cat.code, label: cat.name, inputType: 'multiselect' as const,
+      code: cat.code, label: cat.name, inputType: 'select' as const,
       required: true, editable: true, tab: 'details' as const, section: CURRICULUM_SECTION,
       options: (cat.terms ?? []).map(t => ({ label: t.name, value: t.name })),
-      currentValue: cv(meta, cat.code, 'multiselect'),
+      currentValue: cv(meta, cat.code, 'select'),
     }));
   if (!dynamic.length) return result;
 
@@ -789,7 +797,7 @@ function getDefaultFields(
       {
         code: 'policy', label: 'Consumption policy', inputType: 'select',
         required: true, editable: true, tab: 'details', section: 'Consumption policy',
-        options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'Fixed',
+        options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'strict',
       },
     );
     return fields;

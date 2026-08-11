@@ -219,6 +219,7 @@
     "saveButton": "حفظ"
   },
   "confirmDialog": {
+    "title": "تأكيد الحذف",
     "confirmButton": "تأكيد",
     "cancelButton": "إلغاء",
     "closeAriaLabel": "إغلاق"
@@ -472,6 +473,9 @@
     "removeAssessmentSlotButton": "إزالة",
     "deletePriorAssessmentConfirm": "حذف التقييم المسبق يزيل الدرجة التي يعتمد عليها التخطي التكيفي لهذا المسار. هل تريد الاستمرار؟",
     "deleteAssessmentSlotConfirm": "هل تريد إزالة مقرر التقييم هذا من المسار؟",
+    "deleteLevelConfirm": "هل تريد حذف \"{name}\" وكل ما يحتويه؟",
+    "deleteCourseConfirm": "هل تريد إزالة هذا المقرر من المسار؟",
+    "deleteMultipleConfirm": "هل تريد حذف {count} من العناصر المحددة من المسار؟",
     "courseNameUnavailable": "تفاصيل المقرر غير متوفرة",
     "notAssessmentCourseToast": "\"{name}\" ليس مقررًا يحتوي على بنك أسئلة فقط، لذا لا يمكن استخدامه كتقييم.",
     "bothSlotsFilledToast": "تم تعبئة تقييمي المسبق والنتائج بالفعل.",

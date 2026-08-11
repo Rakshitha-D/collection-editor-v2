@@ -38,6 +38,7 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
   const deleteNode = useTreeStore((s) => s.deleteNode);
   const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
   const setActiveAssessmentSlot = useUiStore((s) => s.setActiveAssessmentSlot);
+  const openModal = useUiStore((s) => s.openModal);
 
   const rootLevels = treeData[0]?.children ?? [];
   const preLevel = rootLevels[0];
@@ -51,15 +52,14 @@ export function useAssessmentSlots(): UseAssessmentSlotsResult {
   const deleteSlot = (slot: 'pre' | 'post') => {
     const level = slot === 'pre' ? preLevel : postLevel;
     if (!level) return;
-    // Every slot deletion confirms first, matching the window.confirm pattern
-    // used for all other content removal (UnitContentList's handleRemove) —
-    // the pre-slot under the Adaptive (Diagnostic) policy gets the stronger,
-    // consequence-specific wording since it's the sole basis for that path's skips.
+    // Every slot deletion confirms first, via the same in-app ConfirmDialog
+    // used for all other content removal in the LP tree — the pre-slot under
+    // the Adaptive (Diagnostic) policy gets the stronger, consequence-specific
+    // wording since it's the sole basis for that path's skips.
     const message = slot === 'pre' && preRequired
       ? lbl.learningPath.deletePriorAssessmentConfirm
       : lbl.learningPath.deleteAssessmentSlotConfirm;
-    if (!window.confirm(message)) return;
-    deleteNode(level.id);
+    openModal('confirmDelete', { message, onConfirm: () => deleteNode(level.id) });
   };
 
   return {
