@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import type { INode, EditorMode } from '../../types/editor';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
+import { useUiStore } from '../../store/ui.store';
 import { useIsDraftStatus } from '../../hooks/useContentStatus';
 import { useLabels } from '../../hooks/useLabels';
 import { TreeNode } from './TreeNode';
@@ -35,7 +36,8 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
   const [showCsvUpload, setShowCsvUpload] = useState(false);
   const [csvMode, setCsvMode] = useState<'create' | 'update'>('create');
 
-  const { treeData, selectedNodeId, selectNode, addNode, deleteNode, reorderChildren, moveNode, setTreeData } = useTreeStore();
+  const { treeData, selectedNodeId, selectNode, addNode, deleteNode, getNodeById, reorderChildren, moveNode, setTreeData } = useTreeStore();
+  const openModal = useUiStore(s => s.openModal);
   const editorProfile = useEditorStore(s => s.editorProfile);
   const isLearningPath = editorProfile.key === 'learningPath';
   const isEditable = editorMode === 'edit';
@@ -134,10 +136,21 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
           deleteSlot('post');
           continue;
         }
+        // LP: every other deletion (a regular Level or one of its courses)
+        // confirms too, via the same in-app dialog — Collection's tree
+        // deletion is unaffected and stays immediate, as before.
+        if (isLearningPath) {
+          const node = getNodeById(id);
+          const message = node?.isFolder
+            ? lbl.learningPath.deleteLevelConfirm.replace('{name}', node.name)
+            : lbl.learningPath.deleteCourseConfirm;
+          openModal('confirmDelete', { message, onConfirm: () => deleteNode(id) });
+          continue;
+        }
         deleteNode(id);
       }
     },
-    [deleteNode, deleteSlot, isLearningPath, preLevel, postLevel],
+    [deleteNode, deleteSlot, isLearningPath, preLevel, postLevel, getNodeById, openModal, lbl],
   );
 
   const handleCreate = useCallback(

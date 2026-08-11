@@ -219,6 +219,7 @@
     "saveButton": "Enregistrer"
   },
   "confirmDialog": {
+    "title": "Confirmer la suppression",
     "confirmButton": "Confirmer",
     "cancelButton": "Annuler",
     "closeAriaLabel": "Fermer"
@@ -472,6 +473,8 @@
     "removeAssessmentSlotButton": "Retirer",
     "deletePriorAssessmentConfirm": "Supprimer l'évaluation préalable retire le score sur lequel se basent les sauts adaptatifs de ce parcours. Continuer ?",
     "deleteAssessmentSlotConfirm": "Retirer ce cours d'évaluation du parcours ?",
+    "deleteLevelConfirm": "Supprimer « {name} » et tout son contenu ?",
+    "deleteCourseConfirm": "Retirer ce cours du parcours ?",
     "courseNameUnavailable": "Détails du cours indisponibles",
     "notAssessmentCourseToast": "« {name} » n'est pas un cours composé uniquement d'un questionnaire, il ne peut donc pas être utilisé comme évaluation.",
     "bothSlotsFilledToast": "Les évaluations préalable et finale sont déjà renseignées.",
