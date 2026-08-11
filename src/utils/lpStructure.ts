@@ -399,8 +399,8 @@ export const REQUIRES_PRIOR_POLICIES = new Set(['adaptive']);
 
 /**
  * Every synchronous (no network) LP publish rule: consumption policy set;
- * prior assessment required only for the Diagnostic ("Adaptive") policy
- * (not Fixed, not PriorLearning — see REQUIRES_PRIOR_POLICIES); pre/post
+ * prior assessment required only for the adaptive ("Adaptive") policy
+ * (not strict, not priorLearning — see REQUIRES_PRIOR_POLICIES); pre/post
  * slot purity when a slot IS filled (Outcome Assessment itself is optional
  * — an empty post slot no longer blocks publish/send-for-review); every
  * content Level has ≥1 course and ≥1 in-scope skill; no empty Levels; every

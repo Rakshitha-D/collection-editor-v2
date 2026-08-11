@@ -124,31 +124,39 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
 
   const handleDelete = useCallback(
     ({ ids }: { ids: string[] }) => {
-      for (const id of ids) {
+      if (!isLearningPath) {
+        for (const id of ids) deleteNode(id);
+        return;
+      }
+
+      // ui.store's openModal holds a single pending confirm, not a queue —
+      // calling it once per id here (the old per-id loop) let each
+      // iteration's dialog/onConfirm silently overwrite the previous one's
+      // before React ever rendered it, so only the LAST selected id in a
+      // multi-select ever got confirmed or deleted. A single id keeps the
+      // existing nuanced behavior (the pre/post slot's own policy-aware
+      // confirm, or a Level/course-specific message); 2+ ids collapse into
+      // one combined confirm that deletes everything on accept.
+      if (ids.length === 1) {
+        const id = ids[0];
         // Deleting the pre-assessment Level via the tree's own delete UI goes
         // through the same policy-gated confirm as the root panel's
         // AssessmentSlotItem Remove button.
-        if (isLearningPath && preLevel?.id === id) {
-          deleteSlot('pre');
-          continue;
-        }
-        if (isLearningPath && postLevel?.id === id) {
-          deleteSlot('post');
-          continue;
-        }
-        // LP: every other deletion (a regular Level or one of its courses)
-        // confirms too, via the same in-app dialog — Collection's tree
-        // deletion is unaffected and stays immediate, as before.
-        if (isLearningPath) {
-          const node = getNodeById(id);
-          const message = node?.isFolder
-            ? lbl.learningPath.deleteLevelConfirm.replace('{name}', node.name)
-            : lbl.learningPath.deleteCourseConfirm;
-          openModal('confirmDelete', { message, onConfirm: () => deleteNode(id) });
-          continue;
-        }
-        deleteNode(id);
+        if (preLevel?.id === id) { deleteSlot('pre'); return; }
+        if (postLevel?.id === id) { deleteSlot('post'); return; }
+        const node = getNodeById(id);
+        const message = node?.isFolder
+          ? lbl.learningPath.deleteLevelConfirm.replace('{name}', node.name)
+          : lbl.learningPath.deleteCourseConfirm;
+        openModal('confirmDelete', { message, onConfirm: () => deleteNode(id) });
+        return;
       }
+
+      const message = lbl.learningPath.deleteMultipleConfirm.replace('{count}', String(ids.length));
+      openModal('confirmDelete', {
+        message,
+        onConfirm: () => { for (const id of ids) deleteNode(id); },
+      });
     },
     [deleteNode, deleteSlot, isLearningPath, preLevel, postLevel, getNodeById, openModal, lbl],
   );

@@ -428,8 +428,8 @@ function resolveOptions(
 ): Array<{ label: string; value: string }> | undefined {
   const code = (field.code as string) ?? '';
 
-  // policy: the schema/form range carries raw values (Fixed/Diagnostic/
-  // PriorLearning) — always render the design's friendly labels regardless
+  // policy: the schema/form range carries raw values (strict/adaptive/
+  // priorLearning) — always render the design's friendly labels regardless
   // of what the category definition's `range` declares. LP-gated: a
   // future/unrelated category could reuse the code 'policy' for something
   // else and shouldn't get these hardcoded LP-specific options.
