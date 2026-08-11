@@ -265,22 +265,26 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
         >
           {sortAZ ? <ArrowUpAZ size={15} /> : <Clock size={15} />}
         </button>
-        <button
-          type="button"
-          className={[
-            styles.filterToggleBtn,
-            filterPanelOpen ? styles.filterToggleBtnActive : '',
-          ].join(' ')}
-          onClick={() => setFilterPanelOpen((v) => !v)}
-          aria-label={lbl.libraryDock.toggleAdvancedFiltersAriaLabel}
-          aria-pressed={filterPanelOpen}
-          title={lbl.libraryDock.advancedFiltersTitle}
-        >
-          <SlidersHorizontal size={15} />
-          {activeFilterCount > 0 && (
-            <span className={styles.filterBadge}>{activeFilterCount}</span>
-          )}
-        </button>
+        {/* Advanced filters (board/medium/gradeLevel/subject/...) don't apply
+            to LP's Course-only, skill-scoped search — see buildLpLibraryFilters. */}
+        {!isLearningPath && (
+          <button
+            type="button"
+            className={[
+              styles.filterToggleBtn,
+              filterPanelOpen ? styles.filterToggleBtnActive : '',
+            ].join(' ')}
+            onClick={() => setFilterPanelOpen((v) => !v)}
+            aria-label={lbl.libraryDock.toggleAdvancedFiltersAriaLabel}
+            aria-pressed={filterPanelOpen}
+            title={lbl.libraryDock.advancedFiltersTitle}
+          >
+            <SlidersHorizontal size={15} />
+            {activeFilterCount > 0 && (
+              <span className={styles.filterBadge}>{activeFilterCount}</span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Content type filter chips — LP profile only ever searches Courses
