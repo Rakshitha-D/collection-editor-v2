@@ -388,12 +388,14 @@ export interface LpValidationIssue {
 // Exported so every "does this policy require a Prior Assessment" check —
 // the publish gate here AND the delete-confirmation guard in
 // useAssessmentSlots.ts — shares one definition rather than two policy
-// lists that can drift out of sync. Diagnostic ("Adaptive") skips solely on
-// the Prior Assessment score, so it must have one. PriorLearning skips can
-// instead draw on external evidence (a verified certificate or prior
-// course) "not the assessment alone" (policyPriorLearningDescription) — the
-// Prior Assessment is optional there, not required. Fixed never skips.
-export const REQUIRES_PRIOR_POLICIES = new Set(['Diagnostic']);
+// lists that can drift out of sync. adaptive skips solely on the Prior
+// Assessment score, so it must have one. priorLearning skips can instead
+// draw on external evidence (a verified certificate or prior course) "not
+// the assessment alone" (policyPriorLearningDescription) — the Prior
+// Assessment is optional there, not required. strict never skips. Values
+// match the Viewer Service's tracking_policies enum (strict | adaptive |
+// priorLearning), not this editor's own casing convention.
+export const REQUIRES_PRIOR_POLICIES = new Set(['adaptive']);
 
 /**
  * Every synchronous (no network) LP publish rule: consumption policy set;

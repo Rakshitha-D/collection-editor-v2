@@ -115,7 +115,7 @@ describe('buildSavePayload (learningPath profile)', () => {
     const lpTree: INode[] = [
       {
         id: 'do_lp', identifier: 'do_lp', name: 'My Path', isFolder: true,
-        metadata: { name: 'My Path', policy: 'Fixed', mimeType: 'application/vnd.ekstep.content-collection' },
+        metadata: { name: 'My Path', policy: 'strict', mimeType: 'application/vnd.ekstep.content-collection' },
         children: [
           {
             id: 'temp-level1', identifier: 'temp-level1', name: 'Level 1', isFolder: true, parent: 'do_lp',

@@ -75,8 +75,8 @@ POST /api/object/category/definition/v1/create
             },
             "policy": {
               "type": "string",
-              "enum": ["Fixed", "Diagnostic", "PriorLearning"],
-              "default": "Fixed"
+              "enum": ["strict", "adaptive", "priorLearning"],
+              "default": "strict"
             },
             "trackable": {
               "type": "object",
@@ -181,8 +181,8 @@ POST /api/object/category/definition/v1/create
                   "renderingHints": { "class": "sb-g-col-lg-1 required" },
                   "required": true,
                   "visible": true,
-                  "range": ["Fixed", "Diagnostic", "PriorLearning"],
-                  "default": "Fixed",
+                  "range": ["strict", "adaptive", "priorLearning"],
+                  "default": "strict",
                   "validations": [
                     { "type": "required", "message": "Consumption policy is required" }
                   ]
@@ -299,8 +299,8 @@ POST /api/object/category/definition/v1/create
                   "renderingHints": { "class": "sb-g-col-lg-1 required" },
                   "required": true,
                   "visible": true,
-                  "range": ["Fixed", "Diagnostic", "PriorLearning"],
-                  "default": "Fixed"
+                  "range": ["strict", "adaptive", "priorLearning"],
+                  "default": "strict"
                 }
               ]
             },
@@ -531,11 +531,14 @@ POST /api/object/category/definition/v1/create
 ## 3. Assumptions & notes (review with backend team)
 
 1. **`policy` is the consumption-policy field.** It lives in the root metadata schema
-   (`default: "Fixed"` — Fixed/Strict is the safe default since it needs no prior assessment) and
+   (`default: "strict"` — strict is the safe default since it needs no prior assessment) and
    is **captured at creation time**: the create form includes it as a required select, and the
-   update form keeps it editable afterwards. Editor labels map Fixed→Strict, Diagnostic→Adaptive,
-   PriorLearning→Prior learning. Note: the backend design doc (v11.1) calls this field `strategy`
-   — the doc and the runtime LP aggregator/waiver logic should be updated to read `policy`.
+   update form keeps it editable afterwards. Raw values match the Viewer Service's
+   `tracking_policies` enum (`strict | adaptive | priorLearning`) so a saved path's policy is
+   directly usable as that service's batch config with no translation step. Editor labels map
+   strict→Strict, adaptive→Adaptive, priorLearning→Prior learning. Note: the backend design doc
+   (v11.1) calls this field `strategy` — the doc and the runtime LP aggregator/waiver logic should
+   be updated to read `policy`.
 2. **`contentType: "Level"`** for Level units (decided, matches `primaryCategory`); `primaryCategory: "Level"`.
 3. **The Curriculum section has `framework` + the non-skill categories (`industry`, `domain`) —
    the skill category is deliberately excluded from the root form.** The LP's skill scope comes

@@ -2,14 +2,16 @@ import type { IFrameworkDetails, ITerm } from '../../../types/framework';
 import type { IEditorProfile } from '../../../types/profile';
 import { resolveSkillCategory } from '../../../hooks/useSkillCategory';
 
-// Design labels for the LP root's consumption-policy field — the schema enum
-// (learning_path_ocd.md §1) uses the raw values; friendly labels are an
+// Design labels for the LP root's consumption-policy field — the raw values
+// match the Viewer Service's tracking_policies enum (strict | adaptive |
+// priorLearning) so a saved path's policy is directly usable as that
+// service's batch config with no translation step; friendly labels are an
 // editor-side concern regardless of whether the field came from the category
 // definition's `range` or the local fallback below.
 export const POLICY_OPTIONS: Array<{ label: string; value: string }> = [
-  { label: 'Strict', value: 'Fixed' },
-  { label: 'Adaptive', value: 'Diagnostic' },
-  { label: 'Prior learning', value: 'PriorLearning' },
+  { label: 'Strict', value: 'strict' },
+  { label: 'Adaptive', value: 'adaptive' },
+  { label: 'Prior learning', value: 'priorLearning' },
 ];
 
 export interface NestedSelectLevel {
@@ -789,7 +791,7 @@ function getDefaultFields(
       {
         code: 'policy', label: 'Consumption policy', inputType: 'select',
         required: true, editable: true, tab: 'details', section: 'Consumption policy',
-        options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'Fixed',
+        options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'strict',
       },
     );
     return fields;

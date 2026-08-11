@@ -24,12 +24,12 @@ export const PolicyCardField: React.FC<PolicyCardFieldProps> = ({ name, label, r
 
   const cards = [
     {
-      value: 'Fixed', Icon: Lock, iconVariant: styles.cardIconPrimary,
+      value: 'strict', Icon: Lock, iconVariant: styles.cardIconPrimary,
       title: lbl.learningPath.policyStrictLabel, titleVariant: '',
       description: <>{lbl.learningPath.policyStrictDescription}</>, descriptionVariant: '',
     },
     {
-      value: 'Diagnostic', Icon: Zap, iconVariant: styles.cardIconPrimary,
+      value: 'adaptive', Icon: Zap, iconVariant: styles.cardIconPrimary,
       title: lbl.learningPath.policyAdaptiveLabel, titleVariant: styles.cardTitleInk,
       description: (
         <>
@@ -41,7 +41,7 @@ export const PolicyCardField: React.FC<PolicyCardFieldProps> = ({ name, label, r
       descriptionVariant: styles.cardDescriptionCharcoal,
     },
     {
-      value: 'PriorLearning', Icon: ShieldCheck, iconVariant: styles.cardIconHover,
+      value: 'priorLearning', Icon: ShieldCheck, iconVariant: styles.cardIconHover,
       title: lbl.learningPath.policyPriorLearningLabel, titleVariant: '',
       description: <>{lbl.learningPath.policyPriorLearningDescription}</>, descriptionVariant: '',
     },

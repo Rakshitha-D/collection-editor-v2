@@ -565,7 +565,7 @@ describe('computePathShape', () => {
 // Publish validation (Phase 5)
 // ---------------------------------------------------------------------------
 
-function validPath(policy = 'Fixed') {
+function validPath(policy = 'strict') {
   return level({
     id: 'root', metadata: { policy },
     children: [
@@ -580,7 +580,7 @@ function validPath(policy = 'Fixed') {
 }
 
 describe('validateLearningPathStructure', () => {
-  it('is clean for a fully-valid Fixed-policy path', () => {
+  it('is clean for a fully-valid strict-policy path', () => {
     expect(validateLearningPathStructure(validPath(), 'skill', [])).toEqual([]);
   });
 
@@ -590,9 +590,9 @@ describe('validateLearningPathStructure', () => {
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('policyMissing');
   });
 
-  it('requires a Prior Assessment only for Diagnostic ("Adaptive") — not Fixed, not PriorLearning', () => {
+  it('requires a Prior Assessment only for adaptive ("Adaptive") — not strict, not priorLearning', () => {
     const noPrior = level({
-      id: 'root', metadata: { policy: 'Fixed' },
+      id: 'root', metadata: { policy: 'strict' },
       children: [
         level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } })] }),
         level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
@@ -600,13 +600,13 @@ describe('validateLearningPathStructure', () => {
     });
     expect(validateLearningPathStructure(noPrior, 'skill', []).map(i => i.code)).not.toContain('priorAssessmentRequired');
 
-    const diagnostic = { ...noPrior, metadata: { policy: 'Diagnostic' } };
-    expect(validateLearningPathStructure(diagnostic, 'skill', []).map(i => i.code)).toContain('priorAssessmentRequired');
+    const adaptive = { ...noPrior, metadata: { policy: 'adaptive' } };
+    expect(validateLearningPathStructure(adaptive, 'skill', []).map(i => i.code)).toContain('priorAssessmentRequired');
 
-    // PriorLearning can skip on external evidence (a verified certificate or
+    // priorLearning can skip on external evidence (a verified certificate or
     // prior course) "not the assessment alone" — the Prior Assessment stays
-    // optional here, unlike Diagnostic which skips solely on its score.
-    const priorLearning = { ...noPrior, metadata: { policy: 'PriorLearning' } };
+    // optional here, unlike adaptive which skips solely on its score.
+    const priorLearning = { ...noPrior, metadata: { policy: 'priorLearning' } };
     expect(validateLearningPathStructure(priorLearning, 'skill', []).map(i => i.code)).not.toContain('priorAssessmentRequired');
   });
 
@@ -618,7 +618,7 @@ describe('validateLearningPathStructure', () => {
         level({ id: 'post', children: [assessmentCourseWithSkills('a2', ['SQL'])] }),
       ],
     });
-    const treeCache = { root: { policy: 'Diagnostic' } };
+    const treeCache = { root: { policy: 'adaptive' } };
     const issues = validateLearningPathStructure(noPrior, 'skill', [], treeCache).map(i => i.code);
     expect(issues).toContain('priorAssessmentRequired');
     expect(issues).not.toContain('policyMissing');

@@ -327,7 +327,7 @@ const LEARNING_PATH_OCD = {
     schema: {
       properties: {
         mimeType: { type: 'string', enum: ['application/vnd.ekstep.content-collection'] },
-        policy: { type: 'string', enum: ['Fixed', 'Diagnostic', 'PriorLearning'], default: 'Fixed' },
+        policy: { type: 'string', enum: ['strict', 'adaptive', 'priorLearning'], default: 'strict' },
       },
     },
   },
@@ -364,7 +364,7 @@ const LEARNING_PATH_OCD = {
               code: 'policy', dataType: 'text', description: 'How learners move through the levels of this path',
               editable: true, inputType: 'select', label: 'Consumption policy', name: 'Policy',
               placeholder: 'Select…', renderingHints: { class: 'sb-g-col-lg-1 required' }, required: true, visible: true,
-              range: ['Fixed', 'Diagnostic', 'PriorLearning'], default: 'Fixed',
+              range: ['strict', 'adaptive', 'priorLearning'], default: 'strict',
               validations: [{ type: 'required', message: 'Consumption policy is required' }],
             },
           ],
@@ -427,7 +427,7 @@ const LEARNING_PATH_OCD = {
             {
               code: 'policy', dataType: 'text', editable: true, inputType: 'select', label: 'Consumption policy',
               name: 'Policy', placeholder: 'Select…', renderingHints: { class: 'sb-g-col-lg-1 required' },
-              required: true, visible: true, range: ['Fixed', 'Diagnostic', 'PriorLearning'], default: 'Fixed',
+              required: true, visible: true, range: ['strict', 'adaptive', 'priorLearning'], default: 'strict',
             },
           ],
         },
