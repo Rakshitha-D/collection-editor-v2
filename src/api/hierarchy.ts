@@ -88,7 +88,7 @@ export async function updateHierarchy(
   hierarchy: Record<string, unknown>,
   lastUpdatedBy?: string,
 ): Promise<{ identifiers?: Record<string, string> }> {
-  const response = await apiClient.patch('/action/content/v3/hierarchy/update', {
+  const response = await apiClient.patch('/action/collection/v1/hierarchy/update', {
     request: {
       data: {
         nodesModified,
