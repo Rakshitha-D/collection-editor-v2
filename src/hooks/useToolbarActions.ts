@@ -84,8 +84,8 @@ export function useToolbarActions(save: () => Promise<void>) {
   /**
    * LP structural gate for Send-for-review / Publish — checkRequiredFields
    * above only validates form-declared fields (name, description, ...), not
-   * the LP-specific rules (Prior Assessment required under an Adaptive/Prior-
-   * learning policy, Outcome Assessment always required, no empty Levels,
+   * the LP-specific rules (Prior Assessment required under the Adaptive
+   * policy — Outcome Assessment is optional, never blocks — no empty Levels,
    * every course tagged with a skill, no duplicate course). Without this, a
    * Learning Path with no Levels or assessments at all could be sent for
    * review or published — the PublishChecklist modal already blocks its own
