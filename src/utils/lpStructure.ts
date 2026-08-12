@@ -472,13 +472,6 @@ export function validateLearningPathStructure(
   ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const).forEach(([lvl, label]) => {
     if (!lvl) return;
     const children = lvl.children ?? [];
-    // A Level sitting at index 0 / last isn't necessarily a slot at all — an
-    // ordinary content Level (no assessment course attached) can legitimately
-    // occupy either position once the slot itself is optional (Outcome) or
-    // simply hasn't been added yet. Only flag purity once SOME course here
-    // is actually flagged isAssessmentCourse — i.e. the slot was engaged with
-    // but is no longer exactly one pure question-set-only course (extra
-    // content added, or the flagged course sitting alongside others).
     const hasAssessmentCourse = children.some((c) => !!c.metadata?.['isAssessmentCourse']);
     if (!hasAssessmentCourse) return;
     if (children.length !== 1 || !children[0]?.metadata?.['isAssessmentCourse']) {
