@@ -60,6 +60,8 @@ export function buildSavePayload(
     'boardIds', 'mediumIds', 'gradeLevelIds', 'subjectIds',
     // Target-framework fields
     'targetBoardIds', 'targetMediumIds', 'targetGradeLevelIds', 'targetSubjectIds',
+    // Org-framework fields — new framework category codes
+    'industry', 'domain',
     // Dial codes
     'dialcodes',
   ]);
