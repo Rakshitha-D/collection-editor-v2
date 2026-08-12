@@ -183,4 +183,28 @@ describe('buildSavePayload (learningPath profile)', () => {
     expect(levelMeta).not.toHaveProperty('metadata');
     expect(levelMeta).not.toHaveProperty('isAssessmentCourse');
   });
+
+  it('wraps the LP root Curriculum section\'s single-select category picks (industry/domain) into arrays', () => {
+    // adaptLpCurriculumFields renders these as single-select (per the
+    // Curriculum-fields fix) — SparkMetaForm's onChange writes the picked
+    // term as a scalar, but the backend schema still types the field as an
+    // array (same convention as medium/gradeLevel/subject), rejecting a
+    // scalar with "Metadata domain should be a/an Array value".
+    const lpTree: INode[] = [
+      {
+        id: 'do_lp', identifier: 'do_lp', name: 'My Path', isFolder: true,
+        metadata: { name: 'My Path' },
+        children: [],
+      },
+    ];
+    const lpTreeCache = {
+      do_lp: { industry: 'Information Technology', domain: 'Software Development' },
+    };
+
+    const { nodesModified } = buildSavePayload(lpTree, lpTreeCache, 'test-channel', learningPathProfile);
+
+    const rootMeta = (nodesModified['do_lp'] as { metadata: Record<string, unknown> }).metadata;
+    expect(rootMeta.industry).toEqual(['Information Technology']);
+    expect(rootMeta.domain).toEqual(['Software Development']);
+  });
 });
