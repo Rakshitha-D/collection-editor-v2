@@ -105,7 +105,7 @@ export async function publishContent(
   contentId: string,
   lastPublishedBy = '',
 ): Promise<void> {
-  await apiClient.post(`/action/content/v3/publish/${contentId}`, {
+  await apiClient.post(`/action/collection/v1/publish/${contentId}`, {
     request: {
       content: {
         lastPublishedBy,
@@ -145,19 +145,19 @@ export async function readContent(
   contentId: string,
 ): Promise<Record<string, unknown>> {
   const response = await apiClient.get(
-    `/action/content/v3/read/${contentId}`,
+    `/action/collection/v1/read/${contentId}`,
   );
   return response.data?.result?.content as Record<string, unknown>;
 }
 
 export async function sendForReview(contentId: string): Promise<void> {
-  await apiClient.post(`/action/content/v3/review/${contentId}`, {
+  await apiClient.post(`/action/collection/v1/review/${contentId}`, {
     request: { content: {} },
   });
 }
 
 export async function rejectContent(contentId: string, comment: string): Promise<void> {
-  await apiClient.post(`/action/content/v3/reject/${contentId}`, {
+  await apiClient.post(`/action/collection/v1/reject/${contentId}`, {
     request: { content: { rejectComment: comment } },
   });
 }
