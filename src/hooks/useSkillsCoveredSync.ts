@@ -19,11 +19,17 @@ export function useSkillsCoveredSync(): void {
   const updateNode = useTreeStore((s) => s.updateNode);
   const skillCategory = useSkillCategory();
 
+  // Depend on skillCategory.code (a stable string), not skillCategory itself
+  // — useSkillCategory() returns a fresh object literal every render, which
+  // would otherwise refire this effect on every SplitBuilderShell render
+  // instead of only when the resolved category actually changes.
+  const skillCategoryCode = skillCategory?.code;
+
   useEffect(() => {
-    if (!isLearningPath || !skillCategory) return;
+    if (!isLearningPath || !skillCategoryCode) return;
     const root = treeData[0];
-    const toSync = resolveSkillsCoveredForSync(root, skillCategory.code, treeCache);
+    const toSync = resolveSkillsCoveredForSync(root, skillCategoryCode, treeCache);
     if (toSync === null) return;
-    updateNode(root!.id, { [skillCategory.code]: toSync }, [skillCategory.code]);
-  }, [isLearningPath, treeData, treeCache, skillCategory, updateNode]);
+    updateNode(root!.id, { [skillCategoryCode]: toSync }, [skillCategoryCode]);
+  }, [isLearningPath, treeData, treeCache, skillCategoryCode, updateNode]);
 }
