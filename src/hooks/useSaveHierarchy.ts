@@ -60,6 +60,15 @@ export function buildSavePayload(
     'boardIds', 'mediumIds', 'gradeLevelIds', 'subjectIds',
     // Target-framework fields
     'targetBoardIds', 'targetMediumIds', 'targetGradeLevelIds', 'targetSubjectIds',
+    // LP root's Curriculum section (adaptLpCurriculumFields) renders whatever
+    // categories the SELECTED framework has, single-select in the UI — but
+    // the backend schema still types these as arrays regardless (same as
+    // medium/gradeLevel/subject above), so a scalar pick here fails the same
+    // "should be a/an Array value" error. USF's own categories are listed
+    // explicitly since adaptLpCurriculumFields can't be enumerated statically
+    // (they come from whichever framework is live) — add another framework's
+    // category codes here if the same error shows up for it.
+    'industry', 'domain',
     // Dial codes
     'dialcodes',
   ]);
