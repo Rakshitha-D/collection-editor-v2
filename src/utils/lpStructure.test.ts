@@ -15,6 +15,7 @@ import {
   hasExplicitCurriculum,
   getExplicitCurriculum,
   computeSkillsCovered,
+  resolveSkillsCoveredForSync,
   computeUncoveredSkills,
   findLevelsWithOutOfScopeSkills,
   computePathShape,
@@ -438,6 +439,43 @@ describe('computeSkillsCovered', () => {
       ],
     });
     expect(computeSkillsCovered(root, 'skill')).toEqual(['Java']);
+  });
+});
+
+describe('resolveSkillsCoveredForSync', () => {
+  it("returns the covered union when it differs from root's stored value — a Level's newly-added skill should attach to the path's own metadata too", () => {
+    const root = level({
+      id: 'root', metadata: { skill: ['Java'] }, // stale — lvl1 now also selects Python
+      children: [
+        level({ id: 'lvl1', metadata: { skill: ['Java', 'Python programming'] }, children: [course('c1')] }),
+      ],
+    });
+    expect(resolveSkillsCoveredForSync(root, 'skill', {})?.sort()).toEqual(['Java', 'Python programming']);
+  });
+
+  it("returns null once root's stored value already matches the covered union, order-insensitively", () => {
+    const root = level({
+      id: 'root', metadata: { skill: ['Python programming', 'Java'] }, // different order, same set
+      children: [
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1')] }),
+        level({ id: 'lvl2', metadata: { skill: ['Python programming'] }, children: [course('c2')] }),
+      ],
+    });
+    expect(resolveSkillsCoveredForSync(root, 'skill', {})).toBeNull();
+  });
+
+  it('prefers treeCache over root.metadata for the stored-value comparison, matching every other field read this way', () => {
+    const root = level({
+      id: 'root', metadata: { skill: ['Java'] }, // stale metadata — treeCache has the live edit
+      children: [level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1')] })],
+    });
+    const treeCache = { root: { skill: ['Java'] } }; // matches the covered union
+    expect(resolveSkillsCoveredForSync(root, 'skill', treeCache)).toBeNull();
+  });
+
+  it('returns null without a root node or a resolved skill category', () => {
+    expect(resolveSkillsCoveredForSync(undefined, 'skill', {})).toBeNull();
+    expect(resolveSkillsCoveredForSync(level({ children: [] }), undefined, {})).toBeNull();
   });
 });
 

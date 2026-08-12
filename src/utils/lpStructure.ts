@@ -332,6 +332,36 @@ export function computeSkillsCovered(root: INode | undefined, skillCategoryCode:
 }
 
 /**
+ * The skills-covered union that should be persisted onto the LP root's OWN
+ * skill-category metadata field, or null if it already matches what's
+ * currently stored there (treeCache first, same precedence as every other
+ * field read this way — e.g. getExplicitCurriculum). Per
+ * learning_path_ocd.md's recommendation: writing the derived union onto the
+ * root makes a saved Learning Path searchable/discoverable by skill without
+ * a separately-editable root field that could drift from what the path
+ * actually covers — a Level's own selection (or the Prior/Outcome
+ * Assessment's course tags) stays the single source of truth; this is a
+ * read-through mirror onto root, never the other way around. Compares
+ * order-insensitively so re-syncing an unchanged set doesn't loop.
+ */
+export function resolveSkillsCoveredForSync(
+  root: INode | undefined,
+  skillCategoryCode: string | undefined,
+  treeCache: Record<string, Record<string, unknown>>,
+): string[] | null {
+  if (!root || !skillCategoryCode) return null;
+  const covered = computeSkillsCovered(root, skillCategoryCode);
+  const stored = (treeCache[root.id]?.[skillCategoryCode] ?? root.metadata?.[skillCategoryCode]) as
+    string[] | string | undefined;
+  const storedArray = toStringArray(stored);
+  const sortedCovered = [...covered].sort();
+  const sortedStored = [...storedArray].sort();
+  const isSame = sortedCovered.length === sortedStored.length
+    && sortedCovered.every((s, i) => s === sortedStored[i]);
+  return isSame ? null : covered;
+}
+
+/**
  * Content Levels whose selected skills include at least one outside the
  * given scope — same rule as validateLearningPathStructure's
  * levelSkillsOutOfScope issue, exposed standalone so a scope-narrowing event
