@@ -50,7 +50,7 @@ export async function readHierarchy(
   contentId: string,
 ): Promise<{ content: Record<string, unknown>; rootNode: INode }> {
   const response = await apiClient.get(
-    `/action/content/v3/hierarchy/${contentId}`,
+    `/action/collection/v1/hierarchy/${contentId}`,
     { params: { mode: 'edit' } },
   );
   const content = response.data?.result?.content as Record<string, unknown> | undefined;
