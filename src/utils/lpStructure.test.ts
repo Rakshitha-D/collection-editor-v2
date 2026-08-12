@@ -674,6 +674,21 @@ describe('validateLearningPathStructure', () => {
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('slotNotPure');
   });
 
+  it('does not flag slotNotPure for an ordinary content Level that just happens to sit first/last — no assessment course attached at all', () => {
+    // No Prior/Outcome Assessment was ever added — every Level is regular
+    // content. Position alone (index 0 / last) must not make this look like
+    // a broken assessment slot; only a Level that HAS an assessment-flagged
+    // course but isn't purely that one course should ever trigger this.
+    const root = level({
+      id: 'root', metadata: { policy: 'strict' },
+      children: [
+        level({ id: 'lvl1', metadata: { skill: ['Java'] }, children: [course('c1', { metadata: { skill: ['Java'] } }), course('c2', { metadata: { skill: ['Java'] } })] }),
+        level({ id: 'lvl2', metadata: { skill: ['SQL'] }, children: [course('c3', { metadata: { skill: ['SQL'] } })] }),
+      ],
+    });
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).not.toContain('slotNotPure');
+  });
+
   it('flags an empty content Level', () => {
     const root = validPath();
     root.children![1].children = [];
