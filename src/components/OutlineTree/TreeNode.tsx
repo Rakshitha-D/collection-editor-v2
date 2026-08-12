@@ -72,6 +72,11 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
   // Regular (non pre/post-assessment) Levels get a bolder title (design) —
   // no number prefix; the row shows just the Level's own name.
   const isRegularLpLevel = isLearningPath && isFolder && !isRoot && !isAssessmentLevel(node.data);
+  // A linked Prior/Outcome/Level assessment course renders with the quiz
+  // content-type icon (via getCtStyle's isAssessmentCourse check) but should
+  // read as "part of the Level structure" rather than a generic quiz —
+  // same terracotta square as the Level/Book icons, not the quiz green.
+  const isLpAssessmentCourse = isLearningPath && !!node.data.metadata?.['isAssessmentCourse'];
   // Adding a folder inside the current node would exceed the profile's maxDepth
   // (e.g. LP Levels can't contain sub-levels) — hide rather than error on click.
   const canAddChildFolder = node.level + 1 <= editorProfile.maxDepth;
@@ -146,7 +151,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({
       <span
         className={[
           styles.ctIcon,
-          isRoot || isFolder ? styles.folderIcon : ctStyle.bgClass,
+          isRoot || isFolder || isLpAssessmentCourse ? styles.folderIcon : ctStyle.bgClass,
           isLearningPath ? styles.ctIconLp : '',
           isRoot && isLearningPath ? styles.rootIcon : '',
         ].filter(Boolean).join(' ')}
