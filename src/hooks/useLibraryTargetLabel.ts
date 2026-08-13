@@ -11,6 +11,7 @@ export function useLibraryTargetLabel(): string | null {
   const lbl = useLabels();
   const isLearningPath = useEditorStore((s) => s.editorProfile.competencyScoped);
   const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
+  const activeLevelExamTarget = useUiStore((s) => s.activeLevelExamTarget);
   const selectedNodeId = useTreeStore((s) => s.selectedNodeId);
   const treeData = useTreeStore((s) => s.treeData);
   const getNodeById = useTreeStore((s) => s.getNodeById);
@@ -19,6 +20,10 @@ export function useLibraryTargetLabel(): string | null {
   if (!isLearningPath) return null;
   if (activeAssessmentSlot === 'pre') return lbl.learningPath.libraryAddPriorAssessmentCourse;
   if (activeAssessmentSlot === 'post') return lbl.learningPath.libraryAddOutcomeAssessmentCourse;
+  if (activeLevelExamTarget) {
+    const level = getNodeById(activeLevelExamTarget);
+    return lbl.learningPath.libraryAddLevelExamCourse.replace('{level}', level?.name ?? '');
+  }
   if (selectedNodeId && selectedNodeId !== rootId) {
     const level = getNodeById(selectedNodeId);
     // A selected course (leaf) is not an add target — courses never receive

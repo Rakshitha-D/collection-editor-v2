@@ -12,6 +12,7 @@ import { useSkillCategory } from '../../hooks/useSkillCategory';
 import { ContentRow } from './ContentRow';
 import { SkillPicker } from './SkillPicker';
 import { AssessmentSlotItem } from './AssessmentSlotItem';
+import { LevelExamItem } from './LevelExamItem';
 import styles from './UnitContentList.module.scss';
 
 interface UnitContentListProps {
@@ -123,6 +124,8 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
             : lbl.learningPath.skillScopeManualNote}
         />
       )}
+
+      {isLpLevel && <LevelExamItem levelId={selectedNodeId} isEditable={isEditable} />}
 
       {/* "Content in this Unit" is a Collection-only concept — the design's
           Level detail page never had a raw content list; a Level's Courses

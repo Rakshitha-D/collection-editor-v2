@@ -6,6 +6,7 @@ import {
   clearAssessmentCourseCache,
   normalizeLearningPathTree,
   isAssessmentLevel,
+  getLevelExamCourse,
   getLevelRole,
   getLevelDisplayInfo,
   resolveOpenAssessmentSlot,
@@ -181,6 +182,25 @@ describe('isAssessmentLevel', () => {
     expect(isAssessmentLevel(level({ children: [] }))).toBe(false);
     expect(isAssessmentLevel(level({ children: [assessmentCourse('a1'), course('c1')] }))).toBe(false);
     expect(isAssessmentLevel(undefined)).toBe(false);
+  });
+});
+
+describe('getLevelExamCourse', () => {
+  it('finds the flagged course among mixed regular and exam children', () => {
+    const lvl = level({ children: [course('c1'), assessmentCourse('a1'), course('c2')] });
+    expect(getLevelExamCourse(lvl)?.id).toBe('a1');
+  });
+
+  it('returns undefined when there is no assessment-flagged course, or no Level', () => {
+    expect(getLevelExamCourse(level({ children: [course('c1'), course('c2')] }))).toBeUndefined();
+    expect(getLevelExamCourse(level({ children: [] }))).toBeUndefined();
+    expect(getLevelExamCourse(undefined)).toBeUndefined();
+  });
+
+  it('does not require it to be the Level\'s only child — unlike isAssessmentLevel', () => {
+    const lvl = level({ children: [assessmentCourse('a1'), course('c1'), course('c2')] });
+    expect(getLevelExamCourse(lvl)?.id).toBe('a1');
+    expect(isAssessmentLevel(lvl)).toBe(false); // shape-wise this is NOT a pre/post slot
   });
 });
 

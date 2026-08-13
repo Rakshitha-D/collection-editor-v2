@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { getAssessmentCourseInfo, hasExplicitCurriculum, isAssessmentSlotFilled, isPrePostSlot, wouldBecomeAmbiguousSlot } from '../../utils/lpStructure';
+import { getAssessmentCourseInfo, getLevelExamCourse, hasExplicitCurriculum, isAssessmentSlotFilled, isPrePostSlot, wouldBecomeAmbiguousSlot } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -63,6 +63,8 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
 
   const { addResource, selectedNodeId, treeData, treeCache } = useTreeStore();
   const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
+  const activeLevelExamTarget = useUiStore(s => s.activeLevelExamTarget);
+  const setActiveLevelExamTarget = useUiStore(s => s.setActiveLevelExamTarget);
   const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
   const isEditable = editorMode === 'edit';
 
@@ -125,6 +127,53 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     [treeData, addResource, setActiveAssessmentSlot, checkingAssessmentCourseId, lbl],
   );
 
+  // Filling a content Level's optional Level Exam course — same
+  // question-set-only check as the Prior/Outcome slots, scoped to one
+  // Level (by id) instead of root.
+  const handleFillLevelExam = useCallback(
+    async (item: IContent, levelId: string) => {
+      const levelNode = useTreeStore.getState().getNodeById(levelId);
+      if (!levelNode || checkingAssessmentCourseId) return;
+      if (getLevelExamCourse(levelNode)) {
+        toast.error(lbl.learningPath.levelExamAlreadyFilledToast);
+        return;
+      }
+      setCheckingAssessmentCourseId(item.identifier);
+      try {
+        const { qualifies, meta } = await getAssessmentCourseInfo(item.identifier);
+        if (!qualifies) {
+          toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
+          return;
+        }
+        // A Level Exam course reduces this Level to just itself until other
+        // content is added — first/last position is then indistinguishable
+        // from a genuine Prior/Outcome slot on the next reload. Doesn't
+        // apply once the Level already has other content (children.length
+        // !== 1 regardless of this course's shape) or sits in a middle
+        // position — see wouldBecomeAmbiguousSlot's own doc.
+        const rootLevels = treeData[0]?.children ?? [];
+        if (wouldBecomeAmbiguousSlot(rootLevels, levelNode)) {
+          toast.error(lbl.learningPath.levelNeedsMixedContentToast);
+          return;
+        }
+        const enriched = { ...item, ...meta } as unknown as IContent;
+        const added = addResource(enriched, levelId, { isAssessmentCourse: true });
+        if (added === false) {
+          toast.error(lbl.learningPath.itemAlreadyInPathToast.replace('{name}', item.name));
+          return;
+        }
+        toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
+        setActiveLevelExamTarget(null);
+      } catch (e) {
+        console.error('[LibraryDock] level exam course check failed:', e);
+        toast.error(lbl.learningPath.assessmentCheckFailedToast);
+      } finally {
+        setCheckingAssessmentCourseId(null);
+      }
+    },
+    [treeData, addResource, setActiveLevelExamTarget, checkingAssessmentCourseId, lbl],
+  );
+
   const handleAdd = useCallback(
     async (item: IContent) => {
       // Every course carries a skill tag under its OWN framework — with no
@@ -136,6 +185,10 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       if (activeAssessmentSlot) {
         handleFillAssessmentSlot(item, activeAssessmentSlot);
+        return;
+      }
+      if (activeLevelExamTarget) {
+        handleFillLevelExam(item, activeLevelExamTarget);
         return;
       }
       if (!selectedNodeId) {
@@ -181,10 +234,12 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       // to receive its only course is the exact shape a Prior/Outcome slot
       // has, so a QuestionSet-only course landing here unflagged would read
       // back as one on the next reload. Scoped to the generic add path
-      // only — the dedicated Prior/Outcome picker (handleFillAssessmentSlot,
-      // above) is a separate flow already, and a Level Exam Course paired
-      // with other content in the same Level never hits this (children.
-      // length !== 1 once there's more than the one course).
+      // only — the dedicated Prior/Outcome picker (handleFillAssessmentSlot)
+      // and Level Exam picker (handleFillLevelExam), both above, are
+      // separate flows with their own copy of this same check; a Level Exam
+      // course paired with other content in the same Level never hits this
+      // regardless (children.length !== 1 once there's more than the one
+      // course).
       if (isLearningPath && wouldBecomeAmbiguousSlot(treeData[0]?.children ?? [], selectedNode)) {
         const { qualifies } = await getAssessmentCourseInfo(item.identifier);
         if (qualifies) {
@@ -201,7 +256,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
     },
-    [activeAssessmentSlot, handleFillAssessmentSlot, selectedNodeId, addResource, treeData, treeCache, lbl, isLearningPath],
+    [activeAssessmentSlot, handleFillAssessmentSlot, activeLevelExamTarget, handleFillLevelExam, selectedNodeId, addResource, treeData, treeCache, lbl, isLearningPath],
   );
 
   const handleApplyFilters = useCallback(

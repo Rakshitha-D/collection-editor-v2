@@ -132,6 +132,15 @@ export function isAssessmentLevel(level: INode | undefined): boolean {
   return children.length === 1 && !!children[0]?.metadata?.['isAssessmentCourse'];
 }
 
+/** The at-most-one Level Exam course linked directly to a content Level, if
+ *  any — canAddCourseToLevel already caps this at one. Unlike
+ *  isAssessmentLevel, doesn't require it to be the Level's ONLY child (a
+ *  Level Exam course sits alongside however many regular courses that
+ *  Level also has). */
+export function getLevelExamCourse(level: INode | undefined): INode | undefined {
+  return (level?.children ?? []).find((c) => !!c.metadata?.['isAssessmentCourse']);
+}
+
 /**
  * getLevelRole(levelIndex, levelCount, hasAssessmentCourse) → role.
  * Level[0] wrapping an assessment course is Prior/diagnostic ("pre");
