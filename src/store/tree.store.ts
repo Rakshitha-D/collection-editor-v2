@@ -271,6 +271,13 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       return '';
     }
 
+    // The 'temp-' prefix is load-bearing (isNew detection throughout
+    // useSaveHierarchy/useSaveQuestion/etc. checks identifier.startsWith
+    // ('temp-')) — it must stay on the tree's own local id. metadata.code is
+    // a different concern: it's the value that actually reaches the backend
+    // and gets persisted, so it should look like any other content's code
+    // (a plain UUID), not carry the local-only 'temp-' placeholder along
+    // with it.
     const newId = 'temp-' + Math.random().toString(36).slice(2);
     const newNode: INode = {
       id: newId,
@@ -281,7 +288,7 @@ export const useTreeStore = create<TreeState>((set, get) => ({
       parent: parentId,
       metadata: {
         mimeType: 'application/vnd.ekstep.content-collection',
-        code: newId,
+        code: crypto.randomUUID(),
         name: profile.defaultUnitName,
         contentType: profile.unitContentType,
         primaryCategory: profile.unitPrimaryCategory,
