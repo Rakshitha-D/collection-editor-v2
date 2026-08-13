@@ -202,6 +202,25 @@ export function isPrePostSlot(levels: INode[], level: INode | undefined): boolea
 }
 
 /**
+ * True iff `levelNode` sits at index 0 or the last index among root's
+ * Levels AND currently has no courses at all — i.e. adding a single
+ * QuestionSet-only course here next would leave it indistinguishable from
+ * a genuine Prior/Outcome Assessment slot (isAssessmentLevel: exactly one
+ * course, and that one flagged isAssessmentCourse — there's no separate
+ * marker recording *why* a Level ended up in that shape). A Level anywhere
+ * else, or one that already has ≥1 course, never hits this ambiguity — a
+ * second course makes children.length !== 1, so isAssessmentLevel can't
+ * match regardless of shape (this is also why a Level Exam Course paired
+ * with other regular content in the same Level is unaffected: only a
+ * Level reduced to just the one QuestionSet-only course is at risk).
+ */
+export function wouldBecomeAmbiguousSlot(rootLevels: INode[], levelNode: INode): boolean {
+  const isFirstOrLast = rootLevels[0]?.id === levelNode.id
+    || rootLevels[rootLevels.length - 1]?.id === levelNode.id;
+  return isFirstOrLast && (levelNode.children ?? []).length === 0;
+}
+
+/**
  * Which pre/post assessment slot (if any) is open to receive a newly-linked
  * assessment course, given root's current Level children. Pre is checked
  * first, so a lone empty path always fills "pre" before "post" — matching

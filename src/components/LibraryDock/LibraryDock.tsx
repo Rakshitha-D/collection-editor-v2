@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { getAssessmentCourseInfo, hasExplicitCurriculum, isAssessmentSlotFilled, isPrePostSlot } from '../../utils/lpStructure';
+import { getAssessmentCourseInfo, hasExplicitCurriculum, isAssessmentSlotFilled, isPrePostSlot, wouldBecomeAmbiguousSlot } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -126,7 +126,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
   );
 
   const handleAdd = useCallback(
-    (item: IContent) => {
+    async (item: IContent) => {
       // Every course carries a skill tag under its OWN framework — with no
       // Curriculum chosen yet, the path has nothing to check that tag
       // against, and the course would just get pruned the moment one is set.
@@ -175,6 +175,22 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           duration: 4000,
         });
         return;
+      }
+      // Interim guard (no persisted "why is this Level shaped like this"
+      // marker exists yet — see plan doc): an empty first/last Level about
+      // to receive its only course is the exact shape a Prior/Outcome slot
+      // has, so a QuestionSet-only course landing here unflagged would read
+      // back as one on the next reload. Scoped to the generic add path
+      // only — the dedicated Prior/Outcome picker (handleFillAssessmentSlot,
+      // above) is a separate flow already, and a Level Exam Course paired
+      // with other content in the same Level never hits this (children.
+      // length !== 1 once there's more than the one course).
+      if (isLearningPath && wouldBecomeAmbiguousSlot(treeData[0]?.children ?? [], selectedNode)) {
+        const { qualifies } = await getAssessmentCourseInfo(item.identifier);
+        if (qualifies) {
+          toast.error(lbl.learningPath.levelNeedsMixedContentToast);
+          return;
+        }
       }
       const added = addResource(item, selectedNodeId);
       if (added === false) {

@@ -12,6 +12,7 @@ import {
   canReorderLevel,
   canAddCourseToLevel,
   isPrePostSlot,
+  wouldBecomeAmbiguousSlot,
   hasExplicitCurriculum,
   getExplicitCurriculum,
   computeSkillsCovered,
@@ -354,6 +355,34 @@ describe('isPrePostSlot', () => {
   it('is false for a Level at slot position that is not assessment-shaped', () => {
     const regular = level({ id: 'lvl1', children: [course('c1')] });
     expect(isPrePostSlot([regular], regular)).toBe(false);
+  });
+});
+
+describe('wouldBecomeAmbiguousSlot', () => {
+  it('is true for an empty Level at index 0 or the last index', () => {
+    const first = level({ id: 'first', children: [] });
+    const mid = level({ id: 'mid', children: [] });
+    const last = level({ id: 'last', children: [] });
+    const levels = [first, mid, last];
+    expect(wouldBecomeAmbiguousSlot(levels, first)).toBe(true);
+    expect(wouldBecomeAmbiguousSlot(levels, last)).toBe(true);
+  });
+
+  it('is false for an empty Level in a middle position — a Level assessment there is not ambiguous', () => {
+    const first = level({ id: 'first', children: [] });
+    const mid = level({ id: 'mid', children: [] });
+    const last = level({ id: 'last', children: [] });
+    expect(wouldBecomeAmbiguousSlot([first, mid, last], mid)).toBe(false);
+  });
+
+  it('is false once the Level already has a course — a second course never reduces it to the ambiguous single-course shape', () => {
+    const first = level({ id: 'first', children: [course('c1')] });
+    expect(wouldBecomeAmbiguousSlot([first], first)).toBe(false);
+  });
+
+  it('a single-Level path\'s sole Level counts as both first and last, so it is still flagged while empty', () => {
+    const only = level({ id: 'only', children: [] });
+    expect(wouldBecomeAmbiguousSlot([only], only)).toBe(true);
   });
 });
 
