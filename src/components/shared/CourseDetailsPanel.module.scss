@@ -105,8 +105,11 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--sbx-gray-100);
-  color: var(--sbx-gray-500);
+  // Same terracotta square as the outline tree's Level/root icons
+  // (TreeNode.module.scss's .folderIcon) — a Unit is the same kind of
+  // structural folder, not a content-type square.
+  background: var(--sbx-primary);
+  color: var(--sbx-white);
   flex-shrink: 0;
 }
 
