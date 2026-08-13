@@ -88,14 +88,20 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
     },
   };
 
-  it('renders USF categories in index order after the Curriculum selector, excluding the skill category', () => {
+  it('hides every Curriculum category field until the Curriculum selector itself has a value — an unselected Curriculum has nothing to cascade from', () => {
     const fields = useFieldPrepare([], {}, usf, true, { profile: learningPathProfile });
+    expect(fields.map(f => f.code)).toEqual(['name', 'description', 'keywords', 'framework', 'policy']);
+    expect(fields.find(f => f.code === 'framework')!.currentValue).toBeFalsy();
+  });
+
+  it('renders USF categories in index order after the Curriculum selector, excluding the skill category, once a Curriculum is picked', () => {
+    const fields = useFieldPrepare([], { framework: 'usf' }, usf, true, { profile: learningPathProfile });
     expect(fields.map(f => f.code)).toEqual(['name', 'description', 'keywords', 'framework', 'industry', 'domain', 'policy']);
     expect(fields.find(f => f.code === 'industry')!.options).toEqual([{ label: 'IT', value: 'IT' }]);
   });
 
   it('marks every synthesized Curriculum category field as required, same as the Curriculum selector itself', () => {
-    const fields = useFieldPrepare([], {}, usf, true, { profile: learningPathProfile });
+    const fields = useFieldPrepare([], { framework: 'usf' }, usf, true, { profile: learningPathProfile });
     expect(fields.find(f => f.code === 'framework')!.required).toBe(true);
     expect(fields.find(f => f.code === 'industry')!.required).toBe(true);
     expect(fields.find(f => f.code === 'domain')!.required).toBe(true);
@@ -106,12 +112,12 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
       { code: 'framework', label: 'Curriculum', inputType: 'framework' },
       { code: 'industry', label: 'Industry', inputType: 'multiSelect', sourceCategory: 'industry', required: false },
     ];
-    const fields = useFieldPrepare(cfg, {}, usf, true, { profile: learningPathProfile });
+    const fields = useFieldPrepare(cfg, { framework: 'usf' }, usf, true, { profile: learningPathProfile });
     expect(fields.find(f => f.code === 'industry')!.required).toBe(true);
   });
 
   it('renders every synthesized Curriculum category field as single-select, not multi-select — only the skill/leaf category allows more than one term', () => {
-    const fields = useFieldPrepare([], {}, usf, true, { profile: learningPathProfile });
+    const fields = useFieldPrepare([], { framework: 'usf' }, usf, true, { profile: learningPathProfile });
     expect(fields.find(f => f.code === 'industry')!.inputType).toBe('select');
     expect(fields.find(f => f.code === 'domain')!.inputType).toBe('select');
   });
@@ -121,7 +127,7 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
       { code: 'framework', label: 'Curriculum', inputType: 'framework' },
       { code: 'industry', label: 'Industry', inputType: 'multiSelect', sourceCategory: 'industry' },
     ];
-    const fields = useFieldPrepare(cfg, { industry: ['IT'] }, usf, true, { profile: learningPathProfile });
+    const fields = useFieldPrepare(cfg, { framework: 'usf', industry: ['IT'] }, usf, true, { profile: learningPathProfile });
     const industry = fields.find(f => f.code === 'industry')!;
     expect(industry.inputType).toBe('select');
     // A prior multi-value save degrades gracefully to its first term, not a crash/blank.
@@ -129,7 +135,7 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
   });
 
   it('adapts to a K-12 framework too — NCF shows board/medium/gradeLevel and excludes subject (its skill-equivalent)', () => {
-    const fields = useFieldPrepare([], {}, ncf, true, { profile: learningPathProfile });
+    const fields = useFieldPrepare([], { framework: 'NCF' }, ncf, true, { profile: learningPathProfile });
     expect(fields.map(f => f.code)).toEqual(['name', 'description', 'keywords', 'framework', 'board', 'medium', 'gradeLevel', 'policy']);
   });
 
@@ -139,7 +145,7 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
       { code: 'industry', label: 'Industry', inputType: 'multiSelect', sourceCategory: 'industry' },
       { code: 'domain', label: 'Domain', inputType: 'multiSelect', sourceCategory: 'domain' },
     ];
-    const fields = useFieldPrepare(cfg, {}, ncf, true, { profile: learningPathProfile });
+    const fields = useFieldPrepare(cfg, { framework: 'NCF' }, ncf, true, { profile: learningPathProfile });
     // usf codes vanish under NCF; NCF's own non-skill categories render instead
     expect(fields.map(f => f.code)).toEqual(['framework', 'board', 'medium', 'gradeLevel']);
   });
@@ -158,7 +164,7 @@ describe('LP dynamic Curriculum section (adaptLpCurriculumFields via useFieldPre
       { code: 'gradeLevel', label: 'Grade Level', inputType: 'multiSelect' },
       { code: 'subject', label: 'Subject', inputType: 'multiSelect' },
     ];
-    const fields = useFieldPrepare(cfg, {}, ncf, true, { profile: learningPathProfile });
+    const fields = useFieldPrepare(cfg, { framework: 'NCF' }, ncf, true, { profile: learningPathProfile });
     // framework lands ahead of the category fields; subject (NCF's
     // skill-equivalent) is dropped; every curriculum field shares one section.
     expect(fields.map(f => f.code)).toEqual(['name', 'framework', 'board', 'medium', 'gradeLevel']);

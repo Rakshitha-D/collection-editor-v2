@@ -738,6 +738,19 @@ function adaptLpCurriculumFields(
     ];
   }
 
+  // Until the Curriculum (framework) selector itself has a value, its
+  // category fields (Industry/Domain/... below) have nothing to cascade
+  // from — rendering them anyway (all empty, all marked required) makes it
+  // look like the author already owes fields tied to a Curriculum they
+  // haven't chosen yet. `fw.organisationFramework` can already be resolved
+  // at this point (e.g. a channel default used to prime term lookups)
+  // even though nothing has been explicitly picked/saved, so gate on the
+  // selector's own currentValue, not on categories.length.
+  const frameworkSelected = !!cv(meta, 'framework', 'select');
+  if (!frameworkSelected) {
+    return result.filter(f => f.code === 'framework' || !categoryCodeOf(f));
+  }
+
   const existingCodes = new Set(result.map(f => f.code));
   const dynamic: PreparedField[] = categories
     .filter(cat => cat.code !== skillCode && !existingCodes.has(cat.code))
