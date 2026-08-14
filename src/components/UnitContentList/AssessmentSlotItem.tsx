@@ -16,7 +16,7 @@ interface AssessmentSlotItemProps {
 // item-row (course + menu) or a dashed "Add X" placeholder.
 export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, isEditable }) => {
   const lbl = useLabels();
-  const { pre, post, setActiveAssessmentSlot, deleteSlot } = useAssessmentSlots();
+  const { pre, post, activeAssessmentSlot, setActiveAssessmentSlot, deleteSlot } = useAssessmentSlots();
   const selectNode = useTreeStore((s) => s.selectNode);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -34,12 +34,14 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
   }, [menuOpen]);
 
   if (!info.filled) {
+    const isActiveTarget = activeAssessmentSlot === slot;
     return (
       <button
         type="button"
-        className={[styles.addRow, styles.addRowAssessment].join(' ')}
+        className={[styles.addRow, styles.addRowAssessment, isActiveTarget ? styles.addRowActive : ''].filter(Boolean).join(' ')}
         disabled={!isEditable}
         onClick={() => setActiveAssessmentSlot(slot)}
+        aria-pressed={isActiveTarget}
       >
         <span className={styles.addRowIcon}><Plus size={16} /></span>
         <span className={styles.addRowText}>{lbl.learningPath.addAssessmentSlotButton.replace('{label}', label)}</span>

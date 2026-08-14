@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Search, Library, SlidersHorizontal, ArrowUpAZ, Clock, PanelRightClose, Info } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search, Library, SlidersHorizontal, ArrowUpAZ, Clock, PanelRightClose, Info, X } from 'lucide-react';
 import type { EditorMode } from '../../types/editor';
 import type { IContent } from '../../types/content';
 import { CT_FILTERS } from '../../types/content';
@@ -81,6 +81,43 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
 
   // Build a set of already-added resource identifiers for O(1) lookup
   const addedIds = useMemo(() => collectResourceIds(treeData), [treeData]);
+
+  // While a Prior/Outcome/Level Exam target is armed, only a QuestionSet-
+  // only course can actually be picked — narrow the visible list to those,
+  // instead of showing every course and letting most picks bounce off the
+  // "isn't a question-set-only course" toast. There's no server-side filter
+  // for "leaves are all QuestionSets" (composite search only sees the
+  // course's own primaryCategory, not its expanded hierarchy), so this
+  // re-checks the current page client-side — getAssessmentCourseInfo's own
+  // cache means repeat views of the same course cost nothing. null = not
+  // filtering (normal browsing); keeps the previous qualifying set visible
+  // while a re-check for a newly-loaded page is still in flight, rather
+  // than flashing an empty list.
+  const [qualifyingIds, setQualifyingIds] = useState<Set<string> | null>(null);
+  const isPickingAssessmentCourse = !!activeAssessmentSlot || !!activeLevelExamTarget;
+
+  useEffect(() => {
+    if (!isPickingAssessmentCourse) {
+      setQualifyingIds(null);
+      return;
+    }
+    let cancelled = false;
+    Promise.all(
+      content.map(async (item) => {
+        try {
+          const { qualifies } = await getAssessmentCourseInfo(item.identifier);
+          return qualifies ? item.identifier : null;
+        } catch {
+          return null;
+        }
+      }),
+    ).then((ids) => {
+      if (!cancelled) setQualifyingIds(new Set(ids.filter((id): id is string => !!id)));
+    });
+    return () => { cancelled = true; };
+  }, [isPickingAssessmentCourse, content]);
+
+  const visibleContent = qualifyingIds ? content.filter((item) => qualifyingIds.has(item.identifier)) : content;
 
   // Filling the Prior/Outcome Assessment slot: only a question-set-only
   // course qualifies, and there's no metadata marker for that — the check
@@ -310,7 +347,22 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           )}
         </div>
         {libraryTargetLabel && (
-          <span className={styles.libraryTargetLabel}>{libraryTargetLabel}</span>
+          (activeAssessmentSlot || activeLevelExamTarget) ? (
+            <div className={styles.libraryTargetChip}>
+              <span className={styles.libraryTargetLabel}>{libraryTargetLabel}</span>
+              <button
+                type="button"
+                className={styles.libraryTargetDismiss}
+                onClick={() => setActiveAssessmentSlot(null)}
+                aria-label={lbl.libraryDock.cancelTargetAriaLabel}
+                title={lbl.libraryDock.cancelTargetAriaLabel}
+              >
+                <X size={11} />
+              </button>
+            </div>
+          ) : (
+            <span className={styles.libraryTargetLabel}>{libraryTargetLabel}</span>
+          )
         )}
       </div>
 
@@ -373,7 +425,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       <div className={styles.mainArea}>
         {/* Card list */}
         <div className={styles.cardList} role="list" aria-label={lbl.libraryDock.libraryContentAriaLabel}>
-          {isLoading && content.length === 0 ? (
+          {isLoading && visibleContent.length === 0 ? (
             // Loading skeleton
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={styles.skeleton} aria-hidden="true">
@@ -384,9 +436,9 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
                 </div>
               </div>
             ))
-          ) : content.length > 0 ? (
+          ) : visibleContent.length > 0 ? (
             <>
-              {content.map((item) => (
+              {visibleContent.map((item) => (
                 <LibraryCard
                   key={item.identifier}
                   item={item}

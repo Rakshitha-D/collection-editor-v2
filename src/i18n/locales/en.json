@@ -275,6 +275,7 @@
     "itemAddedToast": "Added \"{name}\"",
     "collapseLibraryPanelAriaLabel": "Collapse library panel",
     "collapseLibraryTitle": "Collapse library",
+    "cancelTargetAriaLabel": "Cancel — go back to browsing",
     "headerTitle": "Library",
     "searchPlaceholder": "Search content…",
     "searchAriaLabel": "Search library",

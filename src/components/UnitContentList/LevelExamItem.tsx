@@ -15,15 +15,16 @@ interface LevelExamItemProps {
 // own detail page, so there's no "View" navigation — just add or remove.
 export const LevelExamItem: React.FC<LevelExamItemProps> = ({ levelId, isEditable }) => {
   const lbl = useLabels();
-  const { filled, courseName, armExam, deleteExam } = useLevelExam(levelId);
+  const { filled, courseName, isActiveTarget, armExam, deleteExam } = useLevelExam(levelId);
 
   if (!filled) {
     return (
       <button
         type="button"
-        className={[styles.addRow, styles.addRowAssessment].join(' ')}
+        className={[styles.addRow, styles.addRowAssessment, isActiveTarget ? styles.addRowActive : ''].filter(Boolean).join(' ')}
         disabled={!isEditable}
         onClick={armExam}
+        aria-pressed={isActiveTarget}
       >
         <span className={styles.addRowIcon}><Plus size={16} /></span>
         <span className={styles.addRowText}>{lbl.learningPath.addLevelExamButton}</span>

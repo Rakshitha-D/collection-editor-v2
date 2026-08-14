@@ -275,6 +275,7 @@
     "itemAddedToast": "« {name} » ajouté",
     "collapseLibraryPanelAriaLabel": "Réduire le panneau de la bibliothèque",
     "collapseLibraryTitle": "Réduire la bibliothèque",
+    "cancelTargetAriaLabel": "Annuler — revenir à la navigation",
     "headerTitle": "Bibliothèque",
     "searchPlaceholder": "Rechercher du contenu…",
     "searchAriaLabel": "Rechercher dans la bibliothèque",

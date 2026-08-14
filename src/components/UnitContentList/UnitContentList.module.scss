@@ -417,6 +417,16 @@
   }
 }
 
+// Persistent version of .addRow's own :hover treatment — applied while this
+// row's slot/exam target is the one currently armed in the Library dock, so
+// the "add mode" you're in stays visible even after the mouse moves away
+// (previously indistinguishable from the unfilled, unarmed state).
+.addRowActive {
+  border-color: var(--sbx-primary);
+  color: var(--sbx-primary);
+  background: var(--sbx-primary-light);
+}
+
 // Learning Path only — AssessmentSlotItem's unfilled Prior/Outcome Assessment
 // row (design: larger padding/gap, gray-200 border, 12px radius). The plain
 // .addRow above (Collection's generic "Add content" button, and LP Levels'

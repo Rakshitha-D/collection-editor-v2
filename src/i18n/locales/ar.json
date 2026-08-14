@@ -275,6 +275,7 @@
     "itemAddedToast": "تمت إضافة \"{name}\"",
     "collapseLibraryPanelAriaLabel": "طي لوحة المكتبة",
     "collapseLibraryTitle": "طي المكتبة",
+    "cancelTargetAriaLabel": "إلغاء — العودة إلى التصفح",
     "headerTitle": "المكتبة",
     "searchPlaceholder": "البحث في المحتوى…",
     "searchAriaLabel": "البحث في المكتبة",
