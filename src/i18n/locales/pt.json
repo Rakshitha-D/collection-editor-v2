@@ -470,6 +470,7 @@
     "outcomeCheckBadge": "Verificação de resultado",
     "assessmentCourseMeta": "Curso · Apenas banco de questões",
     "addAssessmentSlotButton": "Adicionar {label} — um curso com apenas um banco de questões",
+    "addCourseToLevelButton": "Adicionar curso a este nível",
     "addLevelExamButton": "Adicionar Exame de nível — um curso com apenas um banco de questões",
     "levelExamMeta": "Exame de nível · Apenas banco de questões",
     "requiredSlotBadge": "Obrigatório",

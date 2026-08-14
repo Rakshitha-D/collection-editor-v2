@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import type { EditorMode } from '../../types/editor';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
+import { useUiStore } from '../../store/ui.store';
 import { useLabels } from '../../hooks/useLabels';
 import { useSkillScope } from '../../hooks/useSkillScope';
 import { computeSkillsCovered, computeUncoveredSkills, isAssessmentLevel } from '../../utils/lpStructure';
@@ -32,6 +33,16 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
   // whose own skill tags apply — no manual skill picker for them.
   const isLpLevel = isLearningPath && !isRoot && !isAssessmentLevel(selectedNode);
   const isLpRoot = isLearningPath && isRoot;
+  // Explicit, parallel counterpart to "Add Level Exam" below — regular
+  // course adds otherwise have no button of their own here (they just
+  // happen whenever nothing is armed and this Level is selected), which
+  // made it unclear how to get back to plain browsing once Level Exam mode
+  // was armed. Clicking this unarms any slot/exam target; it has no "on"
+  // state of its own to arm, so it's highlighted whenever neither is armed.
+  const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
+  const activeLevelExamTarget = useUiStore((s) => s.activeLevelExamTarget);
+  const setActiveAssessmentSlot = useUiStore((s) => s.setActiveAssessmentSlot);
+  const isDefaultAddMode = !activeAssessmentSlot && !activeLevelExamTarget;
 
   const { scope, source } = useSkillScope();
   const skillCategory = useSkillCategory();
@@ -123,6 +134,19 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
             ? lbl.learningPath.skillScopeFromPriorNote
             : lbl.learningPath.skillScopeManualNote}
         />
+      )}
+
+      {isLpLevel && (
+        <button
+          type="button"
+          className={[styles.addRow, styles.addRowAssessment, isDefaultAddMode ? styles.addRowActive : ''].filter(Boolean).join(' ')}
+          disabled={!isEditable}
+          onClick={() => setActiveAssessmentSlot(null)}
+          aria-pressed={isDefaultAddMode}
+        >
+          <span className={styles.addRowIcon}><Plus size={16} /></span>
+          <span className={styles.addRowText}>{lbl.learningPath.addCourseToLevelButton}</span>
+        </button>
       )}
 
       {isLpLevel && <LevelExamItem levelId={selectedNodeId} isEditable={isEditable} />}

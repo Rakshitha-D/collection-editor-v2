@@ -40,7 +40,7 @@ export const AssessmentSlotItem: React.FC<AssessmentSlotItemProps> = ({ slot, is
         type="button"
         className={[styles.addRow, styles.addRowAssessment, isActiveTarget ? styles.addRowActive : ''].filter(Boolean).join(' ')}
         disabled={!isEditable}
-        onClick={() => setActiveAssessmentSlot(slot)}
+        onClick={() => setActiveAssessmentSlot(isActiveTarget ? null : slot)}
         aria-pressed={isActiveTarget}
       >
         <span className={styles.addRowIcon}><Plus size={16} /></span>

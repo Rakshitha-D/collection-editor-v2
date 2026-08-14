@@ -26,36 +26,26 @@
 }
 
 // Armed-target state (a Prior/Outcome/Level Exam slot is waiting for a pick)
-// — a visible chip instead of plain text, since it changes what clicking
-// "Add" on any card actually does; the dismiss button lets you back out
-// without navigating away from the Level entirely.
+// — a visible, clickable chip instead of plain text, since it changes what
+// clicking "Add" on any card actually does. The whole chip is the dismiss
+// (click again to unarm, same toggle as the source row) rather than a
+// separate nested X button.
 .libraryTargetChip {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 5px 3px 10px;
+  padding: 3px 8px 3px 10px;
+  border: none;
   border-radius: var(--sbx-r-pill);
   background: var(--sbx-primary-light);
+  color: var(--sbx-primary);
   min-width: 0;
   flex-shrink: 1;
-}
-
-.libraryTargetDismiss {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  border: none;
-  background: none;
-  padding: 0;
   cursor: pointer;
-  color: var(--sbx-primary);
-  border-radius: 50%;
-  flex-shrink: 0;
+  transition: background 0.15s;
 
   &:hover {
-    background: color-mix(in srgb, var(--sbx-primary) 20%, transparent);
+    background: color-mix(in srgb, var(--sbx-primary) 20%, var(--sbx-primary-light));
   }
 }
 

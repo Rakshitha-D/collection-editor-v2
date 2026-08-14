@@ -470,6 +470,7 @@
     "outcomeCheckBadge": "فحص النتيجة",
     "assessmentCourseMeta": "مقرر · بنك أسئلة فقط",
     "addAssessmentSlotButton": "إضافة {label} — مقرر يحتوي على بنك أسئلة فقط",
+    "addCourseToLevelButton": "إضافة مقرر إلى هذا المستوى",
     "addLevelExamButton": "إضافة اختبار المستوى — مقرر يحتوي على بنك أسئلة فقط",
     "levelExamMeta": "اختبار المستوى · بنك أسئلة فقط",
     "requiredSlotBadge": "مطلوب",

@@ -472,6 +472,7 @@
     "addAssessmentSlotButton": "Add {label} — a course with only a question set",
     "requiredSlotBadge": "Required",
     "removeAssessmentSlotButton": "Remove",
+    "addCourseToLevelButton": "Add Course to this level",
     "addLevelExamButton": "Add Level Exam — a course with only a question set",
     "levelExamMeta": "Level Exam · Question set only",
     "deletePriorAssessmentConfirm": "Deleting the Prior Assessment removes the score this path's Adaptive skips are based on. Continue?",

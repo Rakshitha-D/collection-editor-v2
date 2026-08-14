@@ -348,18 +348,19 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
         </div>
         {libraryTargetLabel && (
           (activeAssessmentSlot || activeLevelExamTarget) ? (
-            <div className={styles.libraryTargetChip}>
+            // The whole chip is the dismiss — clicking it again unarms,
+            // same toggle behavior as the source row (AssessmentSlotItem/
+            // LevelExamItem), rather than a separate nested X button.
+            <button
+              type="button"
+              className={styles.libraryTargetChip}
+              onClick={() => setActiveAssessmentSlot(null)}
+              aria-label={lbl.libraryDock.cancelTargetAriaLabel}
+              title={lbl.libraryDock.cancelTargetAriaLabel}
+            >
               <span className={styles.libraryTargetLabel}>{libraryTargetLabel}</span>
-              <button
-                type="button"
-                className={styles.libraryTargetDismiss}
-                onClick={() => setActiveAssessmentSlot(null)}
-                aria-label={lbl.libraryDock.cancelTargetAriaLabel}
-                title={lbl.libraryDock.cancelTargetAriaLabel}
-              >
-                <X size={11} />
-              </button>
-            </div>
+              <X size={11} aria-hidden="true" />
+            </button>
           ) : (
             <span className={styles.libraryTargetLabel}>{libraryTargetLabel}</span>
           )

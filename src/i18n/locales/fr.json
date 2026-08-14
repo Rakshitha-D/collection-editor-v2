@@ -470,6 +470,7 @@
     "outcomeCheckBadge": "Vérification du résultat",
     "assessmentCourseMeta": "Cours · Questionnaire uniquement",
     "addAssessmentSlotButton": "Ajouter {label} — un cours contenant uniquement un questionnaire",
+    "addCourseToLevelButton": "Ajouter un cours à ce niveau",
     "addLevelExamButton": "Ajouter l'examen de niveau — un cours contenant uniquement un questionnaire",
     "levelExamMeta": "Examen de niveau · Questionnaire uniquement",
     "requiredSlotBadge": "Obligatoire",

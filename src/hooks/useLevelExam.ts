@@ -33,9 +33,14 @@ export function useLevelExam(levelId: string | null | undefined): UseLevelExamRe
   // enough, no need for a general tree search.
   const level = treeData[0]?.children?.find((l) => l.id === levelId);
   const course = getLevelExamCourse(level);
+  const isActiveTarget = activeLevelExamTarget === levelId;
 
+  // Toggles: clicking the row again while it's already the armed target
+  // unarms it (back to normal browsing), rather than being a one-way
+  // "arm only" action with no way back except the header chip.
   const armExam = () => {
-    if (levelId) setActiveLevelExamTarget(levelId);
+    if (!levelId) return;
+    setActiveLevelExamTarget(isActiveTarget ? null : levelId);
   };
 
   const deleteExam = () => {
@@ -50,7 +55,7 @@ export function useLevelExam(levelId: string | null | undefined): UseLevelExamRe
     course,
     filled: !!course,
     courseName: course?.name,
-    isActiveTarget: activeLevelExamTarget === levelId,
+    isActiveTarget,
     armExam,
     deleteExam,
   };
