@@ -14,6 +14,7 @@ import { ContentRow } from './ContentRow';
 import { SkillPicker } from './SkillPicker';
 import { AssessmentSlotItem } from './AssessmentSlotItem';
 import { LevelExamItem } from './LevelExamItem';
+import { LevelCourseItem } from './LevelCourseItem';
 import styles from './UnitContentList.module.scss';
 
 interface UnitContentListProps {
@@ -92,6 +93,23 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
     }
   }, [deleteNode, lbl.unitContentList.removeConfirm]);
 
+  // Same confirmDelete modal OutlineTree's own course-delete and
+  // useLevelExam's deleteExam use — keeps every LP course-removal path
+  // consistent, rather than falling back to Collection's window.confirm.
+  const openModal = useUiStore((s) => s.openModal);
+  const handleRemoveCourse = useCallback((id: string) => {
+    openModal('confirmDelete', {
+      message: lbl.learningPath.deleteCourseConfirm,
+      onConfirm: () => deleteNode(id),
+    });
+  }, [openModal, deleteNode, lbl.learningPath.deleteCourseConfirm]);
+
+  // The Level Exam course (if any) has its own dedicated row (LevelExamItem)
+  // above — exclude it here so it's never shown twice.
+  const regularCourses = isLpLevel
+    ? children.filter((c) => !c.metadata?.['isAssessmentCourse'])
+    : [];
+
   if (!selectedNodeId) return null;
 
   return (
@@ -151,9 +169,34 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
 
       {isLpLevel && <LevelExamItem levelId={selectedNodeId} isEditable={isEditable} />}
 
-      {/* "Content in this Unit" is a Collection-only concept — the design's
-          Level detail page never had a raw content list; a Level's Courses
-          are managed via the tree and the Skills card above, not here. */}
+      {isLpLevel && (
+        <div className={styles.coursesCard}>
+          <h3 className={styles.coursesCardTitle}>{lbl.learningPath.coursesCardHeading}</h3>
+          <p className={styles.coursesCardDescription}>{lbl.learningPath.coursesCardDescription}</p>
+          {regularCourses.length > 0 ? (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={regularCourses.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                <div className={styles.coursesList} role="list">
+                  {regularCourses.map(course => (
+                    <LevelCourseItem
+                      key={course.id}
+                      item={course}
+                      onRemove={handleRemoveCourse}
+                      isEditable={isEditable}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <span className={styles.emptyHint}>{lbl.learningPath.coursesEmptyHint}</span>
+          )}
+        </div>
+      )}
+
+      {/* "Content in this Unit" is a Collection-only concept — a content
+          Level's Courses are managed via the Courses card above, and a
+          Level's own content is never authored directly. */}
       {!isLearningPath && (
         <>
           <div className={styles.header}>

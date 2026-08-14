@@ -563,6 +563,11 @@
     "levelNeedsMixedContentToast": "Ce niveau est premier ou dernier dans le parcours — un cours composé uniquement de bancs de questions comme seul contenu sera traité comme une évaluation préalable/finale. Ajoutez un autre cours, ou un cours contenant plus que des bancs de questions.",
     "coursesRemovedFrameworkChangeToast": "{count} cours associé(s) à un autre curriculum ont été retirés de ce parcours.",
     "levelSkillsResetFrameworkChangeToast": "{count} niveau(x) ont eu leurs compétences sélectionnées effacées — elles ne s'appliquent pas au nouveau curriculum.",
-    "priorAssessmentNarrowedScopeToast": "L'évaluation préalable a réduit le périmètre des compétences — {count} niveau(x) ont désormais des compétences hors de ce périmètre."
+    "priorAssessmentNarrowedScopeToast": "L'évaluation préalable a réduit le périmètre des compétences — {count} niveau(x) ont désormais des compétences hors de ce périmètre.",
+    "coursesCardHeading": "Cours",
+    "coursesCardDescription": "Cours qu'un apprenant termine pour valider ce niveau — chaque cours peut inclure ses propres évaluations. Faites glisser la poignée pour réorganiser, utilisez le menu pour retirer.",
+    "coursesEmptyHint": "Pas encore ajouté — choisissez un cours dans la bibliothèque.",
+    "courseMetaLabel": "Cours",
+    "removeFromLevelMenuItem": "Retirer du niveau"
   }
 }

@@ -563,6 +563,11 @@
     "levelNeedsMixedContentToast": "This level is first or last in the path — a question-set-only course as its only content will be treated as a Prior/Outcome Assessment. Add another course, or one with more than just question sets.",
     "coursesRemovedFrameworkChangeToast": "{count} course(s) tagged to a different curriculum were removed from this path.",
     "levelSkillsResetFrameworkChangeToast": "{count} Level(s) had their selected skills cleared — they don't apply to the new curriculum.",
-    "priorAssessmentNarrowedScopeToast": "The Prior Assessment narrowed the skill scope — {count} Level(s) now have skills outside it."
+    "priorAssessmentNarrowedScopeToast": "The Prior Assessment narrowed the skill scope — {count} Level(s) now have skills outside it.",
+    "coursesCardHeading": "Courses",
+    "coursesCardDescription": "Courses a learner completes to clear this level — each course may include its own assessments internally. Drag the handle to reorder, use the menu to remove.",
+    "coursesEmptyHint": "Not added yet — pick a course from the Library.",
+    "courseMetaLabel": "Course",
+    "removeFromLevelMenuItem": "Remove from level"
   }
 }
