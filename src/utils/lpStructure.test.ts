@@ -643,10 +643,26 @@ describe('validateLearningPathStructure', () => {
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).not.toContain('outcomeAssessmentMissing');
   });
 
-  it('flags a pre/post slot that is not exactly one assessment course', () => {
+  it('flags a pre/post slot with more than one assessment-flagged course — genuinely broken, not a Level Exam shape', () => {
     const root = validPath();
-    root.children![0].children!.push(course('extra')); // second child in the pre slot
+    root.children![0].children!.push(assessmentCourseWithSkills('extra', ['Java'])); // a second assessment course, no regular content
     expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).toContain('slotNotPure');
+  });
+
+  it('does not flag slotNotPure for a first/last content Level with a Level Exam course alongside regular content', () => {
+    // A Level Exam course legitimately coexists with regular content at any
+    // position, first/last included — it must never be misread as a broken
+    // Prior/Outcome slot just because it sits at index 0/last.
+    const root = level({
+      id: 'root', metadata: { policy: 'strict' },
+      children: [
+        level({
+          id: 'lvl1', metadata: { skill: ['Java'] },
+          children: [course('c1', { metadata: { skill: ['Java'] } }), assessmentCourseWithSkills('exam1', ['Java'])],
+        }),
+      ],
+    });
+    expect(validateLearningPathStructure(root, 'skill', []).map(i => i.code)).not.toContain('slotNotPure');
   });
 
   it('does not flag slotNotPure for an ordinary content Level that just happens to sit first/last — no assessment course attached at all', () => {

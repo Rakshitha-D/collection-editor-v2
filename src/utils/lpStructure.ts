@@ -428,9 +428,14 @@ export function validateLearningPathStructure(
   ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const).forEach(([lvl, label]) => {
     if (!lvl) return;
     const children = lvl.children ?? [];
-    const hasAssessmentCourse = children.some((c) => !!c.metadata?.['isAssessmentCourse']);
-    if (!hasAssessmentCourse) return;
-    if (children.length !== 1 || !children[0]?.metadata?.['isAssessmentCourse']) {
+    const assessmentChildren = children.filter((c) => !!c.metadata?.['isAssessmentCourse']);
+    if (assessmentChildren.length === 0) return; // no assessment course at all — an ordinary content Level, not this slot
+    // Any regular (non-assessment) sibling means this is a content Level with
+    // a Level Exam course, not a broken Prior/Outcome slot — a Level Exam
+    // course legitimately coexists with regular content at any position,
+    // first/last included (see wouldBecomeAmbiguousSlot's own doc).
+    if (assessmentChildren.length < children.length) return;
+    if (children.length !== 1) {
       issues.push({ code: 'slotNotPure', nodeId: lvl.id, message: `${label} must contain exactly one question-set-only course.` });
     }
   });
