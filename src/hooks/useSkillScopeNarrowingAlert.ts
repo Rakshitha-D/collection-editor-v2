@@ -28,7 +28,7 @@ export function useSkillScopeNarrowingAlert(): void {
 
   useEffect(() => {
     if (!isLearningPath || source !== 'prior' || !skillCategory) return;
-    const affected = findLevelsWithOutOfScopeSkills(treeData[0], skillCategory.code, scope);
+    const affected = findLevelsWithOutOfScopeSkills(treeData[0], scope);
     const key = affected.map((l) => l.id).sort().join(',');
 
     // Skip the first computation (e.g. on initial load of an existing path)

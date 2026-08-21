@@ -24,7 +24,7 @@ import { ConfirmDialog } from '../modals/ConfirmDialog';
 import { ManageCollaborators } from '../Collaborators/ManageCollaborators';
 import { reserveDialcodes, getDialcodeProcessStatus } from '../../api/dialcode';
 import { useLabels } from '../../hooks/useLabels';
-import { useSkillCategory } from '../../hooks/useSkillCategory';
+import { useSkillCatalog } from '../../hooks/useSkillCatalog';
 import { useSkillScope } from '../../hooks/useSkillScope';
 import { validateLearningPathStructure } from '../../utils/lpStructure';
 import toast from 'react-hot-toast';
@@ -148,10 +148,10 @@ const ConfirmReviewModal: React.FC<ConfirmReviewModalProps> = ({ onConfirm, onCa
   const isLearningPath = useEditorStore((s) => s.editorProfile.key === 'learningPath');
   const root = useTreeStore((s) => s.treeData[0]);
   const treeCache = useTreeStore((s) => s.treeCache);
-  const skillCategory = useSkillCategory();
+  const { byFrameworkId } = useSkillCatalog();
   const { scope } = useSkillScope();
   const lpIssues = isLearningPath
-    ? validateLearningPathStructure(root, skillCategory?.code, scope, treeCache)
+    ? validateLearningPathStructure(root, byFrameworkId, scope, treeCache)
     : [];
   const hasBlockingIssues = lpIssues.length > 0;
 

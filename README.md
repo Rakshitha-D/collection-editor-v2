@@ -103,10 +103,22 @@ behavior:
   Levels wrapping a single question-set-only Course, rendered by `OutlineTree` as pinned rows above
   and below the Level list rather than as regular tree rows.
 - A Level's skill scope comes from the Prior Assessment's own skill tags (never from linked courses);
-  with no Prior Assessment linked, Levels fall back to manual selection from the active framework's
-  skill-equivalent category.
+  with no Prior Assessment linked, Levels fall back to manual selection from a catalog spanning
+  **every** relevant framework's skill-equivalent category (its highest-index category — USF's
+  `skill`, another framework's own equivalent), not a single chosen "Curriculum." A Learning Path's
+  linked Courses are not required to share one framework; each Course's own skill tag is always
+  resolved from its own framework.
 - CSV bulk upload, dial codes, and inline Course preview are disabled for this profile; publish is
   gated by the derived structural rules (see `IEditorProfile`) instead of a manual checklist.
+
+> **Removed:** an earlier iteration required picking one root-level "Curriculum" (framework) for
+> the whole path, pruning any linked Course tagged under a different one, and mirroring the derived
+> "Skills covered" union back onto the root's own skill field for search discoverability. Both were
+> removed once Learning Paths were allowed to mix Courses tagged under different frameworks — there
+> is no longer a single framework, or a single skill-category field, to prune against or write onto.
+> `computeSkillsCovered` still computes the union for on-screen display; it's just no longer
+> persisted onto the root's own metadata. See `learning_path_multi_framework_skills_plan.md` in the
+> repo root for the full design writeup.
 
 ```tsx
 import { CollectionEditor } from '@project-sunbird/collection-editor-react';

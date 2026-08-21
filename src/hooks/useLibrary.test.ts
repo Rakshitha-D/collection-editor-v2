@@ -1,80 +1,110 @@
 import { describe, it, expect } from 'vitest';
-import { buildLpLibraryFilters, buildSearchFields, computeLibraryEmptyReason } from './useLibrary';
+import {
+  groupSkillsByCode,
+  buildLpLibraryFilterVariants,
+  buildSearchFields,
+  computeLibraryEmptyReason,
+} from './useLibrary';
 import { DEFAULT_SEARCH_FIELDS } from '../api/content';
+import type { SkillCatalogEntry } from './useSkillCatalog';
 
-describe('buildLpLibraryFilters', () => {
-  it('filling the pre/post slot searches Courses with no competency constraint', () => {
-    expect(buildLpLibraryFilters('pre', [], 'skill')).toEqual({ primaryCategory: ['Course'] });
-    expect(buildLpLibraryFilters('post', ['Java'], 'skill')).toEqual({ primaryCategory: ['Course'] });
-  });
+const catalog: SkillCatalogEntry[] = [
+  { name: 'Python programming', frameworkId: 'usf', categoryCode: 'skill' },
+  { name: 'Java', frameworkId: 'usf', categoryCode: 'skill' },
+  { name: 'Physics', frameworkId: 'NCF', categoryCode: 'subject' },
+];
 
-  it('shows every Course, unfiltered, when browsing a Level with no skills selected yet', () => {
-    expect(buildLpLibraryFilters(null, [], 'skill')).toEqual({ primaryCategory: ['Course'] });
-  });
-
-  it('filters Courses by the selected skills under the resolved skill-category code', () => {
-    expect(buildLpLibraryFilters(null, ['Python programming', 'Java'], 'skill')).toEqual({
-      primaryCategory: ['Course'],
+describe('groupSkillsByCode', () => {
+  it("in 'prior' scope, groups every selected skill under the ONE prior-course-resolved code — no catalog lookup needed", () => {
+    expect(groupSkillsByCode(['Python programming', 'Java'], 'prior', 'skill', [])).toEqual({
       skill: ['Python programming', 'Java'],
     });
   });
 
-  it('omits the skill filter key when the skill category has not resolved yet', () => {
-    expect(buildLpLibraryFilters(null, ['Java'], undefined)).toEqual({ primaryCategory: ['Course'] });
+  it("returns nothing in 'prior' scope when the prior course has no resolvable code", () => {
+    expect(groupSkillsByCode(['Java'], 'prior', undefined, catalog)).toEqual({});
   });
 
-  it("constrains every LP search — slot picker included — to the root's selected framework", () => {
-    expect(buildLpLibraryFilters('pre', [], 'skill', 'usf')).toEqual({
-      primaryCategory: ['Course'],
-      framework: ['usf'],
+  it("in 'manual' scope, groups by looking up each name's owning code(s) in the catalog", () => {
+    expect(groupSkillsByCode(['Python programming', 'Physics'], 'manual', undefined, catalog)).toEqual({
+      skill: ['Python programming'],
+      subject: ['Physics'],
     });
-    expect(buildLpLibraryFilters(null, ['Java'], 'skill', 'usf')).toEqual({
-      primaryCategory: ['Course'],
-      framework: ['usf'],
-      skill: ['Java'],
+  });
+
+  it('groups multiple names under the same code together', () => {
+    expect(groupSkillsByCode(['Python programming', 'Java'], 'manual', undefined, catalog)).toEqual({
+      skill: ['Python programming', 'Java'],
     });
+  });
+
+  it('returns an empty map with no selected skills', () => {
+    expect(groupSkillsByCode([], 'manual', undefined, catalog)).toEqual({});
+  });
+});
+
+describe('buildLpLibraryFilterVariants', () => {
+  it('filling the pre/post slot searches Courses with no competency constraint — exactly one variant', () => {
+    expect(buildLpLibraryFilterVariants('pre', {})).toEqual([{ primaryCategory: ['Course'] }]);
+    expect(buildLpLibraryFilterVariants('post', { skill: ['Java'] })).toEqual([{ primaryCategory: ['Course'] }]);
+  });
+
+  it('shows every Course, unfiltered, when browsing a Level with no skills selected yet', () => {
+    expect(buildLpLibraryFilterVariants(null, {})).toEqual([{ primaryCategory: ['Course'] }]);
+  });
+
+  it('returns one variant, filtered by that code, when every selected skill belongs to a single code', () => {
+    expect(buildLpLibraryFilterVariants(null, { skill: ['Python programming', 'Java'] })).toEqual([
+      { primaryCategory: ['Course'], skill: ['Python programming', 'Java'] },
+    ]);
+  });
+
+  it('returns one variant PER code when the selection spans multiple frameworks', () => {
+    const variants = buildLpLibraryFilterVariants(null, { skill: ['Python programming'], subject: ['Physics'] });
+    expect(variants).toHaveLength(2);
+    expect(variants).toContainEqual({ primaryCategory: ['Course'], skill: ['Python programming'] });
+    expect(variants).toContainEqual({ primaryCategory: ['Course'], subject: ['Physics'] });
   });
 });
 
 describe('buildSearchFields', () => {
-  it('appends the resolved skill-category code and framework for the LP profile', () => {
-    expect(buildSearchFields(true, 'skill')).toEqual([...DEFAULT_SEARCH_FIELDS, 'skill', 'framework']);
+  it('appends every known skill-category code and framework for the LP profile', () => {
+    expect(buildSearchFields(true, ['skill', 'subject'])).toEqual([...DEFAULT_SEARCH_FIELDS, 'skill', 'subject', 'framework']);
+  });
+
+  it('de-dupes repeated codes', () => {
+    expect(buildSearchFields(true, ['skill', 'skill'])).toEqual([...DEFAULT_SEARCH_FIELDS, 'skill', 'framework']);
   });
 
   it('leaves the default fields untouched for the Collection profile', () => {
-    expect(buildSearchFields(false, 'skill')).toBeUndefined();
+    expect(buildSearchFields(false, ['skill'])).toBeUndefined();
   });
 
-  it('leaves the default fields untouched when the skill category has not resolved yet', () => {
-    expect(buildSearchFields(true, undefined)).toBeUndefined();
+  it('leaves the default fields untouched when no skill categories have resolved yet', () => {
+    expect(buildSearchFields(true, [])).toBeUndefined();
   });
 });
 
 describe('computeLibraryEmptyReason', () => {
   it('is null for the Collection profile, regardless of the other inputs', () => {
-    expect(computeLibraryEmptyReason(false, undefined, false, null, [])).toBeNull();
-    expect(computeLibraryEmptyReason(false, 'NCF', true, null, [])).toBeNull();
+    expect(computeLibraryEmptyReason(false, false, null, [])).toBeNull();
+    expect(computeLibraryEmptyReason(false, true, null, [])).toBeNull();
   });
 
-  it('is noCurriculum when the LP root has no explicit Curriculum yet', () => {
-    expect(computeLibraryEmptyReason(true, undefined, false, null, [])).toBe('noCurriculum');
-    expect(computeLibraryEmptyReason(true, undefined, true, null, [])).toBe('noCurriculum');
-  });
-
-  it('is noSkills only on a content Level with a Curriculum set but no skills selected', () => {
-    expect(computeLibraryEmptyReason(true, 'NCF', true, null, [])).toBe('noSkills');
+  it('is noSkills on a content Level with no skills selected', () => {
+    expect(computeLibraryEmptyReason(true, true, null, [])).toBe('noSkills');
   });
 
   it('is null on a content Level once skills are selected', () => {
-    expect(computeLibraryEmptyReason(true, 'NCF', true, null, ['Java'])).toBeNull();
+    expect(computeLibraryEmptyReason(true, true, null, ['Java'])).toBeNull();
   });
 
   it('is null outside a content Level (root, or an assessment Level) even with no skills selected', () => {
-    expect(computeLibraryEmptyReason(true, 'NCF', false, null, [])).toBeNull();
+    expect(computeLibraryEmptyReason(true, false, null, [])).toBeNull();
   });
 
   it('is null while filling the Prior/Outcome Assessment slot, regardless of skills selected', () => {
-    expect(computeLibraryEmptyReason(true, 'NCF', true, 'pre', [])).toBeNull();
-    expect(computeLibraryEmptyReason(true, 'NCF', true, 'post', [])).toBeNull();
+    expect(computeLibraryEmptyReason(true, true, 'pre', [])).toBeNull();
+    expect(computeLibraryEmptyReason(true, true, 'post', [])).toBeNull();
   });
 });

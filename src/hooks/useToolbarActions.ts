@@ -11,7 +11,7 @@ import {
 import { findMissingRequiredFields } from '../utils/validateRequiredFields';
 import { validateLearningPathStructure } from '../utils/lpStructure';
 import { useFramework } from './useFramework';
-import { useSkillCategory } from './useSkillCategory';
+import { useSkillCatalog } from './useSkillCatalog';
 import { useSkillScope } from './useSkillScope';
 
 /**
@@ -34,7 +34,7 @@ export function useToolbarActions(save: () => Promise<void>) {
   const treeData = useTreeStore((s) => s.treeData);
   const treeCache = useTreeStore((s) => s.treeCache);
   const selectNode = useTreeStore((s) => s.selectNode);
-  const skillCategory = useSkillCategory();
+  const { byFrameworkId } = useSkillCatalog();
   const { scope: skillScope } = useSkillScope();
 
   // Same framework resolution as SparkMetaForm (react-query dedupes the read),
@@ -95,11 +95,11 @@ export function useToolbarActions(save: () => Promise<void>) {
    */
   const checkLpStructure = useCallback((): boolean => {
     if (editorProfile.key !== 'learningPath') return true;
-    const issues = validateLearningPathStructure(treeData[0], skillCategory?.code, skillScope, treeCache);
+    const issues = validateLearningPathStructure(treeData[0], byFrameworkId, skillScope, treeCache);
     if (issues.length === 0) return true;
     toast.error(issues[0].message);
     return false;
-  }, [editorProfile.key, treeData, treeCache, skillCategory, skillScope]);
+  }, [editorProfile.key, treeData, treeCache, byFrameworkId, skillScope]);
 
   const runAction = useCallback(
     async (action: ToolbarAction, data?: unknown): Promise<boolean> => {

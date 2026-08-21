@@ -1,5 +1,6 @@
 import { readCourseHierarchy } from '../api/hierarchy';
 import type { INode } from '../types/editor';
+import type { ITerm } from '../types/framework';
 
 export interface HierarchyLeafLike {
   objectType?: string;
@@ -294,41 +295,37 @@ function toStringArray(value: unknown): string[] {
 }
 
 /**
- * The LP root's explicitly-chosen Curriculum (framework) — from a prior save
- * or the current session's Curriculum field, checked via treeCache first
- * since a live edit lands there before a save round-trips it into
- * root.metadata. Deliberately NOT the same as the channel/context default
- * framework (useEditorStore's contentFramework, resolved so *something*
- * exists to browse/filter by before the author has chosen anything) — that
- * fallback must never be mistaken for a real choice, or courses linked
- * under it get pruned the moment a real Curriculum is set, and the Library
- * would silently scope itself to a framework the author never picked.
+ * A course's own framework — courses may be tagged under different
+ * frameworks entirely (learning_path_multi_framework_skills_plan.md §4), so
+ * every "what skills does this course carry" lookup must resolve the
+ * framework PER COURSE, never assume a single ambient one.
  */
-export function getExplicitCurriculum(
-  root: INode | undefined,
-  treeCache: Record<string, Record<string, unknown>>,
-): string | undefined {
-  if (!root) return undefined;
-  const cached = treeCache[root.id]?.['framework'] as string | undefined;
-  return cached ?? (root.metadata?.['framework'] as string | undefined);
+export function getCourseFrameworkId(course: INode | undefined): string | undefined {
+  const fw = course?.metadata?.['framework'];
+  return Array.isArray(fw) ? (fw[0] as string | undefined) : (fw as string | undefined);
 }
 
-export function hasExplicitCurriculum(
-  root: INode | undefined,
-  treeCache: Record<string, Record<string, unknown>>,
-): boolean {
-  return !!getExplicitCurriculum(root, treeCache);
+/** Per-framework resolved skill category (code + terms) — see useSkillCatalog. */
+export interface SkillCategoryByFramework {
+  [frameworkId: string]: { code: string; terms: ITerm[] };
 }
 
 /**
- * "Skills covered" (root summary, Phase 4): the union of skills tagged
- * across the Prior Assessment, each Level's *selected* skills, and the
- * Outcome Assessment — never skills scraped from linked courses' content.
- * Both assessment Levels (their course's tags) and content Levels (their
- * own selection) read the SAME resolved skillCategoryCode metadata field —
- * never the reserved Sunbird `competencies` field, whose platform schema
- * expects competency-ontology objects, not plain framework-term strings.
+ * A course's own skill tags — resolved via ITS OWN framework's skill
+ * category code (never a single path-wide code, which no longer exists).
+ * Empty if the course's framework isn't recognized (not in byFrameworkId) —
+ * treated the same as "no tag" by every caller.
  */
+export function getCourseSkillNames(
+  course: INode | undefined,
+  byFrameworkId: SkillCategoryByFramework,
+): string[] {
+  const frameworkId = getCourseFrameworkId(course);
+  const entry = frameworkId ? byFrameworkId[frameworkId] : undefined;
+  if (!entry) return [];
+  return toStringArray(course?.metadata?.[entry.code]);
+}
+
 /**
  * "Path shape" (root summary, Phase 4): level count excludes the pre/post
  * assessment slots (design: "Neither counts as a level"); course count
@@ -345,48 +342,30 @@ export function computePathShape(root: INode | undefined): { levelCount: number;
   return { levelCount, courseCount };
 }
 
-export function computeSkillsCovered(root: INode | undefined, skillCategoryCode: string | undefined): string[] {
-  if (!root || !skillCategoryCode) return [];
+/**
+ * "Skills covered" (root summary, Phase 4): the union of skills tagged
+ * across the Prior Assessment, each Level's *selected* skills, and the
+ * Outcome Assessment — never skills scraped from linked courses' content.
+ * Assessment Levels read their course's OWN tag (per-course framework,
+ * getCourseSkillNames); content Levels read their own selection, stored
+ * under the fixed `metadata.skills` field (framework-independent — a
+ * Level's selection may span several frameworks at once, so there is no
+ * single resolved code to key it by) — never the reserved Sunbird
+ * `competencies` field, whose platform schema expects competency-ontology
+ * objects, not plain framework-term strings.
+ */
+export function computeSkillsCovered(root: INode | undefined, byFrameworkId: SkillCategoryByFramework): string[] {
+  if (!root) return [];
   const covered = new Set<string>();
   const levels = root.children ?? [];
   levels.forEach((lvl, idx) => {
     if (isPrePostSlotAtIndex(levels, idx)) {
-      toStringArray(lvl.children![0].metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
+      getCourseSkillNames(lvl.children![0], byFrameworkId).forEach((s) => covered.add(s));
     } else {
-      toStringArray(lvl.metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
+      toStringArray(lvl.metadata?.['skills']).forEach((s) => covered.add(s));
     }
   });
   return Array.from(covered);
-}
-
-/**
- * The skills-covered union that should be persisted onto the LP root's OWN
- * skill-category metadata field, or null if it already matches what's
- * currently stored there (treeCache first, same precedence as every other
- * field read this way — e.g. getExplicitCurriculum). Per
- * learning_path_ocd.md's recommendation: writing the derived union onto the
- * root makes a saved Learning Path searchable/discoverable by skill without
- * a separately-editable root field that could drift from what the path
- * actually covers — a Level's own selection (or the Prior/Outcome
- * Assessment's course tags) stays the single source of truth; this is a
- * read-through mirror onto root, never the other way around. Compares
- * order-insensitively so re-syncing an unchanged set doesn't loop.
- */
-export function resolveSkillsCoveredForSync(
-  root: INode | undefined,
-  skillCategoryCode: string | undefined,
-  treeCache: Record<string, Record<string, unknown>>,
-): string[] | null {
-  if (!root || !skillCategoryCode) return null;
-  const covered = computeSkillsCovered(root, skillCategoryCode);
-  const stored = (treeCache[root.id]?.[skillCategoryCode] ?? root.metadata?.[skillCategoryCode]) as
-    string[] | string | undefined;
-  const storedArray = toStringArray(stored);
-  const sortedCovered = [...covered].sort();
-  const sortedStored = [...storedArray].sort();
-  const isSame = sortedCovered.length === sortedStored.length
-    && sortedCovered.every((s, i) => s === sortedStored[i]);
-  return isSame ? null : covered;
 }
 
 /**
@@ -398,14 +377,13 @@ export function resolveSkillsCoveredForSync(
  */
 export function findLevelsWithOutOfScopeSkills(
   root: INode | undefined,
-  skillCategoryCode: string | undefined,
   scope: string[],
 ): INode[] {
-  if (!root || !skillCategoryCode || scope.length === 0) return [];
+  if (!root || scope.length === 0) return [];
   const levels = root.children ?? [];
   return levels.filter((lvl, idx) => {
     if (isPrePostSlotAtIndex(levels, idx)) return false;
-    const skills = toStringArray(lvl.metadata?.[skillCategoryCode]);
+    const skills = toStringArray(lvl.metadata?.['skills']);
     return skills.some((s) => !scope.includes(s));
   });
 }
@@ -418,17 +396,19 @@ export function findLevelsWithOutOfScopeSkills(
  * so a Level can claim to cover a skill that nothing linked to it teaches.
  * Courses missing a skill tag entirely are already caught separately by
  * validateLearningPathStructure's courseMissingSkillTag rule; this is about
- * the Level's selection vs. what its courses are ACTUALLY tagged with.
+ * the Level's selection vs. what its courses are ACTUALLY tagged with. Each
+ * linked course resolves its OWN tag independently — they need not share a
+ * framework.
  */
 export function computeUncoveredSkills(
   level: INode | undefined,
   selectedSkills: string[],
-  skillCategoryCode: string | undefined,
+  byFrameworkId: SkillCategoryByFramework,
 ): string[] {
-  if (!level || !skillCategoryCode || selectedSkills.length === 0) return [];
+  if (!level || selectedSkills.length === 0) return [];
   const covered = new Set<string>();
   for (const course of level.children ?? []) {
-    toStringArray(course.metadata?.[skillCategoryCode]).forEach((s) => covered.add(s));
+    getCourseSkillNames(course, byFrameworkId).forEach((s) => covered.add(s));
   }
   return selectedSkills.filter((s) => !covered.has(s));
 }
@@ -468,7 +448,7 @@ export const REQUIRES_PRIOR_POLICIES = new Set(['adaptive']);
  */
 export function validateLearningPathStructure(
   root: INode | undefined,
-  skillCategoryCode: string | undefined,
+  byFrameworkId: SkillCategoryByFramework,
   skillScope: string[],
   treeCache: Record<string, Record<string, unknown>> = {},
 ): LpValidationIssue[] {
@@ -477,8 +457,8 @@ export function validateLearningPathStructure(
 
   // treeCache first — a policy change lands there immediately (updateNode's
   // unconditional cache write) but only mirrors into root.metadata once a
-  // save round-trips it back, same precedence as getExplicitCurriculum and
-  // useAssessmentSlots' own policy lookup.
+  // save round-trips it back, same precedence as useAssessmentSlots' own
+  // policy lookup.
   const policy = (treeCache[root.id]?.['policy'] ?? root.metadata?.['policy']) as string | undefined;
   if (!policy) {
     issues.push({ code: 'policyMissing', message: 'Set a consumption policy for this path.' });
@@ -525,7 +505,7 @@ export function validateLearningPathStructure(
     if (isEmpty) {
       issues.push({ code: 'emptyLevel', nodeId: lvl.id, message: `"${lvl.name}" has no courses yet.` });
     }
-    const skills = skillCategoryCode ? toStringArray(lvl.metadata?.[skillCategoryCode]) : [];
+    const skills = toStringArray(lvl.metadata?.['skills']);
     if (skills.length === 0) {
       // An empty Level's "no courses yet" above already covers this — the
       // less specific "needs a skill selected" would be redundant noise.
@@ -545,7 +525,7 @@ export function validateLearningPathStructure(
       // Independent of scope, and runs even when isEmpty (every selected
       // skill is trivially uncovered with zero courses) — naming exactly
       // which skills still need a covering course, not just "no courses yet."
-      const uncovered = computeUncoveredSkills(lvl, skills, skillCategoryCode);
+      const uncovered = computeUncoveredSkills(lvl, skills, byFrameworkId);
       if (uncovered.length > 0) {
         issues.push({
           code: 'levelSkillsUncovered', nodeId: lvl.id,
@@ -555,7 +535,7 @@ export function validateLearningPathStructure(
     }
     for (const course of children) {
       registerCourse(course.id, lvl.id);
-      const tags = skillCategoryCode ? toStringArray(course.metadata?.[skillCategoryCode]) : [];
+      const tags = getCourseSkillNames(course, byFrameworkId);
       if (tags.length === 0) {
         issues.push({ code: 'courseMissingSkillTag', nodeId: course.id, message: `"${course.name}" has no skill tag.` });
       }

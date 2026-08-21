@@ -1,6 +1,5 @@
 import type { IFrameworkDetails, ITerm } from '../../../types/framework';
 import type { IEditorProfile } from '../../../types/profile';
-import { resolveSkillCategory } from '../../../hooks/useSkillCategory';
 
 // Design labels for the LP root's consumption-policy field — the raw values
 // match the Viewer Service's tracking_policies enum (strict | adaptive |
@@ -227,8 +226,9 @@ export function useFieldPrepare(
   return adaptToFramework(prepared, frameworkDetails, nodeMetadata, isRoot, ctx);
 }
 
-// LP root gets the fully-dynamic Curriculum treatment; everything else keeps
-// the K-12-aware adaptation.
+// The LP root has no Curriculum/framework concept to adapt fields against
+// (learning_path_multi_framework_skills_plan.md §1) — pass its fields
+// through unchanged. Everything else keeps the K-12-aware adaptation.
 function adaptToFramework(
   fields: PreparedField[],
   fw: IFrameworkDetails,
@@ -237,7 +237,7 @@ function adaptToFramework(
   ctx: IPrepareContext,
 ): PreparedField[] {
   return ctx.profile?.key === 'learningPath'
-    ? adaptLpCurriculumFields(fields, fw, meta, isRoot)
+    ? fields
     : adaptFrameworkFields(fields, fw, meta, isRoot);
 }
 
@@ -672,103 +672,6 @@ function adaptFrameworkFields(
   return [...kept, ...dynamic];
 }
 
-/**
- * LP root Curriculum section — fully dynamic. Renders the *selected*
- * framework's categories (in `index` order) as optional multiselects right
- * after the Curriculum (framework) selector, whatever the framework's shape
- * (USF: Industry/Domain; NCF: Board/Medium/Grade Level; …). The highest-index
- * (skill-equivalent) category is deliberately excluded — the LP's skill scope
- * comes from the prior assessment (useSkillScope), so an editable root skill
- * field would only contradict it. Static category fields from an OCD whose
- * codes don't exist in the selected framework are dropped (they'd render as
- * empty dropdowns).
- */
-const CURRICULUM_SECTION = 'Organisation Framework Terms';
-
-function adaptLpCurriculumFields(
-  fields: PreparedField[],
-  fw: IFrameworkDetails,
-  meta: Record<string, unknown>,
-  isRoot: boolean,
-): PreparedField[] {
-  if (!isRoot) return fields;
-  const categories = [...(fw.organisationFramework?.categories ?? [])]
-    .sort((a, b) => (a.index ?? Infinity) - (b.index ?? Infinity));
-  if (!categories.length) return fields; // framework read still in flight
-  const skillCode = resolveSkillCategory(categories)?.code;
-  const categoryCodeOf = (f: PreparedField) => f.sourceCategory ?? FIELD_TO_FW_CATEGORY[f.code];
-
-  // Drop fields for categories the selected framework doesn't have (or the
-  // skill category); normalize the survivors into the Curriculum card so a
-  // backend form's arbitrary section names can't scatter them. Every
-  // Curriculum-section category field is required and single-select, same
-  // as the framework selector itself — the skill/leaf category is the only
-  // one that's ever multi-select (SkillPicker, a separate section entirely)
-  // — a backend form's own `required`/`inputType` is overridden here for
-  // consistency, and its stored value is re-normalized (normalizeCurrentValue
-  // takes raw[0] for a 'select' field even if a prior multiselect save left
-  // an array behind).
-  const kept = fields
-    .filter(f => {
-      const categoryCode = categoryCodeOf(f);
-      if (!categoryCode) return true;
-      return categoryCode !== skillCode && categories.some(c => c.code === categoryCode);
-    })
-    .map(f => (categoryCodeOf(f)
-      ? { ...f, section: CURRICULUM_SECTION, required: true, inputType: 'select' as const, currentValue: cv(meta, f.code, 'select') }
-      : f));
-
-  // The Curriculum (framework) selector is the anchor of the section — a
-  // backend form config may not declare one (e.g. a Course-shaped default),
-  // so synthesize it ahead of the first category field when missing.
-  let result = kept;
-  let frameworkFieldIndex = result.findIndex(f => f.code === 'framework');
-  if (frameworkFieldIndex === -1) {
-    const frameworkField: PreparedField = {
-      code: 'framework', label: 'Curriculum', inputType: 'select',
-      required: true, editable: true, tab: 'details', section: CURRICULUM_SECTION,
-      options: fw.orgFrameworks, currentValue: cv(meta, 'framework', 'select'),
-    };
-    const firstCategoryIndex = result.findIndex(f => !!categoryCodeOf(f));
-    frameworkFieldIndex = firstCategoryIndex >= 0 ? firstCategoryIndex : result.length;
-    result = [
-      ...result.slice(0, frameworkFieldIndex),
-      frameworkField,
-      ...result.slice(frameworkFieldIndex),
-    ];
-  }
-
-  // Until the Curriculum (framework) selector itself has a value, its
-  // category fields (Industry/Domain/... below) have nothing to cascade
-  // from — rendering them anyway (all empty, all marked required) makes it
-  // look like the author already owes fields tied to a Curriculum they
-  // haven't chosen yet. `fw.organisationFramework` can already be resolved
-  // at this point (e.g. a channel default used to prime term lookups)
-  // even though nothing has been explicitly picked/saved, so gate on the
-  // selector's own currentValue, not on categories.length.
-  const frameworkSelected = !!cv(meta, 'framework', 'select');
-  if (!frameworkSelected) {
-    return result.filter(f => f.code === 'framework' || !categoryCodeOf(f));
-  }
-
-  const existingCodes = new Set(result.map(f => f.code));
-  const dynamic: PreparedField[] = categories
-    .filter(cat => cat.code !== skillCode && !existingCodes.has(cat.code))
-    .map(cat => ({
-      code: cat.code, label: cat.name, inputType: 'select' as const,
-      required: true, editable: true, tab: 'details' as const, section: CURRICULUM_SECTION,
-      options: (cat.terms ?? []).map(t => ({ label: t.name, value: t.name })),
-      currentValue: cv(meta, cat.code, 'select'),
-    }));
-  if (!dynamic.length) return result;
-
-  return [
-    ...result.slice(0, frameworkFieldIndex + 1),
-    ...dynamic,
-    ...result.slice(frameworkFieldIndex + 1),
-  ];
-}
-
 function getDefaultFields(
   meta: Record<string, unknown>,
   isRoot: boolean,
@@ -795,24 +698,16 @@ function getDefaultFields(
   // LP root fallback (no "Learning Path" category definition available yet,
   // §5.1 backend dependency) — the Course BMGS skeleton below doesn't apply
   // to a Learning Path at all, so render just the consumption-policy field
-  // instead of empty/irrelevant required dropdowns.
+  // instead of empty/irrelevant required dropdowns. No Curriculum/framework
+  // field — a Learning Path has no root-level framework at all; its Courses
+  // may be tagged under any number of different frameworks
+  // (learning_path_multi_framework_skills_plan.md §1).
   if (ctx.profile?.key === 'learningPath') {
-    fields.push(
-      {
-        // Curriculum selector — the framework whose categories the dynamic
-        // Curriculum section (adaptLpCurriculumFields) renders. Note the skill
-        // *scope* still follows the prior assessment course's own framework
-        // (useSkillCategory precedence), not this selection.
-        code: 'framework', label: 'Curriculum', inputType: 'select',
-        required: true, editable: true, tab: 'details', section: 'Organisation Framework Terms',
-        options: fw.orgFrameworks, currentValue: cv(meta, 'framework', 'select'),
-      },
-      {
-        code: 'policy', label: 'Consumption policy', inputType: 'select',
-        required: true, editable: true, tab: 'details', section: 'Consumption policy',
-        options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'strict',
-      },
-    );
+    fields.push({
+      code: 'policy', label: 'Consumption policy', inputType: 'select',
+      required: true, editable: true, tab: 'details', section: 'Consumption policy',
+      options: POLICY_OPTIONS, currentValue: cv(meta, 'policy', 'select') || 'strict',
+    });
     return fields;
   }
 

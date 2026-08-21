@@ -100,35 +100,25 @@ describe('tree.store (Learning Path) — assessment-slot auto-wrap', () => {
   });
 });
 
-describe('tree.store — updateNode extraMirrorKeys (dynamic skill-category field)', () => {
+describe("tree.store — updateNode mirrors the fixed 'skills' field (Level skill selection)", () => {
   beforeEach(setupLpTree);
 
-  it('mirrors a dynamically-named field into node.metadata only when passed via extraMirrorKeys', () => {
+  it("mirrors 'skills' into node.metadata — a static field, no per-call key list needed", () => {
     const levelId = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().updateNode(levelId, { skill: ['Python basics'] }, ['skill']);
+    useTreeStore.getState().updateNode(levelId, { skills: ['Python basics'] });
 
     const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
-    expect(level.metadata?.['skill']).toEqual(['Python basics']);
-    expect(useTreeStore.getState().treeCache[levelId]?.['skill']).toEqual(['Python basics']);
+    expect(level.metadata?.['skills']).toEqual(['Python basics']);
+    expect(useTreeStore.getState().treeCache[levelId]?.['skills']).toEqual(['Python basics']);
   });
 
-  it('does not mirror a dynamically-named field into node.metadata without extraMirrorKeys', () => {
+  it('mirrors the static METADATA_MIRROR_FIELDS alongside skills in the same patch', () => {
     const levelId = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().updateNode(levelId, { skill: ['Python basics'] });
-
-    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
-    expect(level.metadata?.['skill']).toBeUndefined();
-    // treeCache is unconditional regardless of extraMirrorKeys — still persists.
-    expect(useTreeStore.getState().treeCache[levelId]?.['skill']).toEqual(['Python basics']);
-  });
-
-  it('still mirrors the static METADATA_MIRROR_FIELDS alongside a dynamic extra key', () => {
-    const levelId = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().updateNode(levelId, { name: 'Level A', skill: ['Java'] }, ['skill']);
+    useTreeStore.getState().updateNode(levelId, { name: 'Level A', skills: ['Java'] });
 
     const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
     expect(level.metadata?.['name']).toBe('Level A');
-    expect(level.metadata?.['skill']).toEqual(['Java']);
+    expect(level.metadata?.['skills']).toEqual(['Java']);
   });
 });
 
@@ -252,97 +242,6 @@ describe('tree.store (Learning Path) — per-Level course caps on cross-Level dr
     const mid = useTreeStore.getState().treeData[0].children!.find((c) => c.id === midId)!;
     expect(mid.children!.some((c) => c.id === 'c2')).toBe(true); // still there — move blocked
     expect(mid.children!.find((c) => c.id === 'c1')!.children).toHaveLength(0);
-  });
-});
-
-describe('tree.store (Learning Path) — pruneCoursesByFramework', () => {
-  beforeEach(setupLpTree);
-
-  const fwCourse = (id: string, framework?: string): IContent =>
-    ({ ...course(id), framework } as unknown as IContent);
-
-  it('removes courses tagged under a different framework, keeps matches and untagged ones', () => {
-    const levelId = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().addResource(fwCourse('c-usf', 'usf'), levelId);
-    useTreeStore.getState().addResource(fwCourse('c-ncf', 'NCF'), levelId);
-    useTreeStore.getState().addResource(fwCourse('c-untagged'), levelId);
-
-    const removed = useTreeStore.getState().pruneCoursesByFramework('usf');
-
-    expect(removed).toBe(1);
-    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
-    expect(level.children!.map((c) => c.id).sort()).toEqual(['c-untagged', 'c-usf']);
-  });
-
-  it('drops an emptied assessment slot with its wrapper Level, reopening the slot', () => {
-    useTreeStore.getState().addResource(fwCourse('prior-ncf', 'NCF'), 'root', { isAssessmentCourse: true, slot: 'pre' });
-    const levelId = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().addResource(fwCourse('c-usf', 'usf'), levelId);
-
-    const removed = useTreeStore.getState().pruneCoursesByFramework('usf');
-
-    expect(removed).toBe(1);
-    const root = useTreeStore.getState().treeData[0];
-    expect(root.children).toHaveLength(1); // the pre wrapper Level is gone entirely
-    expect(root.children![0].id).toBe(levelId);
-  });
-
-  it('is a no-op (returns 0, tree untouched) when every course matches', () => {
-    const levelId = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().addResource(fwCourse('c-usf', 'usf'), levelId);
-    const before = useTreeStore.getState().treeData;
-    expect(useTreeStore.getState().pruneCoursesByFramework('usf')).toBe(0);
-    expect(useTreeStore.getState().treeData).toBe(before);
-  });
-
-  it('keeps a multi-value framework array when ANY entry matches, not just the first', () => {
-    const levelId = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().addResource(fwCourse('c-multi', undefined), levelId);
-    // Tag it with a multi-value framework array whose match ('usf') is NOT first.
-    useTreeStore.getState().updateNode('c-multi', { metadata: { framework: ['NCF', 'usf'] } });
-
-    const removed = useTreeStore.getState().pruneCoursesByFramework('usf');
-
-    expect(removed).toBe(0);
-    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
-    expect(level.children!.some((c) => c.id === 'c-multi')).toBe(true);
-  });
-});
-
-describe('tree.store (Learning Path) — clearLevelSkills', () => {
-  beforeEach(setupLpTree);
-
-  it('removes the given skill-category field from every Level that had one, from both metadata and treeCache', () => {
-    const lvl1 = useTreeStore.getState().addNode('root', 'unit');
-    const lvl2 = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().updateNode(lvl1, { skill: ['Java'] }, ['skill']);
-    useTreeStore.getState().updateNode(lvl2, { skill: ['Python programming'] }, ['skill']);
-
-    const cleared = useTreeStore.getState().clearLevelSkills('skill');
-
-    expect(cleared).toBe(2);
-    const state = useTreeStore.getState();
-    for (const id of [lvl1, lvl2]) {
-      const lvl = state.treeData[0].children!.find((c) => c.id === id)!;
-      expect(lvl.metadata?.['skill']).toBeUndefined();
-      expect(state.treeCache[id]?.['skill']).toBeUndefined();
-    }
-  });
-
-  it('leaves Levels with no selection under that field untouched', () => {
-    const lvl1 = useTreeStore.getState().addNode('root', 'unit');
-    useTreeStore.getState().addNode('root', 'unit'); // lvl2, no skill selection
-    useTreeStore.getState().updateNode(lvl1, { skill: ['Java'] }, ['skill']);
-
-    expect(useTreeStore.getState().clearLevelSkills('skill')).toBe(1);
-  });
-
-  it('is a no-op (returns 0, tree untouched) without a skill-category code, or when nothing has a selection', () => {
-    useTreeStore.getState().addNode('root', 'unit');
-    const before = useTreeStore.getState().treeData;
-    expect(useTreeStore.getState().clearLevelSkills(undefined)).toBe(0);
-    expect(useTreeStore.getState().clearLevelSkills('skill')).toBe(0);
-    expect(useTreeStore.getState().treeData).toBe(before);
   });
 });
 

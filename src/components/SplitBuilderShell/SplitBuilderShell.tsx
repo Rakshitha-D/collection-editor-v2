@@ -21,8 +21,7 @@ import { useSaveHierarchy } from '../../hooks/useSaveHierarchy';
 import { useToolbarActions } from '../../hooks/useToolbarActions';
 import { useLabels } from '../../hooks/useLabels';
 import { useSkillScopeNarrowingAlert } from '../../hooks/useSkillScopeNarrowingAlert';
-import { useSkillsCoveredSync } from '../../hooks/useSkillsCoveredSync';
-import { hasExplicitCurriculum, isAssessmentLevel } from '../../utils/lpStructure';
+import { isAssessmentLevel } from '../../utils/lpStructure';
 import toast from 'react-hot-toast';
 import styles from './SplitBuilderShell.module.scss';
 
@@ -49,12 +48,8 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
   // mounts/unmounts per node selection) so it can track "have I already
   // alerted for this narrowing" across navigation.
   useSkillScopeNarrowingAlert();
-  // Keeps the LP root's own skill-category field mirroring the derived
-  // "Skills covered" union — same always-mounted placement, for the same
-  // reason.
-  useSkillsCoveredSync();
 
-  const { addResource, treeData, treeCache } = useTreeStore();
+  const { addResource, treeData } = useTreeStore();
   const setFormStatus = useEditorStore((s) => s.setFormStatus);
   const isLearningPath = useEditorStore((s) => s.editorProfile.key === 'learningPath');
   // isFormValid: true while the current node's form hasn't been touched or is valid.
@@ -87,13 +82,6 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
       setActiveDragItem(null);
       const item = event.active.data.current?.item as IContent | undefined;
       if (!item) return;
-      // Every course carries a skill tag under its OWN framework — with no
-      // Curriculum chosen yet, the path has nothing to check that tag
-      // against, and the course would just get pruned the moment one is set.
-      if (isLearningPath && !hasExplicitCurriculum(treeData[0], treeCache)) {
-        toast.error(lbl.learningPath.selectCurriculumFirstToast);
-        return;
-      }
       const over = event.over;
       const targetNodeId = (over?.id as string | undefined) ?? selectedNodeId ?? undefined;
       // LP drops land on Levels within a path; collections drop on units within
@@ -141,7 +129,7 @@ export const SplitBuilderShell: React.FC<SplitBuilderShellProps> = ({
         ? lbl.learningPath.addedToLevelSuccess
         : lbl.splitBuilderShell.addedToUnitSuccess).replace('{name}', item.name));
     },
-    [selectedNodeId, addResource, treeData, treeCache, onContentAdded, lbl, isLearningPath],
+    [selectedNodeId, addResource, treeData, onContentAdded, lbl, isLearningPath],
   );
 
   const handleToolbarEvent = useCallback(

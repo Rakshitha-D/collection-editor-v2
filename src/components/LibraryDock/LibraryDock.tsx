@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { getAssessmentCourseInfo, getLevelExamCourse, hasExplicitCurriculum, isAssessmentSlotFilled, isPrePostSlot, wouldBecomeAmbiguousSlot } from '../../utils/lpStructure';
+import { getAssessmentCourseInfo, getLevelExamCourse, isAssessmentSlotFilled, isPrePostSlot, wouldBecomeAmbiguousSlot } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -61,7 +61,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
     emptyReason,
   } = useLibrary();
 
-  const { addResource, selectedNodeId, treeData, treeCache } = useTreeStore();
+  const { addResource, selectedNodeId, treeData } = useTreeStore();
   const setActiveAssessmentSlot = useUiStore(s => s.setActiveAssessmentSlot);
   const activeLevelExamTarget = useUiStore(s => s.activeLevelExamTarget);
   const setActiveLevelExamTarget = useUiStore(s => s.setActiveLevelExamTarget);
@@ -213,13 +213,6 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
 
   const handleAdd = useCallback(
     async (item: IContent) => {
-      // Every course carries a skill tag under its OWN framework — with no
-      // Curriculum chosen yet, the path has nothing to check that tag
-      // against, and the course would just get pruned the moment one is set.
-      if (isLearningPath && !hasExplicitCurriculum(treeData[0], treeCache)) {
-        toast.error(lbl.learningPath.selectCurriculumFirstToast);
-        return;
-      }
       if (activeAssessmentSlot) {
         handleFillAssessmentSlot(item, activeAssessmentSlot);
         return;
@@ -293,7 +286,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       }
       toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
     },
-    [activeAssessmentSlot, handleFillAssessmentSlot, activeLevelExamTarget, handleFillLevelExam, selectedNodeId, addResource, treeData, treeCache, lbl, isLearningPath],
+    [activeAssessmentSlot, handleFillAssessmentSlot, activeLevelExamTarget, handleFillLevelExam, selectedNodeId, addResource, treeData, lbl, isLearningPath],
   );
 
   const handleApplyFilters = useCallback(
@@ -466,12 +459,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
           ) : (
             <div className={styles.emptyState}>
               <Search size={24} />
-              {emptyReason === 'noCurriculum' ? (
-                <>
-                  <p>{lbl.learningPath.noCurriculumEmptyTitle}</p>
-                  <span>{lbl.learningPath.noCurriculumEmptyHint}</span>
-                </>
-              ) : emptyReason === 'noSkills' ? (
+              {emptyReason === 'noSkills' ? (
                 <>
                   <p>{lbl.learningPath.noSkillsEmptyTitle}</p>
                   <span>{lbl.learningPath.noSkillsEmptyHint}</span>
