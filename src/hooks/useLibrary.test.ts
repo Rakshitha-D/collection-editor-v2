@@ -44,23 +44,30 @@ describe('groupSkillsByCode', () => {
 });
 
 describe('buildLpLibraryFilterVariants', () => {
-  it('filling the pre/post slot searches Courses with no competency constraint — exactly one variant', () => {
-    expect(buildLpLibraryFilterVariants('pre', {})).toEqual([{ primaryCategory: ['Course'] }]);
-    expect(buildLpLibraryFilterVariants('post', { skill: ['Java'] })).toEqual([{ primaryCategory: ['Course'] }]);
+  it('filling the pre/post slot searches Evaluation Course with no competency constraint — exactly one variant', () => {
+    expect(buildLpLibraryFilterVariants('pre', true, {})).toEqual([{ primaryCategory: ['Evaluation Course'] }]);
+    expect(buildLpLibraryFilterVariants('post', true, { skill: ['Java'] })).toEqual([{ primaryCategory: ['Evaluation Course'] }]);
+  });
+
+  it('picking a Level Exam course (isPickingEvaluationCourse, no slot) still applies the skill-code filter', () => {
+    expect(buildLpLibraryFilterVariants(null, true, {})).toEqual([{ primaryCategory: ['Evaluation Course'] }]);
+    expect(buildLpLibraryFilterVariants(null, true, { skill: ['Java'] })).toEqual([
+      { primaryCategory: ['Evaluation Course'], skill: ['Java'] },
+    ]);
   });
 
   it('shows every Course, unfiltered, when browsing a Level with no skills selected yet', () => {
-    expect(buildLpLibraryFilterVariants(null, {})).toEqual([{ primaryCategory: ['Course'] }]);
+    expect(buildLpLibraryFilterVariants(null, false, {})).toEqual([{ primaryCategory: ['Course'] }]);
   });
 
   it('returns one variant, filtered by that code, when every selected skill belongs to a single code', () => {
-    expect(buildLpLibraryFilterVariants(null, { skill: ['Python programming', 'Java'] })).toEqual([
+    expect(buildLpLibraryFilterVariants(null, false, { skill: ['Python programming', 'Java'] })).toEqual([
       { primaryCategory: ['Course'], skill: ['Python programming', 'Java'] },
     ]);
   });
 
   it('returns one variant PER code when the selection spans multiple frameworks', () => {
-    const variants = buildLpLibraryFilterVariants(null, { skill: ['Python programming'], subject: ['Physics'] });
+    const variants = buildLpLibraryFilterVariants(null, false, { skill: ['Python programming'], subject: ['Physics'] });
     expect(variants).toHaveLength(2);
     expect(variants).toContainEqual({ primaryCategory: ['Course'], skill: ['Python programming'] });
     expect(variants).toContainEqual({ primaryCategory: ['Course'], subject: ['Physics'] });

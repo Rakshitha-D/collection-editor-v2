@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  isAssessmentCourse,
-  checkAssessmentCourse,
-  getAssessmentCourseInfo,
-  clearAssessmentCourseCache,
+  isEvaluationCourse,
+  EVALUATION_COURSE_CATEGORY,
   normalizeLearningPathTree,
   isAssessmentLevel,
   getLevelExamCourse,
@@ -24,116 +22,45 @@ import {
   revalidateAssessmentSlots,
   type SkillCategoryByFramework,
 } from './lpStructure';
-import { readCourseHierarchy } from '../api/hierarchy';
+import { fetchContentDetails } from '../api/content';
 import type { INode } from '../types/editor';
 
-vi.mock('../api/hierarchy', () => ({
-  readCourseHierarchy: vi.fn(),
+vi.mock('../api/content', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api/content')>()),
+  fetchContentDetails: vi.fn(),
 }));
 
-const questionSet = (id: string) => ({
-  identifier: id,
-  objectType: 'QuestionSet',
-  mimeType: 'application/vnd.sunbird.questionset',
-  children: [],
-});
-const videoResource = (id: string) => ({
-  identifier: id,
-  objectType: 'Content',
-  mimeType: 'video/mp4',
-  children: [],
-});
-const ecmlAssessment = (id: string) => ({
-  identifier: id,
-  objectType: 'Content',
-  mimeType: 'application/vnd.ekstep.ecml-archive',
-  children: [],
-});
-
-describe('isAssessmentCourse', () => {
-  it('is true when every leaf, directly under the course, is a QuML QuestionSet', () => {
-    const course = { children: [questionSet('q1'), questionSet('q2')] };
-    expect(isAssessmentCourse(course)).toBe(true);
-  });
-
-  it('is true when QuestionSets are nested under intermediate units', () => {
-    const course = { children: [{ children: [questionSet('q1'), questionSet('q2')] }] };
-    expect(isAssessmentCourse(course)).toBe(true);
-  });
-
-  it('is false when any leaf is a non-QuestionSet resource', () => {
-    const course = { children: [questionSet('q1'), videoResource('v1')] };
-    expect(isAssessmentCourse(course)).toBe(false);
-  });
-
-  it('is false for legacy ECML assessment content, even though historically labelled "assessment"', () => {
-    const course = { children: [ecmlAssessment('e1')] };
-    expect(isAssessmentCourse(course)).toBe(false);
-  });
-
-  it('is false for an empty course (no leaves at all)', () => {
-    expect(isAssessmentCourse({ children: [] })).toBe(false);
-    expect(isAssessmentCourse({})).toBe(false);
-  });
-});
-
-describe('checkAssessmentCourse', () => {
-  beforeEach(() => {
-    clearAssessmentCourseCache();
-    vi.mocked(readCourseHierarchy).mockReset();
-  });
-
-  it('reads the course hierarchy and evaluates it', async () => {
-    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [questionSet('q1')] });
-    expect(await checkAssessmentCourse('course-1')).toBe(true);
-    expect(readCourseHierarchy).toHaveBeenCalledWith('course-1');
-  });
-
-  it('caches the result per courseId for the session, avoiding a second read', async () => {
-    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [questionSet('q1')] });
-    await checkAssessmentCourse('course-2');
-    await checkAssessmentCourse('course-2');
-    expect(readCourseHierarchy).toHaveBeenCalledTimes(1);
-  });
-
-  it("getAssessmentCourseInfo exposes the course's own metadata (children stripped) for slot linking", async () => {
-    vi.mocked(readCourseHierarchy).mockResolvedValue({
-      identifier: 'course-3', framework: 'usf', skill: ['Python programming'],
-      children: [questionSet('q1')],
-    });
-    const { qualifies, meta } = await getAssessmentCourseInfo('course-3');
-    expect(qualifies).toBe(true);
-    expect(meta).toEqual({ identifier: 'course-3', framework: 'usf', skill: ['Python programming'] });
+describe('isEvaluationCourse', () => {
+  it('is true only for a course whose primaryCategory is exactly "Evaluation Course"', () => {
+    expect(isEvaluationCourse({ primaryCategory: EVALUATION_COURSE_CATEGORY })).toBe(true);
+    expect(isEvaluationCourse({ primaryCategory: 'Course' })).toBe(false);
+    expect(isEvaluationCourse({})).toBe(false);
+    expect(isEvaluationCourse(undefined)).toBe(false);
   });
 });
 
 describe('normalizeLearningPathTree', () => {
-  beforeEach(() => {
-    clearAssessmentCourseCache();
-    vi.mocked(readCourseHierarchy).mockReset();
-  });
-
-  const loadedCourse = (id: string, children: unknown[]): INode => ({
+  const loadedCourse = (id: string, primaryCategory?: string): INode => ({
     id, identifier: id, name: id, isFolder: true, // mapToINode marks collection-mimeType courses as folders
     mimeType: 'application/vnd.ekstep.content-collection',
-    children: children as INode[],
-    metadata: {},
+    children: [{ id: `${id}-leaf`, identifier: `${id}-leaf`, name: 'leaf', isFolder: false, children: [] }],
+    metadata: { primaryCategory },
   });
   const loadedLevel = (id: string, children: INode[]): INode => ({
     id, identifier: id, name: id, isFolder: true, children,
     metadata: { primaryCategory: 'Level' },
   });
 
-  it('re-flattens linked courses to terminal leaves and restores isAssessmentCourse from the expanded subtree', async () => {
+  it("re-flattens linked courses to terminal leaves and flags isAssessmentCourse from the course's OWN primaryCategory", () => {
     const root: INode = {
       id: 'root', identifier: 'root', name: 'LP', isFolder: true,
       children: [
-        loadedLevel('lvl-pre', [loadedCourse('prior', [questionSet('q1')])]),
-        loadedLevel('lvl-1', [loadedCourse('c1', [videoResource('v1')])]),
+        loadedLevel('lvl-pre', [loadedCourse('prior', EVALUATION_COURSE_CATEGORY)]),
+        loadedLevel('lvl-1', [loadedCourse('c1', 'Course')]),
       ],
     };
 
-    const normalized = await normalizeLearningPathTree(root);
+    const normalized = normalizeLearningPathTree(root);
 
     const prior = normalized.children![0].children![0];
     expect(prior.isFolder).toBe(false);
@@ -144,20 +71,19 @@ describe('normalizeLearningPathTree', () => {
     expect(regular.isFolder).toBe(false);
     expect(regular.children).toHaveLength(0);
     expect(regular.metadata?.isAssessmentCourse).toBeUndefined();
-    expect(readCourseHierarchy).not.toHaveBeenCalled(); // subtrees were expanded — no network needed
   });
 
-  it('falls back to a course-hierarchy read for a single-course first/last Level with no expanded subtree', async () => {
-    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [questionSet('q1')] });
+  it('is position-independent — any course categorized Evaluation Course is flagged, not just first/last single-course Levels', () => {
     const root: INode = {
       id: 'root', identifier: 'root', name: 'LP', isFolder: true,
-      children: [loadedLevel('lvl-pre', [loadedCourse('prior', [])])],
+      children: [loadedLevel('lvl-mid', [loadedCourse('c1', 'Course'), loadedCourse('exam', EVALUATION_COURSE_CATEGORY)])],
     };
 
-    const normalized = await normalizeLearningPathTree(root);
+    const normalized = normalizeLearningPathTree(root);
 
-    expect(readCourseHierarchy).toHaveBeenCalledWith('prior');
-    expect(normalized.children![0].children![0].metadata?.isAssessmentCourse).toBe(true);
+    const [regular, exam] = normalized.children![0].children!;
+    expect(regular.metadata?.isAssessmentCourse).toBeUndefined();
+    expect(exam.metadata?.isAssessmentCourse).toBe(true);
   });
 });
 
@@ -760,12 +686,11 @@ describe('validateLearningPathStructure', () => {
 
 describe('revalidateAssessmentSlots', () => {
   beforeEach(() => {
-    clearAssessmentCourseCache();
-    vi.mocked(readCourseHierarchy).mockReset();
+    vi.mocked(fetchContentDetails).mockReset();
   });
 
-  it('flags a slot whose course no longer qualifies as question-set-only', async () => {
-    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [videoResource('v1')] });
+  it('flags a slot whose course is no longer categorized Evaluation Course', async () => {
+    vi.mocked(fetchContentDetails).mockResolvedValue({ primaryCategory: 'Course' } as never);
     const root = validPath();
     const issues = await revalidateAssessmentSlots(root);
     expect(issues.length).toBeGreaterThan(0);
@@ -773,13 +698,13 @@ describe('revalidateAssessmentSlots', () => {
   });
 
   it('is clean when both slots still qualify', async () => {
-    vi.mocked(readCourseHierarchy).mockResolvedValue({ children: [questionSet('q1')] });
+    vi.mocked(fetchContentDetails).mockResolvedValue({ primaryCategory: EVALUATION_COURSE_CATEGORY } as never);
     expect(await revalidateAssessmentSlots(validPath())).toEqual([]);
   });
 
   it('skips slots that are not assessment Levels', async () => {
     const root = level({ id: 'root', children: [level({ id: 'lvl1', children: [course('c1')] })] });
     expect(await revalidateAssessmentSlots(root)).toEqual([]);
-    expect(readCourseHierarchy).not.toHaveBeenCalled();
+    expect(fetchContentDetails).not.toHaveBeenCalled();
   });
 });

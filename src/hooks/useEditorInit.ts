@@ -87,7 +87,7 @@ export function useEditorInit({ config, onError }: UseEditorInitOptions) {
           // LP invariants (courses are terminal leaves; isAssessmentCourse is
           // local-only) don't survive the hierarchy read — restore them.
           if (rootNode && config.config.primaryCategory === 'Learning Path') {
-            rootNode = await normalizeLearningPathTree(rootNode);
+            rootNode = normalizeLearningPathTree(rootNode);
           }
           if (!cancelled) {
             const nodes = rootNode ? [rootNode] : [];

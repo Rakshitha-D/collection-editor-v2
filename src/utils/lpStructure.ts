@@ -1,76 +1,20 @@
-import { readCourseHierarchy } from '../api/hierarchy';
+import { fetchContentDetails } from '../api/content';
 import type { INode } from '../types/editor';
 import type { ITerm } from '../types/framework';
 
-export interface HierarchyLeafLike {
-  objectType?: string;
-  mimeType?: string;
-  children?: HierarchyLeafLike[];
-}
-
-const QUML_QUESTIONSET_MIMETYPE = 'application/vnd.sunbird.questionset';
+export const EVALUATION_COURSE_CATEGORY = 'Evaluation Course';
 
 /**
- * True iff the course has at least one leaf and every leaf is a QuML
- * QuestionSet — legacy ECML assessment resources
- * (application/vnd.ekstep.ecml-archive) do NOT qualify even though they're
- * historically labelled "assessment" content. An empty course (no leaves at
- * all) is not an assessment course.
+ * A course qualifies for the Prior/Outcome Assessment slots and a Level
+ * Exam only by being explicitly authored under the Evaluation Course
+ * primaryCategory (whose own profile restricts its content to Question
+ * Sets/Course Assessment — see evaluationCourseProfile) — never by
+ * inspecting its content shape. This is a synchronous, no-network check:
+ * every course node (from a search result or a loaded hierarchy) already
+ * carries its own primaryCategory.
  */
-export function isAssessmentCourse(course: HierarchyLeafLike): boolean {
-  let hasLeaf = false;
-  let allQuestionSets = true;
-
-  function walk(nodes: HierarchyLeafLike[]) {
-    for (const node of nodes) {
-      const children = node.children ?? [];
-      if (children.length > 0) {
-        walk(children);
-        continue;
-      }
-      hasLeaf = true;
-      const isQuml = node.objectType === 'QuestionSet' && node.mimeType === QUML_QUESTIONSET_MIMETYPE;
-      if (!isQuml) allQuestionSets = false;
-    }
-  }
-
-  walk(course.children ?? []);
-  return hasLeaf && allQuestionSets;
-}
-
-export interface AssessmentCourseInfo {
-  qualifies: boolean;
-  /** The course's full metadata from its own hierarchy read (children stripped).
-   *  Needed because composite-search results only carry the LP framework's
-   *  skill field — a course tagged under a different framework (e.g. USF)
-   *  would otherwise land in the tree without its framework or skill tags. */
-  meta: Record<string, unknown>;
-}
-
-// Per-session cache — the check requires a full course-hierarchy read, so
-// avoid re-fetching for a course already validated (e.g. re-opening the same
-// pre/post slot picker, or the Phase 5 publish-time re-check).
-const assessmentCourseCache = new Map<string, AssessmentCourseInfo>();
-
-export async function getAssessmentCourseInfo(courseId: string): Promise<AssessmentCourseInfo> {
-  const cached = assessmentCourseCache.get(courseId);
-  if (cached) return cached;
-  const course = await readCourseHierarchy(courseId);
-  const { children: _children, ...meta } = (course ?? {}) as Record<string, unknown>;
-  const info: AssessmentCourseInfo = {
-    qualifies: isAssessmentCourse(course as HierarchyLeafLike),
-    meta,
-  };
-  assessmentCourseCache.set(courseId, info);
-  return info;
-}
-
-export async function checkAssessmentCourse(courseId: string): Promise<boolean> {
-  return (await getAssessmentCourseInfo(courseId)).qualifies;
-}
-
-export function clearAssessmentCourseCache(): void {
-  assessmentCourseCache.clear();
+export function isEvaluationCourse(course: { primaryCategory?: string } | undefined): boolean {
+  return course?.primaryCategory === EVALUATION_COURSE_CATEGORY;
 }
 
 /**
@@ -81,39 +25,23 @@ export function clearAssessmentCourseCache(): void {
  *    leaves, so re-flatten them;
  *  - the isAssessmentCourse flag is local-only (stripped from saves), so
  *    without it no Level is recognized as a pre/post slot and "Skills
- *    covered"/slot rules read the path as having no assessments. Recompute
- *    it from the course's expanded subtree when the read included one, else
- *    (single-course first/last Levels only) via a checkAssessmentCourse read.
+ *    covered"/slot rules read the path as having no assessments. Recomputed
+ *    from the course's OWN primaryCategory — always present on the loaded
+ *    node, no network read needed.
  */
-export async function normalizeLearningPathTree(root: INode): Promise<INode> {
-  const levels = root.children ?? [];
-  const normalized: INode[] = [];
-  for (let i = 0; i < levels.length; i++) {
-    const level = levels[i];
-    const children = level.children ?? [];
-    const courses: INode[] = [];
-    for (const child of children) {
-      let flagged = !!child.metadata?.['isAssessmentCourse'];
-      if (!flagged) {
-        if ((child.children ?? []).length > 0) {
-          flagged = isAssessmentCourse(child as HierarchyLeafLike);
-        } else if (children.length === 1 && (i === 0 || i === levels.length - 1)) {
-          try {
-            flagged = await checkAssessmentCourse(child.identifier);
-          } catch (e) {
-            console.error('[lpStructure] assessment-course check failed on load:', e);
-          }
-        }
-      }
-      courses.push({
+export function normalizeLearningPathTree(root: INode): INode {
+  const normalized = (root.children ?? []).map((level) => ({
+    ...level,
+    children: (level.children ?? []).map((child) => {
+      const flagged = !!child.metadata?.['isAssessmentCourse'] || isEvaluationCourse(child.metadata as { primaryCategory?: string } | undefined);
+      return {
         ...child,
         isFolder: false,
         children: [],
         metadata: { ...(child.metadata ?? {}), ...(flagged ? { isAssessmentCourse: true } : {}) },
-      });
-    }
-    normalized.push({ ...level, children: courses });
-  }
+      };
+    }),
+  }));
   return { ...root, children: normalized };
 }
 
@@ -546,9 +474,11 @@ export function validateLearningPathStructure(
 }
 
 /**
- * Re-verifies the pre/post assessment courses are STILL question-set-only at
- * publish time (Phase 1 item 6 / Phase 5: "the course may have changed since
- * it was linked"). Separate from validateLearningPathStructure because it
+ * Re-verifies the pre/post assessment courses are STILL categorized
+ * Evaluation Course at publish time — an author could re-tag a linked
+ * course's category after it was added to the path. A lightweight content
+ * read (not a hierarchy walk — qualification is a single metadata field
+ * now) suffices. Separate from validateLearningPathStructure because it
  * requires a network read; callers should run it alongside the sync checks,
  * not instead of them.
  */
@@ -561,11 +491,11 @@ export async function revalidateAssessmentSlots(root: INode | undefined): Promis
   for (const [lvl, label] of ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const)) {
     if (!lvl || !isAssessmentLevel(lvl)) continue;
     const courseId = lvl.children![0].id;
-    const stillQualifies = await checkAssessmentCourse(courseId);
-    if (!stillQualifies) {
+    const current = await fetchContentDetails(courseId);
+    if (!isEvaluationCourse(current)) {
       issues.push({
         code: 'slotCourseChanged', nodeId: lvl.id,
-        message: `${label}'s course is no longer question-set-only — pick a different course.`,
+        message: `${label}'s course is no longer an Evaluation Course — pick a different course.`,
       });
     }
   }

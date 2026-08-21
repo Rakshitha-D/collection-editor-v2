@@ -6,7 +6,7 @@ import { useUiStore } from '../store/ui.store';
 import { useSkillCategory } from './useSkillCategory';
 import { useSkillCatalog, type SkillCatalogEntry } from './useSkillCatalog';
 import { useSkillScope } from './useSkillScope';
-import { isAssessmentLevel } from '../utils/lpStructure';
+import { EVALUATION_COURSE_CATEGORY, isAssessmentLevel } from '../utils/lpStructure';
 import { compositeSearch, DEFAULT_SEARCH_FIELDS } from '../api/content';
 import { LIBRARY_PRIMARY_CATEGORIES } from '../types/content';
 import type { IContent } from '../types/content';
@@ -44,10 +44,16 @@ export function groupSkillsByCode(
 
 /**
  * LP profile library filter VARIANTS — search is strictly constrained to
- * Courses. Filling the pre/post assessment slot has no competency
- * constraint (the prior assessment *defines* the skill scope, so it can't
- * be filtered by it). Browsing a Level otherwise shows every Course by
- * default, narrowed to the selected skills once the author has picked any.
+ * Courses, or to Evaluation Course specifically while picking the
+ * Prior/Outcome slot or a Level Exam course (isPickingEvaluationCourse) —
+ * a course can only ever fill those roles by being authored under that
+ * category (see isEvaluationCourse). Filling the pre/post assessment slot
+ * additionally has no competency constraint (the prior assessment *defines*
+ * the skill scope, so it can't be filtered by it) — a Level Exam pick, by
+ * contrast, IS still narrowed by the Level's selected skills, same as any
+ * other course added to that Level. Browsing a Level otherwise shows every
+ * Course by default, narrowed to the selected skills once the author has
+ * picked any.
  *
  * Composite search ANDs top-level filter keys — there's no native cross-
  * field OR — so a selection spanning multiple codes returns one filter
@@ -57,9 +63,12 @@ export function groupSkillsByCode(
  */
 export function buildLpLibraryFilterVariants(
   activeAssessmentSlot: 'pre' | 'post' | null,
+  isPickingEvaluationCourse: boolean,
   codeGroups: Record<string, string[]>,
 ): Array<Record<string, unknown>> {
-  const base: Record<string, unknown> = { primaryCategory: ['Course'] };
+  const base: Record<string, unknown> = {
+    primaryCategory: [isPickingEvaluationCourse ? EVALUATION_COURSE_CATEGORY : 'Course'],
+  };
   if (activeAssessmentSlot) return [base];
   const entries = Object.entries(codeGroups);
   if (entries.length === 0) return [base];
@@ -180,6 +189,7 @@ export function useLibrary() {
   const allowedCategories = useAllowedCategories();
   const editorProfile = useEditorStore((s) => s.editorProfile);
   const activeAssessmentSlot = useUiStore((s) => s.activeAssessmentSlot);
+  const activeLevelExamTarget = useUiStore((s) => s.activeLevelExamTarget);
   const activeNodeMeta = useTreeStore((s) => s.activeNodeMeta);
   const selectedNodeId = useTreeStore((s) => s.selectedNodeId);
   const getNodeById = useTreeStore((s) => s.getNodeById);
@@ -232,7 +242,7 @@ export function useLibrary() {
         const searchFields = buildSearchFields(editorProfile.competencyScoped, allSkillCategoryCodes);
 
         if (editorProfile.competencyScoped) {
-          const variants = buildLpLibraryFilterVariants(activeAssessmentSlot, codeGroups);
+          const variants = buildLpLibraryFilterVariants(activeAssessmentSlot, !!activeAssessmentSlot || !!activeLevelExamTarget, codeGroups);
           const results = await Promise.all(variants.map((filters) => compositeSearch({
             filters: { status: ['Live'], ...filters },
             query,
@@ -282,7 +292,7 @@ export function useLibrary() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allowedCategories, channel, editorProfile, activeAssessmentSlot, JSON.stringify(codeGroups), allSkillCategoryCodes.join('|'), emptyReason],
+    [allowedCategories, channel, editorProfile, activeAssessmentSlot, activeLevelExamTarget, JSON.stringify(codeGroups), allSkillCategoryCodes.join('|'), emptyReason],
   );
 
   // Initial/channel-driven load — applies to every profile.
@@ -299,18 +309,19 @@ export function useLibrary() {
   }, [channel, editorProfile.key]);
 
   // LP-only: re-run on anything that changes what the search should be
-  // scoped to (assessment slot armed, a Level's selected skills, or which
-  // node is selected — moving from a skills-empty Level to the root/another
-  // node can change emptyReason without changing selectedLevelSkills itself,
-  // e.g. both read as []). Gated by competencyScoped so Collection's
-  // user-driven search/filter/sort state (set via the search/setFilter/etc.
-  // callbacks below) is never silently reset just because the author
-  // clicked a different tree node.
+  // scoped to (assessment slot or Level Exam target armed, a Level's
+  // selected skills, or which node is selected — moving from a
+  // skills-empty Level to the root/another node can change emptyReason
+  // without changing selectedLevelSkills itself, e.g. both read as []).
+  // Gated by competencyScoped so Collection's user-driven search/filter/
+  // sort state (set via the search/setFilter/etc. callbacks below) is
+  // never silently reset just because the author clicked a different tree
+  // node.
   useEffect(() => {
     if (!editorProfile.competencyScoped) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorProfile.competencyScoped, activeAssessmentSlot, selectedLevelSkills.join('|'), selectedNodeId]);
+  }, [editorProfile.competencyScoped, activeAssessmentSlot, activeLevelExamTarget, selectedLevelSkills.join('|'), selectedNodeId]);
 
   const search = useCallback(
     (query: string) => {

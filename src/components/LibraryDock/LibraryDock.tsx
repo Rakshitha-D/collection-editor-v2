@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Search, Library, SlidersHorizontal, ArrowUpAZ, Clock, PanelRightClose, Info, X } from 'lucide-react';
 import type { EditorMode } from '../../types/editor';
 import type { IContent } from '../../types/content';
@@ -9,7 +9,7 @@ import { useLabels } from '../../hooks/useLabels';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
 import { useUiStore } from '../../store/ui.store';
-import { getAssessmentCourseInfo, getLevelExamCourse, isAssessmentSlotFilled, isPrePostSlot, wouldBecomeAmbiguousSlot } from '../../utils/lpStructure';
+import { getLevelExamCourse, isAssessmentSlotFilled, isEvaluationCourse, isPrePostSlot, wouldBecomeAmbiguousSlot } from '../../utils/lpStructure';
 import { LibraryCard } from './LibraryCard';
 import { FilterChips } from './FilterChips';
 import { LibraryFilterPanel } from './LibraryFilterPanel';
@@ -78,142 +78,82 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<LibraryFilters>({});
   const [previewContent, setPreviewContent] = useState<IContent | null>(null);
-  const [checkingAssessmentCourseId, setCheckingAssessmentCourseId] = useState<string | null>(null);
 
   // Build a set of already-added resource identifiers for O(1) lookup
   const addedIds = useMemo(() => collectResourceIds(treeData), [treeData]);
 
-  // While a Prior/Outcome/Level Exam target is armed, only a QuestionSet-
-  // only course can actually be picked — narrow the visible list to those,
-  // instead of showing every course and letting most picks bounce off the
-  // "isn't a question-set-only course" toast. There's no server-side filter
-  // for "leaves are all QuestionSets" (composite search only sees the
-  // course's own primaryCategory, not its expanded hierarchy), so this
-  // re-checks the current page client-side — getAssessmentCourseInfo's own
-  // cache means repeat views of the same course cost nothing. null = not
-  // filtering (normal browsing); keeps the previous qualifying set visible
-  // while a re-check for a newly-loaded page is still in flight, rather
-  // than flashing an empty list.
-  const [qualifyingIds, setQualifyingIds] = useState<Set<string> | null>(null);
-  const isPickingAssessmentCourse = !!activeAssessmentSlot || !!activeLevelExamTarget;
-
-  useEffect(() => {
-    if (!isPickingAssessmentCourse) {
-      setQualifyingIds(null);
-      return;
-    }
-    let cancelled = false;
-    Promise.all(
-      content.map(async (item) => {
-        try {
-          const { qualifies } = await getAssessmentCourseInfo(item.identifier);
-          return qualifies ? item.identifier : null;
-        } catch {
-          return null;
-        }
-      }),
-    ).then((ids) => {
-      if (!cancelled) setQualifyingIds(new Set(ids.filter((id): id is string => !!id)));
-    });
-    return () => { cancelled = true; };
-  }, [isPickingAssessmentCourse, content]);
-
-  const visibleContent = qualifyingIds ? content.filter((item) => qualifyingIds.has(item.identifier)) : content;
-
-  // Filling the Prior/Outcome Assessment slot: only a question-set-only
-  // course qualifies, and there's no metadata marker for that — the check
-  // requires reading the course's own hierarchy (Phase 1), done here on
-  // selection rather than filtering search results.
+  // Filling the Prior/Outcome Assessment slot: useLibrary's search is
+  // already filtered to primaryCategory: 'Evaluation Course' while a slot
+  // is armed, so `content` only ever contains eligible courses — the
+  // isEvaluationCourse check below is a defensive fallback, not the
+  // primary gate.
   const handleFillAssessmentSlot = useCallback(
-    async (item: IContent, slot: 'pre' | 'post') => {
+    (item: IContent, slot: 'pre' | 'post') => {
       const rootId = treeData[0]?.id;
-      if (!rootId || checkingAssessmentCourseId) return;
+      if (!rootId) return;
       // The slot stays armed while its detail page is open, so an add click
       // can arrive for an already-filled slot — say so up front instead of
-      // running the question-set check and reporting the wrong problem.
+      // running the Evaluation Course check and reporting the wrong problem.
       if (isAssessmentSlotFilled(treeData[0]?.children ?? [], slot)) {
         toast.error(slot === 'pre'
           ? lbl.learningPath.priorSlotFilledToast
           : lbl.learningPath.outcomeSlotFilledToast);
         return;
       }
-      setCheckingAssessmentCourseId(item.identifier);
-      try {
-        const { qualifies, meta } = await getAssessmentCourseInfo(item.identifier);
-        if (!qualifies) {
-          toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
-          return;
-        }
-        // Merge the course's own full metadata (framework + its skill tags) —
-        // the search item only carries the LP framework's skill field, which
-        // is the wrong one when the course was tagged under another framework.
-        const enriched = { ...item, ...meta } as unknown as IContent;
-        const added = addResource(enriched, rootId, { isAssessmentCourse: true, slot });
-        if (added === false) {
-          toast.error(lbl.learningPath.bothSlotsFilledToast);
-          return;
-        }
-        toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
-        setActiveAssessmentSlot(null);
-      } catch (e) {
-        console.error('[LibraryDock] assessment-course check failed:', e);
-        toast.error(lbl.learningPath.assessmentCheckFailedToast);
-      } finally {
-        setCheckingAssessmentCourseId(null);
+      if (!isEvaluationCourse(item)) {
+        toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
+        return;
       }
+      const added = addResource(item, rootId, { isAssessmentCourse: true, slot });
+      if (added === false) {
+        toast.error(lbl.learningPath.bothSlotsFilledToast);
+        return;
+      }
+      toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
+      setActiveAssessmentSlot(null);
     },
-    [treeData, addResource, setActiveAssessmentSlot, checkingAssessmentCourseId, lbl],
+    [treeData, addResource, setActiveAssessmentSlot, lbl],
   );
 
-  // Filling a content Level's optional Level Exam course — same
-  // question-set-only check as the Prior/Outcome slots, scoped to one
-  // Level (by id) instead of root.
+  // Filling a content Level's optional Level Exam course — same Evaluation
+  // Course check as the Prior/Outcome slots, scoped to one Level (by id)
+  // instead of root.
   const handleFillLevelExam = useCallback(
-    async (item: IContent, levelId: string) => {
+    (item: IContent, levelId: string) => {
       const levelNode = useTreeStore.getState().getNodeById(levelId);
-      if (!levelNode || checkingAssessmentCourseId) return;
+      if (!levelNode) return;
       if (getLevelExamCourse(levelNode)) {
         toast.error(lbl.learningPath.levelExamAlreadyFilledToast);
         return;
       }
-      setCheckingAssessmentCourseId(item.identifier);
-      try {
-        const { qualifies, meta } = await getAssessmentCourseInfo(item.identifier);
-        if (!qualifies) {
-          toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
-          return;
-        }
-        // A Level Exam course reduces this Level to just itself until other
-        // content is added — first/last position is then indistinguishable
-        // from a genuine Prior/Outcome slot on the next reload. Doesn't
-        // apply once the Level already has other content (children.length
-        // !== 1 regardless of this course's shape) or sits in a middle
-        // position — see wouldBecomeAmbiguousSlot's own doc.
-        const rootLevels = treeData[0]?.children ?? [];
-        if (wouldBecomeAmbiguousSlot(rootLevels, levelNode)) {
-          toast.error(lbl.learningPath.levelNeedsMixedContentToast);
-          return;
-        }
-        const enriched = { ...item, ...meta } as unknown as IContent;
-        const added = addResource(enriched, levelId, { isAssessmentCourse: true });
-        if (added === false) {
-          toast.error(lbl.learningPath.itemAlreadyInPathToast.replace('{name}', item.name));
-          return;
-        }
-        toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
-        setActiveLevelExamTarget(null);
-      } catch (e) {
-        console.error('[LibraryDock] level exam course check failed:', e);
-        toast.error(lbl.learningPath.assessmentCheckFailedToast);
-      } finally {
-        setCheckingAssessmentCourseId(null);
+      if (!isEvaluationCourse(item)) {
+        toast.error(lbl.learningPath.notAssessmentCourseToast.replace('{name}', item.name));
+        return;
       }
+      // A Level Exam course reduces this Level to just itself until other
+      // content is added — first/last position is then indistinguishable
+      // from a genuine Prior/Outcome slot on the next reload. Doesn't
+      // apply once the Level already has other content (children.length
+      // !== 1 regardless of this course's shape) or sits in a middle
+      // position — see wouldBecomeAmbiguousSlot's own doc.
+      const rootLevels = treeData[0]?.children ?? [];
+      if (wouldBecomeAmbiguousSlot(rootLevels, levelNode)) {
+        toast.error(lbl.learningPath.levelNeedsMixedContentToast);
+        return;
+      }
+      const added = addResource(item, levelId, { isAssessmentCourse: true });
+      if (added === false) {
+        toast.error(lbl.learningPath.itemAlreadyInPathToast.replace('{name}', item.name));
+        return;
+      }
+      toast.success(lbl.libraryDock.itemAddedToast.replace('{name}', item.name));
+      setActiveLevelExamTarget(null);
     },
-    [treeData, addResource, setActiveLevelExamTarget, checkingAssessmentCourseId, lbl],
+    [treeData, addResource, setActiveLevelExamTarget, lbl],
   );
 
   const handleAdd = useCallback(
-    async (item: IContent) => {
+    (item: IContent) => {
       if (activeAssessmentSlot) {
         handleFillAssessmentSlot(item, activeAssessmentSlot);
         return;
@@ -263,20 +203,17 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       // Interim guard (no persisted "why is this Level shaped like this"
       // marker exists yet — see plan doc): an empty first/last Level about
       // to receive its only course is the exact shape a Prior/Outcome slot
-      // has, so a QuestionSet-only course landing here unflagged would read
-      // back as one on the next reload. Scoped to the generic add path
-      // only — the dedicated Prior/Outcome picker (handleFillAssessmentSlot)
-      // and Level Exam picker (handleFillLevelExam), both above, are
-      // separate flows with their own copy of this same check; a Level Exam
-      // course paired with other content in the same Level never hits this
+      // has, so an Evaluation Course landing here unflagged would read back
+      // as one on the next reload. Scoped to the generic add path only —
+      // the dedicated Prior/Outcome picker (handleFillAssessmentSlot) and
+      // Level Exam picker (handleFillLevelExam), both above, are separate
+      // flows with their own copy of this same check; a Level Exam course
+      // paired with other content in the same Level never hits this
       // regardless (children.length !== 1 once there's more than the one
       // course).
-      if (isLearningPath && wouldBecomeAmbiguousSlot(treeData[0]?.children ?? [], selectedNode)) {
-        const { qualifies } = await getAssessmentCourseInfo(item.identifier);
-        if (qualifies) {
-          toast.error(lbl.learningPath.levelNeedsMixedContentToast);
-          return;
-        }
+      if (isLearningPath && wouldBecomeAmbiguousSlot(treeData[0]?.children ?? [], selectedNode) && isEvaluationCourse(item)) {
+        toast.error(lbl.learningPath.levelNeedsMixedContentToast);
+        return;
       }
       const added = addResource(item, selectedNodeId);
       if (added === false) {
@@ -430,7 +367,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
       <div className={styles.mainArea}>
         {/* Card list */}
         <div className={styles.cardList} role="list" aria-label={lbl.libraryDock.libraryContentAriaLabel}>
-          {isLoading && visibleContent.length === 0 ? (
+          {isLoading && content.length === 0 ? (
             // Loading skeleton
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={styles.skeleton} aria-hidden="true">
@@ -441,9 +378,9 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
                 </div>
               </div>
             ))
-          ) : visibleContent.length > 0 ? (
+          ) : content.length > 0 ? (
             <>
-              {visibleContent.map((item) => (
+              {content.map((item) => (
                 <LibraryCard
                   key={item.identifier}
                   item={item}
