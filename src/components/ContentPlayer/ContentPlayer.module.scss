@@ -71,14 +71,14 @@ $type-other : #64748b;
   object-fit: cover;
   flex-shrink: 0;
   opacity: .9;
-  border: 1.5px solid color-mix(in srgb, var(--sbx-white) 20%, transparent);
+  border: 1.5px solid rgba(255,255,255,.2);
 }
 
 .playerHeaderTitle {
   flex: 1;
   font-size: 13px;
   font-weight: 600;
-  color: color-mix(in srgb, var(--sbx-white) 92%, transparent);
+  color: rgba(255,255,255,.92);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -95,7 +95,7 @@ $type-other : #64748b;
   font-weight: 700;
   letter-spacing: .5px;
   text-transform: uppercase;
-  color: var(--sbx-white);
+  color: #fff;
   flex-shrink: 0;
   pointer-events: auto;
 
@@ -114,7 +114,7 @@ $type-other : #64748b;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--sbx-white) 70%, transparent);
+  background: rgba(255,255,255,.7);
 }
 
 // ── 16:9 player area ──────────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ $type-other : #64748b;
   border-radius: 12px;
   object-fit: cover;
   opacity: .85;
-  border: 2px solid color-mix(in srgb, var(--sbx-white) 15%, transparent);
+  border: 2px solid rgba(255,255,255,.15);
 }
 
 .coverPlayRing {
@@ -174,11 +174,11 @@ $type-other : #64748b;
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--sbx-white) 30%, transparent);
+  border: 2px solid rgba(255,255,255,.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--sbx-white) 8%, transparent);
+  background: rgba(255,255,255,.08);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -187,13 +187,13 @@ $type-other : #64748b;
   height: 0;
   border-top: 11px solid transparent;
   border-bottom: 11px solid transparent;
-  border-left: 18px solid color-mix(in srgb, var(--sbx-white) 85%, transparent);
+  border-left: 18px solid rgba(255,255,255,.85);
   margin-left: 4px;
 }
 
 .coverLabel {
   font-size: 12px;
-  color: color-mix(in srgb, var(--sbx-white) 45%, transparent);
+  color: rgba(255,255,255,.45);
   letter-spacing: .5px;
 }
 
@@ -240,7 +240,7 @@ $type-other : #64748b;
   gap: 0;
   padding: 0 4px;
   background: #161b27;
-  border-top: 1px solid color-mix(in srgb, var(--sbx-white) 7%, transparent);
+  border-top: 1px solid rgba(255,255,255,.07);
   overflow-x: auto;
   flex-shrink: 0;
   min-height: 38px;
@@ -257,12 +257,12 @@ $type-other : #64748b;
   padding: 0 12px;
   height: 38px;
   flex-shrink: 0;
-  border-right: 1px solid color-mix(in srgb, var(--sbx-white) 7%, transparent);
+  border-right: 1px solid rgba(255,255,255,.07);
   font-size: 12px;
-  color: color-mix(in srgb, var(--sbx-white) 60%, transparent);
+  color: rgba(255,255,255,.6);
   transition: color .15s;
 
-  &:hover { color: color-mix(in srgb, var(--sbx-white) 90%, transparent); }
+  &:hover { color: rgba(255,255,255,.9); }
   &:last-child { border-right: none; }
 }
 
@@ -271,7 +271,7 @@ $type-other : #64748b;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .4px;
-  color: color-mix(in srgb, var(--sbx-white) 35%, transparent);
+  color: rgba(255,255,255,.35);
   margin-right: 2px;
 }
 
@@ -304,7 +304,7 @@ $type-other : #64748b;
 
 .playerErrorMsg {
   font-size: 13px;
-  color: color-mix(in srgb, var(--sbx-white) 50%, transparent);
+  color: rgba(255, 255, 255, .5);
   max-width: 260px;
   line-height: 1.5;
 }
@@ -318,12 +318,12 @@ $type-other : #64748b;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  background: var(--sbx-white);
+  background: #fff;
 
   .playerWrapper {
     flex: 1;
     min-height: 0;
-    background: var(--sbx-white);
+    background: #fff;
     // Stretch the custom element to fill the area instead of centering it.
     align-items: stretch;
     justify-content: stretch;

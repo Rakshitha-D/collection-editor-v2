@@ -12,7 +12,7 @@
 // "full" variant only (the tree's already-linked-course page) — the Library
 // preview modal ("compact") stays a bare Units list.
 .detailsCard, .unitsCard {
-  background: var(--sbx-white);
+  background: white;
   border: 1px solid var(--sbx-gray-100);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-1);
@@ -109,7 +109,7 @@
   // (TreeNode.module.scss's .folderIcon) — a Unit is the same kind of
   // structural folder, not a content-type square.
   background: var(--sbx-primary);
-  color: var(--sbx-white);
+  color: white;
   flex-shrink: 0;
 }
 
@@ -213,6 +213,6 @@
   border-radius: var(--sbx-r-pill);
   color: var(--sbx-primary);
   border: 1px solid var(--sbx-primary);
-  background: color-mix(in srgb, var(--sbx-primary) 12%, var(--sbx-white));
+  background: color-mix(in srgb, var(--sbx-primary) 12%, white);
   white-space: nowrap;
 }

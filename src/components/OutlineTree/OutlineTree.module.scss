@@ -13,7 +13,7 @@
   height: 40px;
   border-bottom: 1px solid var(--sbx-gray-200);
   flex-shrink: 0;
-  background: var(--sbx-white);
+  background: white;
 }
 
 .sectionLabel {
@@ -63,7 +63,7 @@
   right: 0;
   z-index: 200;
   min-width: 220px;
-  background: var(--sbx-white);
+  background: white;
   border: 1px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-2, 0 4px 16px rgba(0,0,0,0.12));

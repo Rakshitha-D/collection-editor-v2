@@ -4,7 +4,7 @@
   justify-content: space-between;
   height: var(--sbx-topbar-h, 60px);
   padding: 0 20px;
-  background: var(--sbx-white);
+  background: white;
   border-bottom: 1px solid var(--sbx-gray-200);
   box-shadow: var(--sbx-shadow-1);
   flex-shrink: 0;
@@ -35,7 +35,7 @@
   height: 32px;
   border-radius: var(--sbx-r-sm);
   border: 1.5px solid var(--sbx-gray-200);
-  background: var(--sbx-white);
+  background: white;
   cursor: pointer;
   color: var(--sbx-gray-600);
   flex-shrink: 0;
@@ -111,7 +111,7 @@
   padding: 0 14px;
   border-radius: var(--sbx-r-sm);
   border: 1.5px solid var(--sbx-gray-200);
-  background: var(--sbx-white);
+  background: white;
   cursor: pointer;
   color: var(--sbx-gray-600);
   font-family: var(--sbx-font);
@@ -147,7 +147,7 @@
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  background: var(--sbx-white);
+  background: white;
   border: 1.5px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md, 8px);
   box-shadow: var(--sbx-shadow-2, 0 4px 16px rgba(0,0,0,0.12));
@@ -222,7 +222,7 @@
 }
 
 .sbModal {
-  background: var(--sbx-white);
+  background: white;
   border-radius: var(--sbx-r-md, 8px);
   box-shadow: var(--sbx-shadow-3, 0 8px 32px rgba(0, 0, 0, 0.18));
   width: 480px;

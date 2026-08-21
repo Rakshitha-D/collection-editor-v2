@@ -57,7 +57,7 @@
   flex-direction: column;
   gap: 8px;
   padding-bottom: 12px;
-  background: var(--sbx-white);
+  background: white;
   padding: 24px;
   border: 1px solid var(--sbx-gray-100);
   border-radius: var(--sbx-r-md);
@@ -99,7 +99,7 @@
   padding: 6px 8px 6px 13px;
   border-radius: var(--sbx-r-pill);
   background: var(--sbx-primary);
-  color: var(--sbx-white);
+  color: white;
   font-size: 11.5px;
   font-weight: 500;
 }
@@ -181,7 +181,7 @@
   z-index: 8;
   max-height: 240px;
   overflow-y: auto;
-  background: var(--sbx-white);
+  background: white;
   border: 1px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-3);
@@ -220,7 +220,7 @@
   height: 18px;
   border-radius: 5px;
   border: 1.5px solid var(--sbx-gray-300);
-  color: var(--sbx-white);
+  color: white;
 }
 
 .skillCheckboxChecked {
@@ -258,7 +258,7 @@
   flex-direction: column;
   gap: 8px;
   padding-bottom: 12px;
-  background-color: var(--sbx-white);
+  background-color: white;
   padding: 24px;
   border: 1px solid var(--sbx-gray-100);
   border-radius: var(--sbx-r-md);
@@ -280,7 +280,7 @@
   // not a neutral gray card — this row represents a *confirmed* linked
   // question-set-only course, not a generic content row.
   border: 1px solid var(--sbx-primary-hover);
-  background: color-mix(in srgb, var(--sbx-primary) 6%, var(--sbx-white));
+  background: color-mix(in srgb, var(--sbx-primary) 6%, white);
   border-radius: 12px;
   cursor: pointer;
 }
@@ -293,7 +293,7 @@
   height: 34px;
   border-radius: 9px;
   background: var(--sbx-primary);
-  color: var(--sbx-white);
+  color: white;
   flex-shrink: 0;
 }
 
@@ -323,7 +323,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background-color: var(--sbx-white);
+  background-color: white;
   padding: 24px;
   border: 1px solid var(--sbx-gray-100);
   border-radius: var(--sbx-r-md);
@@ -357,7 +357,7 @@
   padding: 12px 14px;
   border: 1px solid var(--sbx-gray-100);
   border-radius: 12px;
-  background: var(--sbx-white);
+  background: white;
 }
 
 .courseDragHandle {
@@ -381,7 +381,7 @@
   height: 34px;
   border-radius: 9px;
   background: var(--sbx-primary);
-  color: var(--sbx-white);
+  color: white;
   flex-shrink: 0;
 }
 
@@ -426,7 +426,7 @@
   font-weight: 500;
   color: var(--sbx-primary);
   border: 1px solid var(--sbx-primary);
-  background: color-mix(in srgb, var(--sbx-primary) 12%, var(--sbx-white));
+  background: color-mix(in srgb, var(--sbx-primary) 12%, white);
 }
 
 .menuWrap {
@@ -453,7 +453,7 @@
   right: 0;
   top: 100%;
   z-index: 100;
-  background: var(--sbx-white);
+  background: white;
   border: 1px solid var(--sbx-gray-200);
   border-radius: var(--sbx-r-md);
   box-shadow: var(--sbx-shadow-3);
@@ -542,5 +542,5 @@
   font-weight: 500;
   color: var(--sbx-error);
   border: 1px solid var(--sbx-error);
-  background: color-mix(in srgb, var(--sbx-error) 12%, var(--sbx-white));
+  background: color-mix(in srgb, var(--sbx-error) 12%, white);
 }

@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--sbx-white);
+  background: #fff;
 
   &.editable {
     cursor: pointer;
@@ -41,7 +41,7 @@
   height: 18px;
   border-radius: 50%;
   background: var(--sbx-error, #dc2626);
-  color: var(--sbx-white);
+  color: #fff;
   border: none;
   cursor: pointer;
   display: none;

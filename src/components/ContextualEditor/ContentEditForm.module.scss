@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 0;
   border-top: 1px solid var(--sbx-gray-200);
-  background: var(--sbx-white);
+  background: white;
   flex-shrink: 0;
 }
 
@@ -57,7 +57,7 @@
   padding: 4px 12px;
   border: 1px solid var(--sbx-gray-300);
   border-radius: var(--sbx-r-sm);
-  background: var(--sbx-white);
+  background: white;
   cursor: pointer;
   color: var(--sbx-gray-600);
   &:hover { border-color: var(--sbx-primary); color: var(--sbx-primary); }
@@ -198,7 +198,7 @@
   padding: 0 16px;
   border: 1.5px solid var(--sbx-gray-300);
   border-radius: var(--sbx-r-sm);
-  background: var(--sbx-white);
+  background: white;
   font-size: 13px;
   cursor: pointer;
   &:hover { border-color: var(--sbx-primary); color: var(--sbx-primary); }
