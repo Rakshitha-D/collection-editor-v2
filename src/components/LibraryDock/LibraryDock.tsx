@@ -154,19 +154,24 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
 
   const handleAdd = useCallback(
     (item: IContent) => {
-      // Every course carries a skill tag under its OWN framework — with no
-      // Curriculum chosen yet, the path has nothing to check that tag
-      // against, and the course would just get pruned the moment one is set.
-      if (isLearningPath && !hasExplicitCurriculum(treeData[0], treeCache)) {
-        toast.error(lbl.learningPath.selectCurriculumFirstToast);
-        return;
-      }
+      // Filling the Prior/Outcome Assessment slot or a Level Exam target
+      // picks an Evaluation Course, which defines the skill scope rather
+      // than conforming to one — it isn't required to belong to the path's
+      // chosen Curriculum, so these flows must bypass the Curriculum gate
+      // below entirely, not just skip the skill-tag check.
       if (activeAssessmentSlot) {
         handleFillAssessmentSlot(item, activeAssessmentSlot);
         return;
       }
       if (activeLevelExamTarget) {
         handleFillLevelExam(item, activeLevelExamTarget);
+        return;
+      }
+      // Every course carries a skill tag under its OWN framework — with no
+      // Curriculum chosen yet, the path has nothing to check that tag
+      // against, and the course would just get pruned the moment one is set.
+      if (isLearningPath && !hasExplicitCurriculum(treeData[0], treeCache)) {
+        toast.error(lbl.learningPath.selectCurriculumFirstToast);
         return;
       }
       if (!selectedNodeId) {

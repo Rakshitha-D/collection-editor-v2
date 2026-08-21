@@ -69,6 +69,11 @@ describe('computeLibraryEmptyReason', () => {
     expect(computeLibraryEmptyReason(true, undefined, true, null, [])).toBe('noCurriculum');
   });
 
+  it('is null with no Curriculum while picking an Evaluation Course for a slot/Level Exam — that course defines the scope, not the other way around', () => {
+    expect(computeLibraryEmptyReason(true, undefined, false, 'pre', [], true)).toBeNull();
+    expect(computeLibraryEmptyReason(true, undefined, true, null, [], true)).toBeNull();
+  });
+
   it('is noSkills only on a content Level with a Curriculum set but no skills selected', () => {
     expect(computeLibraryEmptyReason(true, 'NCF', true, null, [])).toBe('noSkills');
   });

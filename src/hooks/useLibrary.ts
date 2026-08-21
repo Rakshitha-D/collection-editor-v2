@@ -67,8 +67,11 @@ export function buildSearchFields(
  * there's no framework to scope search by, and with no skills selected on a
  * content Level there's nothing to filter by, so browsing must show nothing
  * rather than every course. Doesn't apply to Collection, root, an assessment
- * Level, or while filling the Prior/Outcome Assessment slot (that course
- * *defines* the skill scope, so it can't be filtered by it).
+ * Level, or while picking an Evaluation Course for the Prior/Outcome
+ * Assessment slot or a Level Exam — that course *defines* the skill scope
+ * (and isn't required to belong to any particular Curriculum), so neither
+ * gate applies while filling it. isPickingEvaluationCourse mirrors
+ * useLibrary's own activeAssessmentSlot-or-activeLevelExamTarget check.
  */
 export function computeLibraryEmptyReason(
   competencyScoped: boolean,
@@ -76,8 +79,10 @@ export function computeLibraryEmptyReason(
   isLpLevel: boolean,
   activeAssessmentSlot: 'pre' | 'post' | null,
   selectedSkills: string[],
+  isPickingEvaluationCourse = false,
 ): 'noCurriculum' | 'noSkills' | null {
   if (!competencyScoped) return null;
+  if (isPickingEvaluationCourse) return null;
   if (!frameworkId) return 'noCurriculum';
   if (isLpLevel && !activeAssessmentSlot && selectedSkills.length === 0) return 'noSkills';
   return null;
@@ -170,11 +175,12 @@ export function useLibrary() {
   const isLpLevel = editorProfile.competencyScoped
     && !!selectedNode?.isFolder && !!selectedNode.parent && !isAssessmentLevel(selectedNode);
 
+  const isPickingEvaluationCourse = !!activeAssessmentSlot || !!activeLevelExamTarget;
+
   const emptyReason = computeLibraryEmptyReason(
     editorProfile.competencyScoped, lpFrameworkId, isLpLevel, activeAssessmentSlot, selectedLevelSkills,
+    isPickingEvaluationCourse,
   );
-
-  const isPickingEvaluationCourse = !!activeAssessmentSlot || !!activeLevelExamTarget;
 
   const load = useCallback(
     async (
