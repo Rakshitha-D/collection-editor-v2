@@ -318,6 +318,94 @@
   color: var(--sbx-gray-500);
 }
 
+// ── Courses card (Learning Path content Level) ────────────────
+.coursesCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: var(--sbx-white);
+  padding: 24px;
+  border: 1px solid var(--sbx-gray-100);
+  border-radius: var(--sbx-r-md);
+  box-shadow: var(--sbx-shadow-1);
+}
+
+.coursesCardTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sbx-obsidian);
+}
+
+.coursesCardDescription {
+  margin: 0;
+  font-size: 13px;
+  color: var(--sbx-gray-500);
+  line-height: 1.5;
+}
+
+.coursesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.courseRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--sbx-gray-100);
+  border-radius: 12px;
+  background: var(--sbx-white);
+}
+
+.courseDragHandle {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  color: var(--sbx-gray-300);
+  cursor: grab;
+  flex-shrink: 0;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.courseIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--sbx-primary);
+  color: var(--sbx-white);
+  flex-shrink: 0;
+}
+
+.courseInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.courseTitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--sbx-obsidian);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.courseMeta {
+  font-size: 12px;
+  color: var(--sbx-gray-500);
+}
+
 .addRowIcon {
   display: flex;
   align-items: center;
