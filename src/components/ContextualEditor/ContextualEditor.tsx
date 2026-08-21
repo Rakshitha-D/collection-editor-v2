@@ -17,7 +17,7 @@ import { CourseDetailsPanel } from '../shared/CourseDetailsPanel';
 import { AssessmentDetailPanel } from './AssessmentDetailPanel';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { useLabels } from '../../hooks/useLabels';
-import { isAssessmentLevel, getLevelDisplayInfo } from '../../utils/lpStructure';
+import { isAssessmentLevel, getLevelDisplayInfo, isEvaluationCourse } from '../../utils/lpStructure';
 import styles from './ContextualEditor.module.scss';
 
 const QUESTIONSET_MIME = 'application/vnd.sunbird.questionset';
@@ -135,7 +135,10 @@ export const ContextualEditor: React.FC<ContextualEditorProps> = ({ editorMode, 
   // LP profile: a linked Course is never authored/played inline — show the
   // read-only "Course details" (Title, Units, Topics) instead of
   // ContentPlayer + ContentEditForm (design: "Course details ... Back to {Level}").
-  if (isLearningPath && isLeafContent && selectedNode.primaryCategory === 'Course') {
+  // A Level Exam course is linked the same way but categorized Evaluation
+  // Course, not Course — it needs the same treatment, not the generic
+  // leaf-content/player fallback below.
+  if (isLearningPath && isLeafContent && (selectedNode.primaryCategory === 'Course' || isEvaluationCourse(selectedNode))) {
     const parentLevelInfo = selectedNode.parent
       ? getLevelDisplayInfo(treeData[0]?.children ?? [], selectedNode.parent)
       : null;
