@@ -177,6 +177,13 @@ export function resolveOpenAssessmentSlot(levels: INode[]): 'pre' | 'post' | nul
  * content Levels between them. Simulates the same splice-based move
  * `reorderInParent` performs and checks the pinned Levels didn't shift,
  * rather than hand-deriving index-shift arithmetic.
+ *
+ * Also blocks moving a content Level (one that ISN'T already a pinned pre/
+ * post slot) into index 0 or the last index if it would land there already
+ * shaped like one (isAssessmentLevel — exactly one course, flagged) — e.g. a
+ * content Level whose only remaining course is its Level Exam course. Same
+ * ambiguity wouldBecomeAmbiguousSlot guards on add; without this, reordering
+ * could produce the identical shape without ever going through that check.
  */
 export function canReorderLevel(levels: INode[], fromIndex: number, toIndex: number): boolean {
   if (fromIndex < 0 || fromIndex >= levels.length) return false; // fail closed — nothing to move
@@ -184,7 +191,6 @@ export function canReorderLevel(levels: INode[], fromIndex: number, toIndex: num
   const postLevel = levels.length > 1 && isAssessmentLevel(levels[levels.length - 1])
     ? levels[levels.length - 1]
     : null;
-  if (!preLevel && !postLevel) return true;
 
   const simulated = [...levels];
   const [moved] = simulated.splice(fromIndex, 1);
@@ -192,6 +198,8 @@ export function canReorderLevel(levels: INode[], fromIndex: number, toIndex: num
 
   if (preLevel && simulated[0] !== preLevel) return false;
   if (postLevel && simulated[simulated.length - 1] !== postLevel) return false;
+  if (!preLevel && isAssessmentLevel(simulated[0])) return false;
+  if (!postLevel && simulated.length > 1 && isAssessmentLevel(simulated[simulated.length - 1])) return false;
   return true;
 }
 

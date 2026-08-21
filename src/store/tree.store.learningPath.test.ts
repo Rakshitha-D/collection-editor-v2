@@ -175,6 +175,45 @@ describe('tree.store (Learning Path) — per-Level course caps (addResource)', (
   });
 });
 
+describe('tree.store (Learning Path) — deleteNode ambiguous-slot guard', () => {
+  beforeEach(setupLpTree);
+
+  it('blocks removing the last regular course from a first/last content Level with a Level Exam course', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit'); // sole Level — first AND last
+    useTreeStore.getState().addResource(course('c1'), levelId);
+    useTreeStore.getState().addResource(course('a1'), levelId, { isAssessmentCourse: true });
+
+    expect(useTreeStore.getState().deleteNode('c1')).toBe(false);
+
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.children).toHaveLength(2); // nothing removed
+  });
+
+  it('allows removing the Level Exam course itself, leaving the regular course', () => {
+    const levelId = useTreeStore.getState().addNode('root', 'unit');
+    useTreeStore.getState().addResource(course('c1'), levelId);
+    useTreeStore.getState().addResource(course('a1'), levelId, { isAssessmentCourse: true });
+
+    expect(useTreeStore.getState().deleteNode('a1')).toBe(true);
+
+    const level = useTreeStore.getState().treeData[0].children!.find((c) => c.id === levelId)!;
+    expect(level.children!.map((c) => c.id)).toEqual(['c1']);
+  });
+
+  it('allows removing the last regular course from a MIDDLE content Level with a Level Exam course — position, not shape, decides the ambiguity', () => {
+    useTreeStore.getState().addNode('root', 'unit'); // l1
+    const midLevelId = useTreeStore.getState().addNode('root', 'unit'); // l2 — genuinely in the middle
+    useTreeStore.getState().addNode('root', 'unit'); // l3
+    useTreeStore.getState().addResource(course('c1'), midLevelId);
+    useTreeStore.getState().addResource(course('a1'), midLevelId, { isAssessmentCourse: true });
+
+    expect(useTreeStore.getState().deleteNode('c1')).toBe(true);
+
+    const mid = useTreeStore.getState().treeData[0].children!.find((c) => c.id === midLevelId)!;
+    expect(mid.children!.map((c) => c.id)).toEqual(['a1']);
+  });
+});
+
 describe('tree.store (Learning Path) — slot pinning (reorderChildren)', () => {
   beforeEach(setupLpTree);
 

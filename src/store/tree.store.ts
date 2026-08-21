@@ -17,7 +17,7 @@ interface TreeState {
   selectNode: (id: string) => void;
   updateNode: (id: string, patch: Record<string, unknown>, extraMirrorKeys?: string[]) => void;
   addNode: (parentId: string, type: 'unit' | 'subunit') => string;
-  deleteNode: (id: string) => void;
+  deleteNode: (id: string) => boolean;
   reorderChildren: (parentId: string, fromIndex: number, toIndex: number) => void;
   addResource: (content: IContent, nodeId: string, opts?: { isAssessmentCourse?: boolean; slot?: 'pre' | 'post' }) => boolean;
   markDirty: () => void;
@@ -321,11 +321,31 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     // Never allow the root/collection node to be removed — it would leave the
     // tree empty with no way to add units back or recover in the UI.
     const rootId = get().treeData[0]?.id;
-    if (id === rootId) return;
+    if (id === rootId) return false;
+
+    // LP profile: removing a content Level's course must not leave that
+    // Level — if it sits at index 0/last — looking like a genuine pre/post
+    // Assessment slot (isAssessmentLevel: exactly one course, flagged).
+    // Same ambiguity wouldBecomeAmbiguousSlot guards against on add (a
+    // content Level with a Level Exam course, first/last, reduced to just
+    // that one course by deleting its other content).
+    const profile = useEditorStore.getState().editorProfile;
+    if (profile.derivedRoles) {
+      const node = bfsFind(get().treeData, id);
+      const parent = node?.parent ? bfsFind(get().treeData, node.parent) : undefined;
+      const levels = get().treeData[0]?.children ?? [];
+      const levelIndex = parent ? levels.findIndex((l) => l.id === parent.id) : -1;
+      if (levelIndex === 0 || levelIndex === levels.length - 1) {
+        const remaining = (parent!.children ?? []).filter((c) => c.id !== id);
+        if (remaining.length === 1 && !!remaining[0].metadata?.['isAssessmentCourse']) return false;
+      }
+    }
+
     set((state) => ({
       treeData: removeNode(state.treeData, id),
       selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
     }));
+    return true;
   },
 
   reorderChildren: (parentId, fromIndex, toIndex) => {

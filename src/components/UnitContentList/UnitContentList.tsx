@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
 import type { EditorMode } from '../../types/editor';
 import { useTreeStore } from '../../store/tree.store';
 import { useEditorStore } from '../../store/editor.store';
@@ -100,9 +101,13 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
   const handleRemoveCourse = useCallback((id: string) => {
     openModal('confirmDelete', {
       message: lbl.learningPath.deleteCourseConfirm,
-      onConfirm: () => deleteNode(id),
+      onConfirm: () => {
+        if (!deleteNode(id)) {
+          toast.error(lbl.learningPath.cannotRemoveLastRegularCourseToast);
+        }
+      },
     });
-  }, [openModal, deleteNode, lbl.learningPath.deleteCourseConfirm]);
+  }, [openModal, deleteNode, lbl.learningPath.deleteCourseConfirm, lbl.learningPath.cannotRemoveLastRegularCourseToast]);
 
   // The Level Exam course (if any) has its own dedicated row (LevelExamItem)
   // above — exclude it here so it's never shown twice.

@@ -561,6 +561,7 @@
     "priorSlotFilledToast": "L'Évaluation préalable contient déjà un cours — retirez-le avant d'en ajouter un autre.",
     "outcomeSlotFilledToast": "L'Évaluation finale contient déjà un cours — retirez-le avant d'en ajouter un autre.",
     "levelNeedsMixedContentToast": "Ce niveau est premier ou dernier dans le parcours — un cours composé uniquement de bancs de questions comme seul contenu sera traité comme une évaluation préalable/finale. Ajoutez un autre cours, ou un cours contenant plus que des bancs de questions.",
+    "cannotRemoveLastRegularCourseToast": "Ce niveau est premier ou dernier dans le parcours — retirer ce cours ne laisserait que le cours d'examen de niveau, qui serait alors traité comme une évaluation préalable/finale. Ajoutez d'abord un autre cours.",
     "coursesRemovedFrameworkChangeToast": "{count} cours associé(s) à un autre curriculum ont été retirés de ce parcours.",
     "levelSkillsResetFrameworkChangeToast": "{count} niveau(x) ont eu leurs compétences sélectionnées effacées — elles ne s'appliquent pas au nouveau curriculum.",
     "priorAssessmentNarrowedScopeToast": "L'évaluation préalable a réduit le périmètre des compétences — {count} niveau(x) ont désormais des compétences hors de ce périmètre.",

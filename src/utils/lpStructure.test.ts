@@ -243,6 +243,29 @@ describe('canReorderLevel', () => {
     expect(canReorderLevel(levels, -1, 1)).toBe(false);
     expect(canReorderLevel(levels, levels.length, 1)).toBe(false);
   });
+
+  it('rejects moving a content Level with a Level Exam course into index 0 or the last index — it would newly look like a genuine pre/post slot', () => {
+    // No genuine pre/post slot exists yet — l2's sole child is its Level
+    // Exam course, shape-identical to isAssessmentLevel once it lands first
+    // or last, even though it was never validated as a real assessment slot.
+    const noSlotsYet = [
+      level({ id: 'l1', children: [course('c1'), course('c2')] }),
+      level({ id: 'l2', children: [assessmentCourse('a1')] }),
+      level({ id: 'l3', children: [course('c3')] }),
+    ];
+    expect(canReorderLevel(noSlotsYet, 1, 0)).toBe(false);
+    expect(canReorderLevel(noSlotsYet, 1, 2)).toBe(false);
+  });
+
+  it('still allows reordering an assessment-shaped Level between two middle positions — the ambiguity only applies at index 0/last', () => {
+    const levels2 = [
+      level({ id: 'l1', children: [course('c1')] }),
+      level({ id: 'l2', children: [assessmentCourse('a1')] }),
+      level({ id: 'l3', children: [course('c2')] }),
+      level({ id: 'l4', children: [course('c3')] }),
+    ];
+    expect(canReorderLevel(levels2, 1, 2)).toBe(true);
+  });
 });
 
 describe('canAddCourseToLevel', () => {
