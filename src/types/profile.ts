@@ -4,7 +4,7 @@ import type { IConfig } from './editor';
 // depth, linked-leaf rules, feature gating) from config.config.primaryCategory
 // so components read `editorProfile` instead of branching on primaryCategory.
 export interface IEditorProfile {
-  key: 'collection' | 'learningPath';
+  key: 'collection' | 'learningPath' | 'evaluationCourse';
   /** primaryCategory + contentType written for new folder nodes */
   unitPrimaryCategory: string;
   unitContentType: string;
@@ -19,6 +19,12 @@ export interface IEditorProfile {
   derivedRoles: boolean;
   /** competency-scoped library search */
   competencyScoped: boolean;
+  /** When set, the Library's addable content is restricted to exactly these
+   *  primaryCategory values, at every depth in the course (not just root) —
+   *  used for Evaluation Courses (prior/post assessment and level exam
+   *  courses), whose content must be Question Sets or ECML assessment
+   *  content only, never regular course material. */
+  restrictedContentCategories?: string[];
   features: {
     csvUpload: boolean;
     dialcodes: boolean;
@@ -56,6 +62,20 @@ export const learningPathProfile: IEditorProfile = {
   features: { csvUpload: false, dialcodes: false, pageNumbers: false, bulkUpload: false, collaborators: false },
 };
 
+// Otherwise a normal Course — units, drag/drop, standard depth — just with
+// its addable content restricted to assessment-only material. Not a distinct
+// structural profile like learningPath; everything but the Library filter
+// behaves exactly like collectionProfile.
+export const evaluationCourseProfile: IEditorProfile = {
+  ...collectionProfile,
+  key: 'evaluationCourse',
+  restrictedContentCategories: ['Practice Question Set', 'Course Assessment'],
+};
+
 export function resolveEditorProfile(config: { config: Pick<IConfig, 'primaryCategory'> }): IEditorProfile {
-  return config.config.primaryCategory === 'Learning Path' ? learningPathProfile : collectionProfile;
+  switch (config.config.primaryCategory) {
+    case 'Learning Path': return learningPathProfile;
+    case 'Evaluation Course': return evaluationCourseProfile;
+    default: return collectionProfile;
+  }
 }

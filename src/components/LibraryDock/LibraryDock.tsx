@@ -66,6 +66,7 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
   const activeLevelExamTarget = useUiStore(s => s.activeLevelExamTarget);
   const setActiveLevelExamTarget = useUiStore(s => s.setActiveLevelExamTarget);
   const isLearningPath = useEditorStore(s => s.editorProfile.competencyScoped);
+  const restrictedContentCategories = useEditorStore(s => s.editorProfile.restrictedContentCategories);
   const isEditable = editorMode === 'edit';
 
   // LP profile: the header shows where an "Add" click will land — "Open a
@@ -406,10 +407,20 @@ export const LibraryDock: React.FC<LibraryDockProps> = ({ editorMode, collapsed 
 
       {/* Content type filter chips — LP profile only ever searches Courses
           (see useLibrary's buildLpLibraryFilters), so show that as the sole,
-          permanently-active chip instead of the generic category list. */}
+          permanently-active chip instead of the generic category list. An
+          Evaluation Course profile narrows CT_FILTERS down to its own
+          restricted categories (still real, switchable pills — unlike LP's
+          single always-'all' chip — since there's more than one allowed
+          category to filter between). */}
       <div className={styles.filters}>
         <FilterChips
-          filters={isLearningPath ? LP_COURSE_FILTER : CT_FILTERS}
+          filters={
+            isLearningPath
+              ? LP_COURSE_FILTER
+              : restrictedContentCategories
+                ? [CT_FILTERS[0], ...CT_FILTERS.filter((f) => restrictedContentCategories.includes(f.value))]
+                : CT_FILTERS
+          }
           active={activeFilter}
           onChange={setFilter}
         />

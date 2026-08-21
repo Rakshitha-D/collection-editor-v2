@@ -155,6 +155,31 @@ The equivalent web-component usage is identical to the standard flow — just se
 `IEditorProfile` (exported for advanced integrations that need to introspect the active profile,
 e.g. `unitLabelKey`/`features` for a custom host toolbar) is re-exported from the package root.
 
+## Evaluation Course profile
+
+Setting `config.primaryCategory` to `'Evaluation Course'` authors a normal Course — same unit
+structure, drag/drop, depth, and toolbar as the default profile — except the Library's addable
+content is restricted to exactly `Practice Question Set` and `Course Assessment` (ECML assessment
+content), at every depth in the course, not just the root. This is the category used for a Course
+that will serve as a Learning Path's Prior/Outcome Assessment or a Level Exam course — its content
+must be assessment-only, never regular course material.
+
+```tsx
+const evaluationCourseConfig = {
+  context: { /* same shape as any other Course */ },
+  config: {
+    mode: 'edit',
+    objectType: 'Collection',
+    primaryCategory: 'Evaluation Course', // the only switch
+  },
+};
+```
+
+No new backend object category definition is required beyond the platform accepting
+`'Evaluation Course'` as a `primaryCategory` value on Collection objects — the restriction is
+enforced entirely client-side, via `evaluationCourseProfile.restrictedContentCategories`
+(`IEditorProfile`).
+
 ---
 
 ## API

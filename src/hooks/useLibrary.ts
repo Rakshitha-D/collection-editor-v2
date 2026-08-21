@@ -112,11 +112,20 @@ const EMPTY_SKILLS: string[] = [];
  * Returns allowed primaryCategory values for the currently selected unit,
  * driven by editorConfig.config.hierarchy.levelN.children.Content.
  * Falls back to the full LIBRARY_PRIMARY_CATEGORIES constant.
+ *
+ * An Evaluation Course profile overrides this entirely, at every depth
+ * (root or any Course Unit) — its content must be Question Sets or ECML
+ * assessment content only, never regular course material.
  */
 export function useAllowedCategories(): string[] {
   const config = useEditorStore((s) => s.editorConfig);
+  const editorProfile = useEditorStore((s) => s.editorProfile);
   const selectedNodeId = useTreeStore((s) => s.selectedNodeId);
   const treeData = useTreeStore((s) => s.treeData);
+
+  if (editorProfile.restrictedContentCategories) {
+    return editorProfile.restrictedContentCategories;
+  }
 
   // Compute selected node depth (root = 0)
   const depth = useCallback(() => {
@@ -277,10 +286,17 @@ export function useLibrary() {
   );
 
   // Initial/channel-driven load — applies to every profile.
+  // editorProfile.key is included because it resolves asynchronously
+  // (useEditorInit calls setEditorProfile after this hook's own mount
+  // effect may already have fired with the store's default collectionProfile)
+  // — without it, an Evaluation Course's restrictedContentCategories would
+  // never take effect: the very first load() call captures the default
+  // (unrestricted) allowedCategories, and nothing else re-triggers this
+  // effect since channel itself doesn't change once the profile resolves.
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel]);
+  }, [channel, editorProfile.key]);
 
   // LP-only: re-run on anything that changes what the search should be
   // scoped to (assessment slot armed, a Level's selected skills, or which
