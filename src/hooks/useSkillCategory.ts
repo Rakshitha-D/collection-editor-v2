@@ -1,6 +1,7 @@
+import { useEditorStore } from '../store/editor.store';
 import { useTreeStore } from '../store/tree.store';
 import { useFramework } from './useFramework';
-import { getCourseFrameworkId, isAssessmentLevel } from '../utils/lpStructure';
+import { isAssessmentLevel } from '../utils/lpStructure';
 import type { ICategory, ITerm } from '../types/framework';
 import type { INode } from '../types/editor';
 
@@ -34,22 +35,18 @@ export function resolveSkillCategory(categories: ICategory[] | undefined): ISkil
 export function resolvePriorCourseFramework(rootNode: INode | undefined): string | undefined {
   const preLevel = rootNode?.children?.[0];
   if (!isAssessmentLevel(preLevel)) return undefined;
-  return getCourseFrameworkId(preLevel?.children?.[0]);
+  const fw = preLevel?.children?.[0]?.metadata?.['framework'];
+  return Array.isArray(fw) ? (fw[0] as string | undefined) : (fw as string | undefined);
 }
 
-/**
- * The skill category for the linked Prior Assessment course specifically —
- * resolved from THAT course's own framework, nothing else. There is no
- * root-level "Curriculum" or context-default fallback anymore
- * (learning_path_multi_framework_skills_plan.md §2): a Learning Path's
- * courses may span several frameworks, so there is no single ambient
- * framework to fall back to. Returns null when no Prior Assessment is
- * linked (or it has no resolvable framework) — callers use the
- * multi-framework catalog (useSkillCatalog) instead in that case.
- */
 export function useSkillCategory(): ISkillCategory | null {
+  const config = useEditorStore((s) => s.editorConfig);
+  const contentFramework = useEditorStore((s) => s.contentFramework);
   const treeData = useTreeStore((s) => s.treeData);
-  const frameworkId = resolvePriorCourseFramework(treeData[0]);
+  // Prior course's framework wins: it defines the skill scope, so the skill
+  // category must come from its taxonomy (learning_path_plan.md §3 item 1).
+  const frameworkId = resolvePriorCourseFramework(treeData[0])
+    ?? (contentFramework ?? config?.context?.framework) as string | undefined;
   const { organisationFramework } = useFramework(frameworkId);
   return resolveSkillCategory(organisationFramework?.categories);
 }

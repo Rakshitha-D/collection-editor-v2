@@ -4,7 +4,7 @@ import type { IContent } from '../types/content';
 import { useEditorStore } from './editor.store';
 import { useUiStore } from './ui.store';
 import { useI18nStore } from './i18n.store';
-import { canAddCourseToLevel, canReorderLevel, isAssessmentSlotFilled, isPrePostSlot, resolveOpenAssessmentSlot } from '../utils/lpStructure';
+import { canAddCourseToLevel, canReorderLevel, isAssessmentLevel, isAssessmentSlotFilled, isPrePostSlot, resolveOpenAssessmentSlot } from '../utils/lpStructure';
 
 interface TreeState {
   treeData: INode[];
@@ -15,7 +15,7 @@ interface TreeState {
   // actions
   setTreeData: (nodes: INode[]) => void;
   selectNode: (id: string) => void;
-  updateNode: (id: string, patch: Record<string, unknown>) => void;
+  updateNode: (id: string, patch: Record<string, unknown>, extraMirrorKeys?: string[]) => void;
   addNode: (parentId: string, type: 'unit' | 'subunit') => string;
   deleteNode: (id: string) => void;
   reorderChildren: (parentId: string, fromIndex: number, toIndex: number) => void;
@@ -26,6 +26,13 @@ interface TreeState {
   getBreadcrumb: (id: string) => Array<{ id: string; name: string }>;
   moveNode: (nodeId: string, fromParentId: string, toParentId: string) => void;
   replaceNodeIds: (identifiers: Record<string, string>) => void;
+  /** LP: drop linked courses tagged under a different framework than the
+   *  root's newly-selected curriculum. Returns how many were removed. */
+  pruneCoursesByFramework: (frameworkId: string) => number;
+  /** LP: clear every Level's selected-skills field under the OLD resolved
+   *  skill-category code when the Curriculum changes. Returns how many
+   *  Levels had a selection cleared. */
+  clearLevelSkills: (skillCategoryCode: string | undefined) => number;
 }
 
 // BFS through treeData to find a node by id
@@ -56,24 +63,26 @@ function getNodeDepth(nodes: INode[], targetId: string, depth = 0): number {
 const METADATA_MIRROR_FIELDS = new Set([
   'name', 'appIcon', 'description', 'keywords', 'trackable',
   'qrCodeProcessId', 'reservedDialcodes',
-  // A Level's selected skills (LP profile) — a fixed, framework-independent
-  // field (never the reserved Sunbird `competencies` field, whose platform
-  // schema expects competency-ontology objects, not plain framework-term
-  // strings; and never a resolved-per-framework code, since a Level's
-  // selection may span several frameworks at once — see
-  // learning_path_multi_framework_skills_plan.md §3).
-  'skills',
 ]);
 
+// extraMirrorKeys: for patch keys whose NAME is only known at call time (e.g.
+// a Level's skill selection, stored under the resolved skill-category code —
+// 'skill' for USF, a different code for another framework — never the
+// reserved Sunbird `competencies` field, whose platform schema expects
+// competency-ontology objects, not plain framework-term strings). Callers
+// pass the dynamic key(s) explicitly rather than growing the static set above.
 function deepMergeNode(
-  nodes: INode[], id: string, patch: Record<string, unknown>,
+  nodes: INode[], id: string, patch: Record<string, unknown>, extraMirrorKeys?: string[],
 ): INode[] {
   return nodes.map((node) => {
     if (node.id === id) {
       const explicitMetaPatch = (patch['metadata'] as Record<string, unknown>) ?? {};
       // Mirror top-level patch fields into metadata so cleanMetadata sees the latest values
+      const mirrorFields = extraMirrorKeys?.length
+        ? new Set([...METADATA_MIRROR_FIELDS, ...extraMirrorKeys])
+        : METADATA_MIRROR_FIELDS;
       const mirroredFields: Record<string, unknown> = {};
-      for (const key of METADATA_MIRROR_FIELDS) {
+      for (const key of mirrorFields) {
         if (key in patch) mirroredFields[key] = patch[key];
       }
       return {
@@ -83,7 +92,7 @@ function deepMergeNode(
       };
     }
     if (node.children && node.children.length > 0) {
-      return { ...node, children: deepMergeNode(node.children, id, patch) };
+      return { ...node, children: deepMergeNode(node.children, id, patch, extraMirrorKeys) };
     }
     return node;
   });
@@ -227,9 +236,9 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     set({ selectedNodeId: id, breadcrumb, activeNodeMeta });
   },
 
-  updateNode: (id, patch) => {
+  updateNode: (id, patch, extraMirrorKeys) => {
     set((state) => ({
-      treeData: deepMergeNode(state.treeData, id, patch),
+      treeData: deepMergeNode(state.treeData, id, patch, extraMirrorKeys),
       treeCache: {
         ...state.treeCache,
         [id]: { ...(state.treeCache[id] ?? {}), ...patch },
@@ -470,6 +479,65 @@ export const useTreeStore = create<TreeState>((set, get) => ({
     // would otherwise show "Unsaved" and trigger the back-guard.
     const { editorMode, setIsDirty } = useEditorStore.getState();
     if (editorMode === 'edit') setIsDirty(true);
+  },
+
+  pruneCoursesByFramework: (frameworkId) => {
+    let removed = 0;
+    set((state) => {
+      const root = state.treeData[0];
+      if (!root) return state;
+      const newLevels: INode[] = [];
+      for (const lvl of root.children ?? []) {
+        const wasAssessmentLevel = isAssessmentLevel(lvl);
+        const keptChildren = (lvl.children ?? []).filter((child) => {
+          if (child.isFolder) return true;
+          const fw = child.metadata?.['framework'];
+          // Courses with no framework metadata are kept — only a KNOWN
+          // mismatch is unrelated to the new curriculum. A multi-value
+          // framework array must be checked by membership, not just its
+          // first element, or a course tagged under several frameworks
+          // (one of which matches) gets wrongly dropped.
+          const matches = !fw || (Array.isArray(fw) ? fw.includes(frameworkId) : fw === frameworkId);
+          if (!matches) removed++;
+          return matches;
+        });
+        // An emptied assessment slot loses its wrapper Level too, so the
+        // pre/post slot reverts to its dashed "Add …" placeholder instead of
+        // lingering as an empty content Level.
+        if (wasAssessmentLevel && keptChildren.length === 0) continue;
+        newLevels.push(keptChildren.length === (lvl.children ?? []).length ? lvl : { ...lvl, children: keptChildren });
+      }
+      if (removed === 0) return state;
+      return { treeData: [{ ...root, children: newLevels }] };
+    });
+    if (removed > 0) get().markDirty();
+    return removed;
+  },
+
+  clearLevelSkills: (skillCategoryCode) => {
+    if (!skillCategoryCode) return 0;
+    let cleared = 0;
+    set((state) => {
+      const root = state.treeData[0];
+      if (!root) return state;
+      const newTreeCache = { ...state.treeCache };
+      const newLevels = (root.children ?? []).map((lvl) => {
+        const hadSelection = lvl.metadata?.[skillCategoryCode] !== undefined
+          || newTreeCache[lvl.id]?.[skillCategoryCode] !== undefined;
+        if (!hadSelection) return lvl;
+        cleared++;
+        const { [skillCategoryCode]: _metaRemoved, ...restMeta } = lvl.metadata ?? {};
+        if (newTreeCache[lvl.id]) {
+          const { [skillCategoryCode]: _cacheRemoved, ...restCache } = newTreeCache[lvl.id];
+          newTreeCache[lvl.id] = restCache;
+        }
+        return { ...lvl, metadata: restMeta };
+      });
+      if (cleared === 0) return state;
+      return { treeData: [{ ...root, children: newLevels }], treeCache: newTreeCache };
+    });
+    if (cleared > 0) get().markDirty();
+    return cleared;
   },
 
   replaceNodeIds: (identifiers) => {

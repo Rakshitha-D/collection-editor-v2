@@ -30,33 +30,31 @@ const rootWithoutPrior = (): INode => ({
   ],
 });
 
-const manualCatalog = ['Python programming', 'Java', 'SQL', 'Physics'];
-
 describe('resolveSkillScope', () => {
   it("uses the prior assessment's skill tags as the sole scope when one is linked", () => {
-    expect(resolveSkillScope(rootWithPrior(['Python programming', 'Java']), skillCategory, manualCatalog, {}))
+    expect(resolveSkillScope(rootWithPrior(['Python programming', 'Java']), skillCategory, {}))
       .toEqual({ scope: ['Python programming', 'Java'], source: 'prior' });
   });
 
-  it('falls back to the (multi-framework) catalog when no prior assessment is linked', () => {
-    expect(resolveSkillScope(rootWithoutPrior(), skillCategory, manualCatalog, {}))
-      .toEqual({ scope: manualCatalog, source: 'manual' });
+  it('falls back to the full skill catalog when no prior assessment is linked', () => {
+    expect(resolveSkillScope(rootWithoutPrior(), skillCategory, {}))
+      .toEqual({ scope: ['Python programming', 'Java', 'SQL'], source: 'manual' });
   });
 
   it('falls back to manual when there is no root node yet', () => {
-    expect(resolveSkillScope(undefined, skillCategory, manualCatalog, {}).source).toBe('manual');
+    expect(resolveSkillScope(undefined, skillCategory, {}).source).toBe('manual');
   });
 
-  it('returns the manual catalog when the prior course has no resolvable skill category', () => {
-    expect(resolveSkillScope(rootWithPrior(['Python programming']), null, manualCatalog, {}))
-      .toEqual({ scope: manualCatalog, source: 'manual' });
+  it('returns an empty manual scope when the skill category cannot be resolved', () => {
+    expect(resolveSkillScope(rootWithPrior(['Python programming']), null, {}))
+      .toEqual({ scope: [], source: 'manual' });
   });
 
   it("prefers the treeCache's uncommitted edit over the course's loaded metadata", () => {
     const root = rootWithPrior(['Python programming']);
     const priorCourseId = root.children![0].children![0].id;
     const cache = { [priorCourseId]: { skill: ['Java', 'SQL'] } };
-    expect(resolveSkillScope(root, skillCategory, manualCatalog, cache)).toEqual({ scope: ['Java', 'SQL'], source: 'prior' });
+    expect(resolveSkillScope(root, skillCategory, cache)).toEqual({ scope: ['Java', 'SQL'], source: 'prior' });
   });
 
   it('never derives scope from a regular (non-assessment) Level at index 0', () => {
@@ -69,6 +67,6 @@ describe('resolveSkillScope', () => {
         },
       ],
     };
-    expect(resolveSkillScope(root, skillCategory, manualCatalog, {}).source).toBe('manual');
+    expect(resolveSkillScope(root, skillCategory, {}).source).toBe('manual');
   });
 });

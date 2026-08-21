@@ -9,7 +9,7 @@ import { useUiStore } from '../../store/ui.store';
 import { useLabels } from '../../hooks/useLabels';
 import { useSkillScope } from '../../hooks/useSkillScope';
 import { computeSkillsCovered, computeUncoveredSkills, isAssessmentLevel } from '../../utils/lpStructure';
-import { useSkillCatalog } from '../../hooks/useSkillCatalog';
+import { useSkillCategory } from '../../hooks/useSkillCategory';
 import { ContentRow } from './ContentRow';
 import { SkillPicker } from './SkillPicker';
 import { AssessmentSlotItem } from './AssessmentSlotItem';
@@ -46,27 +46,29 @@ export const UnitContentList: React.FC<UnitContentListProps> = ({ editorMode, is
   const isDefaultAddMode = !activeAssessmentSlot && !activeLevelExamTarget;
 
   const { scope, source } = useSkillScope();
-  const { byFrameworkId } = useSkillCatalog();
-  // Selected skills live under the fixed `skills` field — framework-
-  // independent, since a Level's selection may span several frameworks at
-  // once (learning_path_multi_framework_skills_plan.md §3) — never the
+  const skillCategory = useSkillCategory();
+  // Selected skills live under the resolved skill-category code (e.g. 'skill'
+  // for USF) — the SAME field a linked course's own tags use — never the
   // reserved Sunbird `competencies` field, whose platform schema expects
   // competency-ontology objects, not plain framework-term strings.
-  const selectedSkills = Array.isArray(activeNodeMeta['skills'])
-    ? activeNodeMeta['skills'] as string[]
+  const selectedSkills = skillCategory && Array.isArray(activeNodeMeta[skillCategory.code])
+    ? activeNodeMeta[skillCategory.code] as string[]
     : [];
   const outOfScopeSkills = source === 'prior' ? selectedSkills.filter(s => !scope.includes(s)) : [];
-  const skillsCovered = isLpRoot ? computeSkillsCovered(treeData[0], byFrameworkId) : [];
+  const skillsCovered = isLpRoot ? computeSkillsCovered(treeData[0], skillCategory?.code) : [];
   // Selected but no linked course under THIS Level actually carries the tag —
   // independent of (and can overlap with) out-of-scope: a skill can be both.
   const uncoveredSkills = isLpLevel
-    ? computeUncoveredSkills(selectedNode, selectedSkills, byFrameworkId)
+    ? computeUncoveredSkills(selectedNode, selectedSkills, skillCategory?.code)
     : [];
 
   const handleSkillsChange = useCallback((skills: string[]) => {
-    if (!selectedNodeId) return;
-    updateNode(selectedNodeId, { skills });
-  }, [selectedNodeId, updateNode]);
+    if (!selectedNodeId || !skillCategory?.code) return;
+    // Flat patch — extraMirrorKeys makes this land in node.metadata AND flat
+    // in treeCache, where buildSavePayload persists it. A nested
+    // { metadata: {...} } patch would save a bogus 'metadata' field.
+    updateNode(selectedNodeId, { [skillCategory.code]: skills }, [skillCategory.code]);
+  }, [selectedNodeId, skillCategory?.code, updateNode]);
 
   const sensors = useSensors(
     // distance:5 prevents conflict with outer DnD context (distance:8) while still feeling responsive
