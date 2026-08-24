@@ -26,7 +26,19 @@ const LearningPathChecklist: React.FC<{ objectType: string; onConfirm: () => voi
   useEffect(() => {
     let cancelled = false;
     setAsyncIssues(null);
-    revalidateAssessmentSlots(root).then((issues) => { if (!cancelled) setAsyncIssues(issues); });
+    revalidateAssessmentSlots(root)
+      .then((issues) => { if (!cancelled) setAsyncIssues(issues); })
+      .catch((e) => {
+        // Without this, a rejected fetch (network error, 4xx/5xx) leaves
+        // asyncIssues null forever — isChecking never clears, so the modal
+        // is stuck on "Verifying assessment courses…" with no way out
+        // besides closing it. Surface it as a blocking issue instead, same
+        // as any other unresolved slot problem, with a retry-worthy message.
+        console.error('[PublishChecklist] assessment-course re-check failed:', e);
+        if (!cancelled) {
+          setAsyncIssues([{ code: 'slotCourseCheckFailed', message: lbl.learningPath.assessmentCheckFailedToast }]);
+        }
+      });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [root]);
