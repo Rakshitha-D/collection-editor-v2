@@ -8,6 +8,7 @@ import { CourseDetailsPanel } from '../shared/CourseDetailsPanel';
 import { useLabels } from '../../hooks/useLabels';
 import { useEditorStore } from '../../store/editor.store';
 import { useLibraryTargetLabel } from '../../hooks/useLibraryTargetLabel';
+import { isEvaluationCourse } from '../../utils/lpStructure';
 import styles from './LibraryPreviewPanel.module.scss';
 
 const QUESTIONSET_MIME = 'application/vnd.sunbird.questionset';
@@ -35,7 +36,11 @@ export const LibraryPreviewPanel: React.FC<LibraryPreviewPanelProps> = ({
   const targetLabel = useLibraryTargetLabel();
   if (!content) return null;
 
-  const isCourse = competencyScoped && content.primaryCategory === 'Course';
+  // While filling the Prior/Outcome Assessment slot or a Level Exam target,
+  // useLibrary's search is filtered to Evaluation Course — every item here
+  // during those flows carries that category, not 'Course', so it needs the
+  // same "show Course details, not the content player" treatment.
+  const isCourse = competencyScoped && (content.primaryCategory === 'Course' || isEvaluationCourse(content));
   const meta = [content.organisation?.[0] ?? content.channel ?? '', content.primaryCategory ?? '']
     .filter(Boolean)
     .join(' • ');
