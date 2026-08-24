@@ -331,7 +331,6 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
 
   const renderField = (field: typeof tabFields[number]) => {
     const commonProps = {
-      key: field.code,
       name: field.code,
       label: field.label,
       required: field.required,
@@ -354,31 +353,31 @@ export const SparkMetaForm: React.FC<SparkMetaFormProps> = ({
     }
     switch (field.inputType) {
       case 'textarea':
-        return <TextField {...commonProps} multiline maxLength={field.maxLength} />;
+        return <TextField key={field.code} {...commonProps} multiline maxLength={field.maxLength} />;
       case 'select':
-        return <SelectField {...commonProps} options={field.options ?? []} />;
+        return <SelectField key={field.code} {...commonProps} options={field.options ?? []} />;
       case 'multiselect':
-        return <MultiSelectField {...commonProps} options={field.options ?? []} />;
+        return <MultiSelectField key={field.code} {...commonProps} options={field.options ?? []} />;
       case 'chips':
-        return <ChipGroupField {...commonProps} />;
+        return <ChipGroupField key={field.code} {...commonProps} />;
       case 'radio':
-        return <RadioField {...commonProps} options={field.options ?? []} />;
+        return <RadioField key={field.code} {...commonProps} options={field.options ?? []} />;
       case 'appIcon':
-        return <AppIconField {...commonProps} nodeId={selectedNodeId ?? ''} />;
+        return <AppIconField key={field.code} {...commonProps} nodeId={selectedNodeId ?? ''} />;
       case 'datepicker':
       case 'datetime':
-        return <DateTimeField {...commonProps} />;
+        return <DateTimeField key={field.code} {...commonProps} />;
       case 'keywords':
       case 'tagsinput':
-        return <KeywordSuggestField {...commonProps} />;
+        return <KeywordSuggestField key={field.code} {...commonProps} />;
       case 'nestedselect':
-        return <NestedSelectField {...commonProps} levels={field.levels ?? []} />;
+        return <NestedSelectField key={field.code} {...commonProps} levels={field.levels ?? []} />;
       case 'license':
-        return <LicenseSelectField {...commonProps} />;
+        return <LicenseSelectField key={field.code} {...commonProps} />;
       case 'dialcode':
-        return <DialcodeInputField {...commonProps} />;
+        return <DialcodeInputField key={field.code} {...commonProps} />;
       default:
-        return <TextField {...commonProps} maxLength={field.maxLength} />;
+        return <TextField key={field.code} {...commonProps} maxLength={field.maxLength} />;
     }
   };
 
