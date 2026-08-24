@@ -22,12 +22,12 @@ import {
   validateLearningPathStructure,
   revalidateAssessmentSlots,
 } from './lpStructure';
-import { fetchContentDetails } from '../api/content';
+import { readContent } from '../api/hierarchy';
 import type { INode } from '../types/editor';
 
-vi.mock('../api/content', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api/content')>()),
-  fetchContentDetails: vi.fn(),
+vi.mock('../api/hierarchy', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api/hierarchy')>()),
+  readContent: vi.fn(),
 }));
 
 describe('isEvaluationCourse', () => {
@@ -775,11 +775,11 @@ describe('validateLearningPathStructure', () => {
 
 describe('revalidateAssessmentSlots', () => {
   beforeEach(() => {
-    vi.mocked(fetchContentDetails).mockReset();
+    vi.mocked(readContent).mockReset();
   });
 
   it('flags a slot whose course is no longer categorized Evaluation Course', async () => {
-    vi.mocked(fetchContentDetails).mockResolvedValue({ primaryCategory: 'Course' } as never);
+    vi.mocked(readContent).mockResolvedValue({ primaryCategory: 'Course' } as never);
     const root = validPath();
     const issues = await revalidateAssessmentSlots(root);
     expect(issues.length).toBeGreaterThan(0);
@@ -787,13 +787,13 @@ describe('revalidateAssessmentSlots', () => {
   });
 
   it('is clean when both slots still qualify', async () => {
-    vi.mocked(fetchContentDetails).mockResolvedValue({ primaryCategory: EVALUATION_COURSE_CATEGORY } as never);
+    vi.mocked(readContent).mockResolvedValue({ primaryCategory: EVALUATION_COURSE_CATEGORY } as never);
     expect(await revalidateAssessmentSlots(validPath())).toEqual([]);
   });
 
   it('skips slots that are not assessment Levels', async () => {
     const root = level({ id: 'root', children: [level({ id: 'lvl1', children: [course('c1')] })] });
     expect(await revalidateAssessmentSlots(root)).toEqual([]);
-    expect(fetchContentDetails).not.toHaveBeenCalled();
+    expect(readContent).not.toHaveBeenCalled();
   });
 });

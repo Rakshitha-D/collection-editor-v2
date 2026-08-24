@@ -1,4 +1,4 @@
-import { fetchContentDetails } from '../api/content';
+import { readContent } from '../api/hierarchy';
 import type { INode } from '../types/editor';
 
 export const EVALUATION_COURSE_CATEGORY = 'Evaluation Course';
@@ -509,11 +509,11 @@ export function validateLearningPathStructure(
 /**
  * Re-verifies the pre/post assessment courses are STILL categorized
  * Evaluation Course at publish time — an author could re-tag a linked
- * course's category after it was added to the path. A lightweight content
- * read (not a hierarchy walk — qualification is a single metadata field
- * now) suffices. Separate from validateLearningPathStructure because it
- * requires a network read; callers should run it alongside the sync checks,
- * not instead of them.
+ * course's category after it was added to the path. A lightweight
+ * collection read (not a hierarchy walk — qualification is a single
+ * metadata field now) suffices. Separate from validateLearningPathStructure
+ * because it requires a network read; callers should run it alongside the
+ * sync checks, not instead of them.
  */
 export async function revalidateAssessmentSlots(root: INode | undefined): Promise<LpValidationIssue[]> {
   const issues: LpValidationIssue[] = [];
@@ -524,7 +524,10 @@ export async function revalidateAssessmentSlots(root: INode | undefined): Promis
   for (const [lvl, label] of ([[preLevel, 'Prior Assessment'], [postLevel, 'Outcome Assessment']] as const)) {
     if (!lvl || !isAssessmentLevel(lvl)) continue;
     const courseId = lvl.children![0].id;
-    const current = await fetchContentDetails(courseId);
+    // A linked Course is a Collection object — /action/content/v3/read
+    // (fetchContentDetails) 404s on it; readContent's collection/v1/read
+    // is the endpoint that actually resolves Collections.
+    const current = await readContent(courseId) as { primaryCategory?: string } | undefined;
     if (!isEvaluationCourse(current)) {
       issues.push({
         code: 'slotCourseChanged', nodeId: lvl.id,
