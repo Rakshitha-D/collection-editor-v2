@@ -105,6 +105,6 @@ export async function getUsersByIds(ids: string[]): Promise<IUser[]> {
  * Response shape: { result: { response: { firstName, lastName, userName, … } } }
  */
 export async function readUser(userId: string): Promise<IUser> {
-  const response = await apiClient.get(`/portal/user/v5/read/${userId}`);
+  const response = await apiClient.get(`/action/user/v5/read/${userId}`);
   return (response.data?.result?.response ?? {}) as IUser;
 }

@@ -15,7 +15,7 @@ describe('resolveApiUrl', () => {
   });
 
   it('replaces a leading /portal segment', () => {
-    expect(resolveApiUrl('/portal/user/v5/read/u1', '/my-portal')).toBe('/my-portal/user/v5/read/u1');
+    expect(resolveApiUrl('/portal/user/v5/read/u1', '/my-action')).toBe('/my-action/user/v5/read/u1');
   });
 
   it('normalizes an apiSlug missing its leading slash', () => {
