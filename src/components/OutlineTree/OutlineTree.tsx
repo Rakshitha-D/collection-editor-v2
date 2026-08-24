@@ -148,14 +148,27 @@ export const OutlineTree: React.FC<OutlineTreeProps> = ({
         const message = node?.isFolder
           ? lbl.learningPath.deleteLevelConfirm.replace('{name}', node.name)
           : lbl.learningPath.deleteCourseConfirm;
-        openModal('confirmDelete', { message, onConfirm: () => deleteNode(id) });
+        openModal('confirmDelete', {
+          message,
+          onConfirm: () => {
+            if (!deleteNode(id)) {
+              toast.error(lbl.learningPath.cannotRemoveLastRegularCourseToast);
+            }
+          },
+        });
         return;
       }
 
       const message = lbl.learningPath.deleteMultipleConfirm.replace('{count}', String(ids.length));
       openModal('confirmDelete', {
         message,
-        onConfirm: () => { for (const id of ids) deleteNode(id); },
+        onConfirm: () => {
+          let blocked = false;
+          for (const id of ids) {
+            if (!deleteNode(id)) blocked = true;
+          }
+          if (blocked) toast.error(lbl.learningPath.cannotRemoveLastRegularCourseToast);
+        },
       });
     },
     [deleteNode, deleteSlot, isLearningPath, preLevel, postLevel, getNodeById, openModal, lbl],
