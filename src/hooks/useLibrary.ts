@@ -182,6 +182,16 @@ export function useLibrary() {
     isPickingEvaluationCourse,
   );
 
+  // Guards against out-of-order resolution: load() is invoked from several
+  // independent triggers (initial/channel effect, the LP-only slot/skills/
+  // Curriculum effect, search/setFilter/applyAdvancedFilters/toggleSort/
+  // loadMore) that can fire in quick succession — e.g. clicking through
+  // Levels rapidly, or typing then immediately selecting a different node
+  // before the debounced search resolves. Without this, an older request
+  // resolving after a newer one silently overwrites the current selection's
+  // results with stale ones.
+  const requestIdRef = useRef(0);
+
   const load = useCallback(
     async (
       query = '',
@@ -190,6 +200,7 @@ export function useLibrary() {
       reset = true,
       sortAZ = false,
     ) => {
+      const requestId = ++requestIdRef.current;
       store.setLoading(true);
       try {
         // No Curriculum chosen yet, or (viewing a content Level) no skills
@@ -197,6 +208,7 @@ export function useLibrary() {
         // nothing rather than every course in the framework (see
         // emptyReason above for why each case applies).
         if (emptyReason) {
+          if (requestId !== requestIdRef.current) return;
           store.setContent([], 0);
           return;
         }
@@ -232,15 +244,20 @@ export function useLibrary() {
           fields: buildSearchFields(editorProfile.competencyScoped, skillCategory?.code),
         });
 
+        // A newer load() has since started — this response is stale, don't
+        // let it clobber whatever the newer request already committed (or
+        // will commit).
+        if (requestId !== requestIdRef.current) return;
+
         if (reset) {
           store.setContent(content, count);
         } else {
           store.appendContent(content, count);
         }
       } catch (e) {
-        console.error('[useLibrary] load error:', e);
+        if (requestId === requestIdRef.current) console.error('[useLibrary] load error:', e);
       } finally {
-        store.setLoading(false);
+        if (requestId === requestIdRef.current) store.setLoading(false);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
